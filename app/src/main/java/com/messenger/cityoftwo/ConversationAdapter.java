@@ -1,4 +1,4 @@
-package com.tessera.app;
+package com.messenger.cityoftwo;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -62,6 +62,11 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
 //                Toast.makeText(context, BufferText, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void addItem(Conversation conv){
+        ConversationList.add(conv);
+        notifyItemInserted(getItemCount());
     }
 
     @Override

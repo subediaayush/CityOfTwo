@@ -1,4 +1,4 @@
-package com.tessera.app;
+package com.messenger.cityoftwo;
 
 /**
  * Created by Aayush on 1/15/2016.

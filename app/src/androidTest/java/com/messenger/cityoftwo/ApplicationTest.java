@@ -1,4 +1,4 @@
-package com.tessera.app;
+package com.messenger.cityoftwo;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
