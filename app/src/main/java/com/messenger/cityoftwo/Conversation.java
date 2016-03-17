@@ -5,24 +5,27 @@ package com.messenger.cityoftwo;
  */
 public class Conversation {
 
-    private final Type type;
+    public static final Integer SENT = 0,
+            RECEIVED = 1;
+
+    private final Integer type;
     private final String text;
 
-    public static enum Type {
-        SENT,
-        RECEIVED
-    }
-
-    public Conversation (String text, Type type){
+    /**
+     * @param text
+     * @param type
+     */
+    public Conversation(String text, Integer type) {
         this.text = text;
         this.type = type;
     }
 
-    public Type getType() {
+    public Integer getType() {
         return type;
     }
 
     public String getText() {
         return text;
     }
+
 }

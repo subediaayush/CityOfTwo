@@ -7,14 +7,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Aayush on 2/6/2016.
@@ -46,13 +46,19 @@ public class TestAdapter extends PagerAdapter {
         TextView question = (TextView) view.findViewById(R.id.test_question);
         ListView answers_listview = (ListView) view.findViewById(R.id.test_answers);
 
-        AnswersAdapter a = new AnswersAdapter(context, Tests.get(position).getAnswers());
+        Test t = Tests.get(position);
+
+        question.setText(t.getQuestion());
+
+        AnswersAdapter a = new AnswersAdapter(context, t.getAnswers());
+
         answers_listview.setAdapter(a);
 
         answers_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 context.setAnswer(i, position);
+                Toast.makeText(context, "Answer " + i + " selected", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -61,18 +67,22 @@ public class TestAdapter extends PagerAdapter {
     }
 
     @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        ((NonSwipeableViewPager) container).removeView((View) object);
+    }
+
+    @Override
     public boolean isViewFromObject(View view, Object object) {
-        return false;
+        return view.equals(object);
     }
 
     class AnswersAdapter extends ArrayAdapter<String> {
 
         Context context;
-        List<String> answers;
+        ArrayList<AnswerPair> answers;
 
-        public AnswersAdapter(Context context, List<String> answers) {
-            super(context, R.layout.layout_test_option, answers);
-
+        public AnswersAdapter(Context context, ArrayList<AnswerPair> answers) {
+            super(context, R.layout.layout_test_option);
             this.context = context;
             this.answers = answers;
         }
@@ -84,11 +94,14 @@ public class TestAdapter extends PagerAdapter {
                 convertView = li.inflate(R.layout.layout_test_option, null);
             }
 
-            ImageButton Option = (ImageButton) convertView.findViewById(R.id.option_image);
+            ImageView Option = (ImageView) convertView.findViewById(R.id.option_image);
+            TextView Description = (TextView) convertView.findViewById(R.id.option_description);
 
             Picasso.with(context)
-                    .load(answers.get(position))
+                    .load(answers.get(position).second)
                     .into(Option);
+
+            Description.setText(answers.get(position).first);
 
             return convertView;
         }

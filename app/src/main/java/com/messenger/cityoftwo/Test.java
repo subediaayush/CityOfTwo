@@ -8,9 +8,9 @@ import java.util.ArrayList;
 public class Test {
 
     String Question;
-    ArrayList<String> Answers;
+    ArrayList<AnswerPair> Answers;
 
-    public Test(String question, ArrayList<String> answers) {
+    public Test(String question, ArrayList<AnswerPair> answers) {
         Question = question;
         Answers = answers;
     }
@@ -19,15 +19,11 @@ public class Test {
         return Question;
     }
 
-    public ArrayList<String> getAnswers() {
+    public ArrayList<AnswerPair> getAnswers() {
         return Answers;
     }
 
-    public String getAnswer(int index){
+    public AnswerPair getAnswer(int index){
         return Answers.get(index);
-    }
-
-    public Integer getAnswerIndex(String answer){
-        return Answers.indexOf(answer);
     }
 }

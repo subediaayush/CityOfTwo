@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="url_login">facebook-login/</string>
+    <string name="url_signup">facebook-signup/</string>
+    <string name="url_submit_test">submit_test/</string>
+    <string name="url_test">test/</string>
+    <string name="url_send_message">message/</string>
+    <string name="url_broadcast_gcm">broadcast_gcm/</string>
+</resources>

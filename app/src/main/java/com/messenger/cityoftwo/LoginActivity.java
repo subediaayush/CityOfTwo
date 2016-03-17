@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.ImageView;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -14,6 +15,7 @@ import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.squareup.picasso.Picasso;
 
 /**
  * Created by Aayush on 2/3/2016.
@@ -25,7 +27,10 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
+
         setContentView(R.layout.activity_login);
+
+        ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
 
         mCallbackManager = CallbackManager.Factory.create();
 
@@ -37,15 +42,15 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
+        loginButton.setReadPermissions("user_likes");
+
         loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 AccessToken accessToken = loginResult.getAccessToken();
-                Profile profile = Profile.getCurrentProfile();
+                Log.i("Facebook Access Token", accessToken.getToken());
 
-                OpenLobby(accessToken, profile);
-
-                Log.i("Facebook Login", "Login Success: " + profile.getName() + " ");
+                OpenLobby(accessToken);
             }
 
             @Override
@@ -64,14 +69,20 @@ public class LoginActivity extends AppCompatActivity {
     private void OpenLobby(AccessToken accessToken, Profile profile) {
         Intent i = new Intent(this, LobbyActivity.class);
 
-        i.putExtra(TesseraApplication.ACCESS_TOKEN, accessToken);
-        i.putExtra(TesseraApplication.PROFILE, profile);
+        i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
+        i.putExtra(CityOfTwo.KEY_PROFILE, profile);
 
-        startActivityForResult(i, TesseraApplication.LOGIN);
+        startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
     }
 
     private void OpenLobby() {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        Profile profile = Profile.getCurrentProfile();
+
+        OpenLobby(accessToken, profile);
+    }
+
+    private void OpenLobby(AccessToken accessToken) {
         Profile profile = Profile.getCurrentProfile();
 
         OpenLobby(accessToken, profile);
@@ -91,6 +102,23 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
+
+        int width = BackgroundView.getMeasuredWidth(),
+                height = BackgroundView.getMeasuredHeight();
+
+        Picasso.with(this)
+                .load(R.drawable.background)
+                .resize(width, height)
+                .centerCrop()
+                .into(BackgroundView);
+
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
 
@@ -103,9 +131,9 @@ public class LoginActivity extends AppCompatActivity {
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
 
         switch (requestCode) {
-            case TesseraApplication.LOGIN:
+            case CityOfTwo.ACTIVITY_LOBBY:
                 if (resultCode == RESULT_CANCELED)
-                    finish();
+//                    finish();
                 break;
             default:
                 break;

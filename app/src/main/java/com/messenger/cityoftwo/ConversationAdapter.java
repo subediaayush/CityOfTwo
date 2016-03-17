@@ -26,9 +26,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     public int getItemViewType(int position) {
         Conversation currentConv = ConversationList.get(position);
 
-        if (currentConv.getType() == Conversation.Type.RECEIVED)
+        if (currentConv.getType() == Conversation.RECEIVED)
             return 1;
-        else if (currentConv.getType() == Conversation.Type.SENT)
+        else if (currentConv.getType() == Conversation.SENT)
             return 0;
 
         return 0;

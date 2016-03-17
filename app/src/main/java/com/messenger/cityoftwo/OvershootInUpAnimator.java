@@ -35,7 +35,7 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
     @Override
     protected void animateRemoveImpl(final RecyclerView.ViewHolder holder) {
         ViewCompat.animate(holder.itemView)
-                .translationY(holder.itemView.getRootView().getHeight())
+//                .translationY(holder.itemView.getRootView().getHeight())
                 .setDuration(getRemoveDuration())
                 .setListener(new DefaultRemoveVpaListener(holder))
                 .start();
@@ -49,7 +49,7 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
     @Override
     protected void animateAddImpl(final RecyclerView.ViewHolder holder) {
         ViewCompat.animate(holder.itemView)
-                .translationY(0)
+//                .translationY(0)
                 .setDuration(getAddDuration())
                 .setInterpolator(new OvershootInterpolator(mTension))
                 .setListener(new DefaultAddVpaListener(holder))
