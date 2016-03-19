@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -41,6 +40,8 @@ public class LobbyActivity extends AppCompatActivity {
 
     AccessToken mAccessToken;
     Profile mProfile;
+    Boolean mCanPutText = true;
+    String mDescriptionBuffer = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +108,8 @@ public class LobbyActivity extends AppCompatActivity {
         ReloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LobbyActivity.this.recreate();
+                Status.setStatus(State.BEGIN);
+                facebookLogin(mAccessToken);
             }
         });
 
@@ -468,19 +470,44 @@ public class LobbyActivity extends AppCompatActivity {
         if (mLobbyDescription == null)
             mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
+        if (lobbyDescription.equals(mLobbyDescription.getText())) return;
+
+        mDescriptionBuffer = lobbyDescription;
+        if (!mCanPutText) {
+            return;
+        }
+
         final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
-        Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
+        Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_to_left);
 
         slideToLeft.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-
+                mCanPutText = false;
             }
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                mLobbyDescription.setText(lobbyDescription);
+                mCanPutText = true;
+                mLobbyDescription.setText(mDescriptionBuffer);
                 mLobbyDescription.startAnimation(slideFromRight);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        slideFromRight.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                mCanPutText = false;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mCanPutText = true;
             }
 
             @Override

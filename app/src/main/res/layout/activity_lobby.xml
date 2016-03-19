@@ -8,7 +8,66 @@
         android:id="@+id/background_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:background="@color/Black" />
+
+    <ProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/Base.Widget.AppCompat.ProgressBar.Horizontal" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="50dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Welcome"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+                android:textColor="@color/White"
+                android:textSize="48sp" />
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/lobby_profile_image"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_margin="50dp"
+                android:src="@color/Gray" />
+
+            <TextView
+                android:id="@+id/lobby_profile_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Profile"
+                android:textColor="@color/White"
+                android:textSize="24sp" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal" />
+
+            <TextView
+                android:id="@+id/lobby_progress_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Loading for some reason"
+                android:textColor="@color/White"
+                android:textSize="24sp" />
+        </LinearLayout>
+    </ScrollView>
 
     <ImageButton
         android:id="@+id/refresh_button"
@@ -18,69 +77,7 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:padding="5dp"
-        android:src="@android:drawable/stat_notify_sync_noanim"/>
+        android:adjustViewBounds="true"
+        android:src="@android:drawable/stat_notify_sync_noanim" />
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:gravity="center_vertical"
-        android:orientation="vertical">
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Welcome"
-                    android:textAppearance="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
-                    android:textColor="@color/White"
-                    android:textStyle="bold" />
-
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/lobby_profile_image"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp" />
-
-                <TextView
-                    android:id="@+id/lobby_profile_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textColor="@color/White"
-                    android:textStyle="bold" />
-
-                <com.github.glomadrian.loadingballs.BallView
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="30dp"
-                    lib:balls="5"
-                    lib:enable_size_animation="true"
-                    lib:max_ball_size="12dp"
-                    lib:min_ball_size="5dp"
-                    lib:movement_cycle_time="1500"
-                    lib:size_cycle_time="500" />
-
-                <TextView
-                    android:id="@+id/lobby_progress_description"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Loading for some reason"
-                    android:textColor="@color/White"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </ScrollView>
-    </LinearLayout>
 </RelativeLayout>

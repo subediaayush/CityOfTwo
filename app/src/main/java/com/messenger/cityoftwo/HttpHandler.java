@@ -172,14 +172,15 @@ public abstract class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
             Log.i("Http Connection", "Call to " + URL.toString() + " completed");
             Log.i("Http Response", response.message());
+            return true;
         } catch (IOException e) {
             Log.i("Http Connection", "Call to " + URL.toString() + " failed with an exception: " + e.toString());
+            return false;
         } catch (Exception e) {
             e.printStackTrace();
             Log.i("Http Connection", "Call to " + URL.toString() + " failed");
+            return false;
         }
-
-        return null;
     }
 
     public HttpUrl getURL() {
@@ -199,7 +200,11 @@ public abstract class HttpHandler extends AsyncTask<Void, Void, Boolean> {
         if (aBoolean) {
             onSuccess(getResponse());
         } else {
-            onFailure(getResponseStatus());
+            try {
+                onFailure(getResponseStatus());
+            } catch (Exception e) {
+                onFailure(-1);
+            }
         }
     }
 

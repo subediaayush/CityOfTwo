@@ -1,12 +1,12 @@
 package com.messenger.cityoftwo; /**
  * Copyright (C) 2015 Wasabeef
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@ package com.messenger.cityoftwo; /**
 
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
 
@@ -45,7 +46,7 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
             else if (viewType == 0)
                 ViewCompat.setPivotX(view, 0);
         } catch (Exception e) {
-            Log.e(e.toString, "Cannot determine the view type of the view");
+            Log.e(e.toString(), "Cannot determine the view type of the view");
         }
         ViewCompat.setPivotY(view, view.getHeight());
     }
@@ -62,7 +63,7 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
             else if (viewType == 0)
                 ViewCompat.setPivotX(view, 0);
         } catch (Exception e) {
-            Log.e(e.toString, "Cannot determine the view type of the view");
+            Log.e(e.toString(), "Cannot determine the view type of the view");
         }
         ViewCompat.setPivotY(view, view.getHeight());
     }

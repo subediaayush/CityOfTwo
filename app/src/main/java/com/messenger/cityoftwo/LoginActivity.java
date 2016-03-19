@@ -39,8 +39,19 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         if (BuildConfig.DEBUG) {
-            startActivity(new Intent(this, ConversationActivity.class));
+            Intent i = new Intent(this, LobbyActivity.class);
+
+            AccessToken accessToken = AccessToken.getCurrentAccessToken();
+            Profile profile = Profile.getCurrentProfile();
+
+            i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
+            i.putExtra(CityOfTwo.KEY_PROFILE, profile);
+
+            startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
             return;
+
+            // startActivity(new Intent(this, ConversationActivity.class));
+            // return;
         }
 
         ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
