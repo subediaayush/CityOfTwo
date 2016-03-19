@@ -16,6 +16,7 @@ package com.messenger.cityoftwo; /**
 
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.view.animation.OvershootInterpolator;
 
 import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
@@ -33,26 +34,59 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
     }
 
     @Override
-    protected void animateRemoveImpl(final RecyclerView.ViewHolder holder) {
-        ViewCompat.animate(holder.itemView)
-//                .translationY(holder.itemView.getRootView().getHeight())
-                .setDuration(getRemoveDuration())
-                .setListener(new DefaultRemoveVpaListener(holder))
-                .start();
+    protected void preAnimateAddImpl(RecyclerView.ViewHolder holder) {
+        int viewType = holder.getItemViewType();
+        View view = holder.itemView;
+        ViewCompat.setScaleX(view, .01f);
+        ViewCompat.setScaleY(view, .01f);
+        try {
+            if (viewType == 1)
+                ViewCompat.setPivotX(view, view.getWidth());
+            else if (viewType == 0)
+                ViewCompat.setPivotX(view, 0);
+        } catch (Exception e) {
+            Log.e(e.toString, "Cannot determine the view type of the view");
+        }
+        ViewCompat.setPivotY(view, view.getHeight());
     }
 
     @Override
-    protected void preAnimateAddImpl(RecyclerView.ViewHolder holder) {
-        ViewCompat.setTranslationX(holder.itemView, holder.itemView.getRootView().getWidth());
+    protected void preAnimateRemoveImpl(RecyclerView.ViewHolder holder) {
+        int viewType = holder.getItemViewType();
+        View view = holder.itemView;
+        ViewCompat.setScaleX(view, 1);
+        ViewCompat.setScaleY(view, 1);
+        try {
+            if (viewType == 1)
+                ViewCompat.setPivotX(view, view.getWidth());
+            else if (viewType == 0)
+                ViewCompat.setPivotX(view, 0);
+        } catch (Exception e) {
+            Log.e(e.toString, "Cannot determine the view type of the view");
+        }
+        ViewCompat.setPivotY(view, view.getHeight());
     }
 
     @Override
     protected void animateAddImpl(final RecyclerView.ViewHolder holder) {
         ViewCompat.animate(holder.itemView)
-//                .translationY(0)
+                .scaleX(1)
+                .scaleY(1)
+                .alpha(1)
                 .setDuration(getAddDuration())
                 .setInterpolator(new OvershootInterpolator(mTension))
                 .setListener(new DefaultAddVpaListener(holder))
+                .start();
+    }
+
+    @Override
+    protected void animateRemoveImpl(final RecyclerView.ViewHolder holder) {
+        ViewCompat.animate(holder.itemView)
+                .scaleX(.1f)
+                .scaleY(.1f)
+                .alpha(0)
+                .setDuration(getRemoveDuration())
+                .setListener(new DefaultRemoveVpaListener(holder))
                 .start();
     }
 }

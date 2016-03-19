@@ -1,5 +1,8 @@
 package com.messenger.cityoftwo;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -13,15 +16,20 @@ import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
 import com.squareup.picasso.Picasso;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Aayush on 2/3/2016.
  */
 public class LoginActivity extends AppCompatActivity {
+    private final List<String> permissionList = Arrays.asList("user_likes");
     private CallbackManager mCallbackManager;
+    private LoginManager mLoginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,21 +38,17 @@ public class LoginActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_login);
 
+        if (BuildConfig.DEBUG) {
+            startActivity(new Intent(this, ConversationActivity.class));
+            return;
+        }
+
         ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
 
         mCallbackManager = CallbackManager.Factory.create();
+        mLoginManager = LoginManager.getInstance();
 
-        if (isLoggedIn()) {
-            OpenLobby();
-            return;
-        } else {
-            Log.i("Facebook Login", "Not logged in");
-        }
-
-        LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-        loginButton.setReadPermissions("user_likes");
-
-        loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+        mLoginManager.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 AccessToken accessToken = loginResult.getAccessToken();
@@ -56,14 +60,46 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onCancel() {
                 Log.i("Facebook Login", "Login Cancelled");
+                showLoginError();
             }
 
             @Override
             public void onError(FacebookException error) {
                 Log.i("Facebook Login", "Login Error");
+                showLoginError();
             }
         });
 
+        mLoginManager.logInWithReadPermissions(
+                this,
+                permissionList
+        );
+
+    }
+
+    private void showLoginError() {
+        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+
+        adb.setTitle("Oops");
+        adb.setMessage("Something went wrong!");
+        adb.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (mLoginManager == null) mLoginManager = LoginManager.getInstance();
+                mLoginManager.logInWithReadPermissions(
+                        LoginActivity.this,
+                        permissionList
+                );
+            }
+        });
+        adb.setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        Dialog warningDialog = adb.create();
+        warningDialog.show();
     }
 
     private void OpenLobby(AccessToken accessToken, Profile profile) {
@@ -132,8 +168,14 @@ public class LoginActivity extends AppCompatActivity {
 
         switch (requestCode) {
             case CityOfTwo.ACTIVITY_LOBBY:
-                if (resultCode == RESULT_CANCELED)
-//                    finish();
+                switch (resultCode) {
+                    case RESULT_CANCELED:
+                        recreate();
+                        break;
+                    case RESULT_OK:
+                        finish();
+                        break;
+                }
                 break;
             default:
                 break;

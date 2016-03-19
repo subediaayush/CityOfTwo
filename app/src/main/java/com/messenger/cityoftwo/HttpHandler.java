@@ -22,7 +22,7 @@ import static java.lang.Integer.parseInt;
 /**
  * Created by Aayush on 8/2/2015.
  */
-public abstract class HttpHandler extends AsyncTask<Void, Void, Void> {
+public abstract class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
     public static final int GET = 0,
             POST = 1;
@@ -148,7 +148,7 @@ public abstract class HttpHandler extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void... params) {
+    protected Boolean doInBackground(Void... params) {
         Request.Builder b = RequestBuilder;
 
         if (Type == POST) {
@@ -195,8 +195,8 @@ public abstract class HttpHandler extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected void onPostExecute(Void aVoid) {
-        if (getResponseStatus() != 404) {
+    protected void onPostExecute(Boolean aBoolean) {
+        if (aBoolean) {
             onSuccess(getResponse());
         } else {
             onFailure(getResponseStatus());

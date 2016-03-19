@@ -7,12 +7,14 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
@@ -34,7 +36,7 @@ public class LobbyActivity extends AppCompatActivity {
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
     BroadcastReceiver mBroadcastReceiver;
 
-    ProgressBar mLobbyProgressBar;
+    //    ProgressBar mLobbyProgressBar;
     TextView mLobbyDescription;
 
     AccessToken mAccessToken;
@@ -61,7 +63,8 @@ public class LobbyActivity extends AppCompatActivity {
 
         CircleImageView ProfileImageView = (CircleImageView) findViewById(R.id.lobby_profile_image);
         TextView ProfileTextView = (TextView) findViewById(R.id.lobby_profile_name);
-        mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
+
+//        mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
         ImageButton ReloadButton = (ImageButton) findViewById(R.id.refresh_button);
@@ -161,17 +164,11 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler LoginHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, header, token) {
             @Override
             protected void onPreRun() {
-                mLobbyProgressBar.setVisibility(View.VISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Please wait while we set up your profile...");
+                setLobbyDescription("Please wait while we set up your profile...");
             }
 
             @Override
             protected void onSuccess(String response) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.INVISIBLE);
-
                 try {
                     JSONObject Response = new JSONObject(response);
 
@@ -216,10 +213,7 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Seems like there is a problem.\n" +
+                setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
         };
@@ -235,17 +229,11 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler SignUpHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, CityOfTwo.HEADER_ACCESS_TOKEN, token) {
             @Override
             protected void onPreRun() {
-                mLobbyProgressBar.setVisibility(View.VISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Please wait while we set up your profile...");
+                setLobbyDescription("Please wait while we set up your profile...");
             }
 
             @Override
             protected void onSuccess(String response) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.INVISIBLE);
-
                 try {
                     JSONObject Response = new JSONObject(response);
 
@@ -254,10 +242,8 @@ public class LobbyActivity extends AppCompatActivity {
                     if (!registered) {
                         facebookLogin(accessToken);
                     } else {
-                        mLobbyProgressBar.setVisibility(View.VISIBLE);
-                        mLobbyDescription.setVisibility(View.VISIBLE);
 
-                        mLobbyDescription.setText("Please wait while we find someone for you to talk to.");
+                        setLobbyDescription("Please wait while we find someone for you to talk to.");
 
                         // Testing/Simulating test phase
 
@@ -277,10 +263,7 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Seems like there is a problem.\n" +
+                setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
         };
@@ -293,17 +276,11 @@ public class LobbyActivity extends AppCompatActivity {
 //        TestHttpHandler = new HttpHandler(CityOfTwo.HOST, path) {
 //            @Override
 //            protected void onPreRun() {
-//                mLobbyProgressBar.setVisibility(View.VISIBLE);
-//                mLobbyDescription.setVisibility(View.VISIBLE);
-//
-//                mLobbyDescription.setText("Currently downloading your test to set up your profile...");
+//                setLobbyDescription("Currently downloading your test to set up your profile...");
 //            }
 //
 //            @Override
 //            protected void onSuccess(String response) {
-//                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-//                mLobbyDescription.setVisibility(View.INVISIBLE);
-//
 //                Intent intent = new Intent(LobbyActivity.this, TestActivity.class);
 //
 //                Bundle extras = new Bundle();
@@ -314,10 +291,7 @@ public class LobbyActivity extends AppCompatActivity {
 //
 //            @Override
 //            protected void onFailure(Integer status) {
-//                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-//                mLobbyDescription.setVisibility(View.VISIBLE);
-//
-//                mLobbyDescription.setText("Seems like there is a problem.\n" +
+//                setLobbyDescription("Seems like there is a problem.\n" +
 //                        "Please try again later.");
 //            }
 //        };
@@ -335,28 +309,20 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler BroadcastGCMHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
             @Override
             protected void onPreRun() {
-                mLobbyProgressBar.setVisibility(View.VISIBLE);
-                mLobbyDescription.setVisibility(View.INVISIBLE);
             }
 
             @Override
             protected void onSuccess(String response) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.INVISIBLE);
-
                 try {
                     JSONObject Response = new JSONObject(response);
 
                     Boolean status = Response.getBoolean("parsadi");
 
-                    mLobbyProgressBar.setVisibility(View.VISIBLE);
-                    mLobbyDescription.setVisibility(View.VISIBLE);
-
                     if (!status) {
-                        mLobbyDescription.setText("Seems like there is a problem.\n" +
+                        setLobbyDescription("Seems like there is a problem.\n" +
                                 "Please try again later.");
                     } else {
-                        mLobbyDescription.setText("Please wait while we find someone for you to talk to.");
+                        setLobbyDescription("Please wait while we find someone for you to talk to.");
                         mBroadcastReceiver = new BroadcastReceiver() {
                             @Override
                             public void onReceive(Context context, Intent intent) {
@@ -384,10 +350,7 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Seems like there is a problem.\n" +
+                setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
         };
@@ -443,30 +406,20 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler TestHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
             @Override
             protected void onPreRun() {
-                mLobbyProgressBar.setVisibility(View.VISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Submitting your test results to set up your profile...");
+                setLobbyDescription("Submitting your test results to set up your profile...");
             }
 
             @Override
             protected void onSuccess(String response) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.INVISIBLE);
-
                 try {
                     JSONObject Response = new JSONObject(response);
-
                     Boolean status = Response.getBoolean("parsadi");
 
-                    mLobbyProgressBar.setVisibility(View.VISIBLE);
-                    mLobbyDescription.setVisibility(View.VISIBLE);
-
                     if (!status) {
-                        mLobbyDescription.setText("Seems like there is a problem.\n" +
+                        setLobbyDescription("Seems like there is a problem.\n" +
                                 "Please try again later.");
                     } else {
-                        mLobbyDescription.setText("Please wait while we find someone for you to talk to.");
+                        setLobbyDescription("Please wait while we find someone for you to talk to.");
                         waitForServer();
                     }
 
@@ -477,10 +430,7 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-                mLobbyDescription.setVisibility(View.VISIBLE);
-
-                mLobbyDescription.setText("Seems like there is a problem.\n" +
+                setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
         };
@@ -495,7 +445,7 @@ public class LobbyActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        setResult(RESULT_CANCELED, new Intent());
+        setResult(RESULT_OK, new Intent());
         finish();
     }
 
@@ -510,16 +460,47 @@ public class LobbyActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
         super.onStop();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+    }
+
+    public void setLobbyDescription(final String lobbyDescription) {
+        if (mLobbyDescription == null)
+            mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
+
+        final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
+        Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
+
+        slideToLeft.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mLobbyDescription.setText(lobbyDescription);
+                mLobbyDescription.startAnimation(slideFromRight);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        mLobbyDescription.startAnimation(slideToLeft);
+
+    }
+
+    public enum State {
+        BEGIN,
+        SIGNED_UP,
+        LOGGED_IN
     }
 
     static class Status {
-        static State status;
-
-        public Status() {
-            status = State.BEGIN;
-        }
+        static State status = State.BEGIN;
 
         public static State getStatus() {
             return status;
@@ -531,10 +512,5 @@ public class LobbyActivity extends AppCompatActivity {
         }
     }
 
-    public enum State {
-        BEGIN,
-        SIGNED_UP,
-        LOGGED_IN
-    }
 
 }
