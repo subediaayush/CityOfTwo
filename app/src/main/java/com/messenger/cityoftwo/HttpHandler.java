@@ -199,7 +199,9 @@ public abstract class HttpHandler extends AsyncTask<Void, Void, Boolean> {
     protected void onPostExecute(Boolean aBoolean) {
         if (aBoolean) {
             onSuccess(getResponse());
+            Log.i("Http Connection", "onSuccess called for " + URL.toString());
         } else {
+            Log.i("Http Connection", "onFailure called for " + URL.toString());
             try {
                 onFailure(getResponseStatus());
             } catch (Exception e) {

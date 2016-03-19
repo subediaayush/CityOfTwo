@@ -14,6 +14,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
@@ -35,7 +36,7 @@ public class LobbyActivity extends AppCompatActivity {
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
     BroadcastReceiver mBroadcastReceiver;
 
-    //    ProgressBar mLobbyProgressBar;
+    ProgressBar mLobbyProgressBar;
     TextView mLobbyDescription;
 
     AccessToken mAccessToken;
@@ -65,7 +66,7 @@ public class LobbyActivity extends AppCompatActivity {
         CircleImageView ProfileImageView = (CircleImageView) findViewById(R.id.lobby_profile_image);
         TextView ProfileTextView = (TextView) findViewById(R.id.lobby_profile_name);
 
-//        mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
+        mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
         ImageButton ReloadButton = (ImageButton) findViewById(R.id.refresh_button);
@@ -166,6 +167,7 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler LoginHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, header, token) {
             @Override
             protected void onPreRun() {
+                mLobbyProgressBar.setVisibility(View.INVISIBLE);
                 setLobbyDescription("Please wait while we set up your profile...");
             }
 
@@ -215,6 +217,8 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
+                mLobbyProgressBar.setVisibility(View.INVISIBLE);
+
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
@@ -265,6 +269,8 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
+                mLobbyProgressBar.setVisibility(View.INVISIBLE);
+
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
@@ -311,6 +317,8 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler BroadcastGCMHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
             @Override
             protected void onPreRun() {
+                mLobbyProgressBar.setVisibility(View.VISIBLE);
+                setLobbyDescription("Waiting for server to respond");
             }
 
             @Override
@@ -321,6 +329,7 @@ public class LobbyActivity extends AppCompatActivity {
                     Boolean status = Response.getBoolean("parsadi");
 
                     if (!status) {
+                        mLobbyProgressBar.setVisibility(View.INVISIBLE);
                         setLobbyDescription("Seems like there is a problem.\n" +
                                 "Please try again later.");
                     } else {
@@ -352,6 +361,8 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
+                mLobbyProgressBar.setVisibility(View.INVISIBLE);
+
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
@@ -418,6 +429,7 @@ public class LobbyActivity extends AppCompatActivity {
                     Boolean status = Response.getBoolean("parsadi");
 
                     if (!status) {
+                        mLobbyProgressBar.setVisibility(View.INVISIBLE);
                         setLobbyDescription("Seems like there is a problem.\n" +
                                 "Please try again later.");
                     } else {
@@ -432,6 +444,7 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
+                mLobbyProgressBar.setVisibility(View.INVISIBLE);
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
             }
@@ -470,10 +483,12 @@ public class LobbyActivity extends AppCompatActivity {
         if (mLobbyDescription == null)
             mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
-        if (lobbyDescription.equals(mLobbyDescription.getText())) return;
-
+        // Set the new description buffer
         mDescriptionBuffer = lobbyDescription;
-        if (!mCanPutText) {
+
+        // Do not do anything else if animation is running
+        // or if two consecutive description are same
+        if (lobbyDescription.equals(mLobbyDescription.getText()) || !mCanPutText) {
             return;
         }
 
