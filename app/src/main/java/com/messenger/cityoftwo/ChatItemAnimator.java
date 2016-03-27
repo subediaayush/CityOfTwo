@@ -22,16 +22,28 @@ import android.view.animation.OvershootInterpolator;
 
 import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
 
-public class OvershootInUpAnimator extends BaseItemAnimator {
+public class ChatItemAnimator extends BaseItemAnimator {
 
     private final float mTension;
+    private final int mAddDuration;
+    private final int mRemoveDuration;
 
-    public OvershootInUpAnimator() {
+    public ChatItemAnimator() {
         mTension = 2.0f;
+        mAddDuration = 200;
+        mRemoveDuration = 200;
     }
 
-    public OvershootInUpAnimator(float mTension) {
+    public ChatItemAnimator(float mTension, int mDuration) {
         this.mTension = mTension;
+        this.mAddDuration = mDuration;
+        this.mRemoveDuration = mDuration;
+    }
+
+    public ChatItemAnimator(float mTension, int mAddDuration, int mRemoveDuration) {
+        this.mTension = mTension;
+        this.mAddDuration = mAddDuration;
+        this.mRemoveDuration = mRemoveDuration;
     }
 
     @Override
@@ -41,31 +53,33 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
         ViewCompat.setScaleX(view, .01f);
         ViewCompat.setScaleY(view, .01f);
         try {
-            if (viewType == 1)
-                ViewCompat.setPivotX(view, view.getWidth());
-            else if (viewType == 0)
+            if (viewType == CityOfTwo.RECEIVED) {
                 ViewCompat.setPivotX(view, 0);
+                ViewCompat.setPivotY(view, 0);
+            } else if (viewType == CityOfTwo.SENT) {
+                ViewCompat.setPivotX(view, view.getWidth());
+                ViewCompat.setPivotY(view, view.getHeight());
+            }
         } catch (Exception e) {
             Log.e(e.toString(), "Cannot determine the view type of the view");
         }
-        ViewCompat.setPivotY(view, view.getHeight());
     }
 
     @Override
     protected void preAnimateRemoveImpl(RecyclerView.ViewHolder holder) {
         int viewType = holder.getItemViewType();
         View view = holder.itemView;
-        ViewCompat.setScaleX(view, 1);
-        ViewCompat.setScaleY(view, 1);
         try {
-            if (viewType == 1)
-                ViewCompat.setPivotX(view, view.getWidth());
-            else if (viewType == 0)
+            if (viewType == CityOfTwo.RECEIVED) {
                 ViewCompat.setPivotX(view, 0);
+                ViewCompat.setPivotY(view, 0);
+            } else if (viewType == CityOfTwo.SENT) {
+                ViewCompat.setPivotX(view, view.getWidth());
+                ViewCompat.setPivotY(view, view.getHeight());
+            }
         } catch (Exception e) {
             Log.e(e.toString(), "Cannot determine the view type of the view");
         }
-        ViewCompat.setPivotY(view, view.getHeight());
     }
 
     @Override
@@ -74,7 +88,7 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
                 .scaleX(1)
                 .scaleY(1)
                 .alpha(1)
-                .setDuration(getAddDuration())
+                .setDuration(mAddDuration)
                 .setInterpolator(new OvershootInterpolator(mTension))
                 .setListener(new DefaultAddVpaListener(holder))
                 .start();
@@ -86,7 +100,7 @@ public class OvershootInUpAnimator extends BaseItemAnimator {
                 .scaleX(.1f)
                 .scaleY(.1f)
                 .alpha(0)
-                .setDuration(getRemoveDuration())
+                .setDuration(mRemoveDuration)
                 .setListener(new DefaultRemoveVpaListener(holder))
                 .start();
     }

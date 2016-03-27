@@ -7,9 +7,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.ImageView;
+import android.view.View;
+import android.widget.Button;
 
 import com.facebook.AccessToken;
+import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -18,7 +20,6 @@ import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.squareup.picasso.Picasso;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     private final List<String> permissionList = Arrays.asList("user_likes");
     private CallbackManager mCallbackManager;
     private LoginManager mLoginManager;
+    private AccessTokenTracker mAccessTokenTracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,33 +41,52 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         if (BuildConfig.DEBUG) {
-            Intent i = new Intent(this, LobbyActivity.class);
+            try {
+                String regID = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+                        .getString("REG_ID", "EMPTY");
 
-            AccessToken accessToken = AccessToken.getCurrentAccessToken();
-            Profile profile = Profile.getCurrentProfile();
+                Log.i("GCM ID", regID);
+            } catch (NullPointerException e) {
+                Log.e("NullPointer Exception", "Shared Preferences not found");
+            }
 
-            i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
-            i.putExtra(CityOfTwo.KEY_PROFILE, profile);
-
-            startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
-            return;
-
-            // startActivity(new Intent(this, ConversationActivity.class));
-            // return;
+//            Intent i = new Intent(this, LobbyActivity.class);
+//
+//            AccessToken accessToken = AccessToken.getCurrentAccessToken();
+//            Profile profile = Profile.getCurrentProfile();
+//
+//            i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
+//            i.putExtra(CityOfTwo.KEY_PROFILE, profile);
+//
+//            startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
+//            return;
+//
+//            startActivity(new Intent(this, ConversationActivity.class));
+//             return;
         }
 
-        ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
+        Button getStartedButton = (Button) findViewById(R.id.get_started_button);
 
         mCallbackManager = CallbackManager.Factory.create();
         mLoginManager = LoginManager.getInstance();
 
+        getStartedButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateAccessToken(
+                        AccessToken.getCurrentAccessToken()
+                );
+            }
+        });
+
+        // Registering Facebook login manager to handle login events
         mLoginManager.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 AccessToken accessToken = loginResult.getAccessToken();
                 Log.i("Facebook Access Token", accessToken.getToken());
 
-                OpenLobby(accessToken);
+//                openLobby(accessToken);
             }
 
             @Override
@@ -81,11 +102,32 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        mLoginManager.logInWithReadPermissions(
-                this,
-                permissionList
-        );
+        // Registering access toke228n tracker to handle changes in access tokens
+        mAccessTokenTracker = new AccessTokenTracker() {
+            @Override
+            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
 
+                Log.i("AccessToken", "AccessToken updated");
+                updateAccessToken(currentAccessToken);
+            }
+        };
+
+    }
+
+    private void updateAccessToken(AccessToken currentAccessToken) {
+        if (currentAccessToken == null) {
+            // No AccessToken found
+            // Attempting to re login
+            mLoginManager.logInWithReadPermissions(
+                    this,
+                    permissionList
+            );
+            Log.i("Facebook Login", "No user found");
+        } else {
+            // Starting app with current logged in account
+            openLobby(currentAccessToken);
+            Log.i("Facebook Login", "Logging in with current account");
+        }
     }
 
     private void showLoginError() {
@@ -113,31 +155,34 @@ public class LoginActivity extends AppCompatActivity {
         warningDialog.show();
     }
 
-    private void OpenLobby(AccessToken accessToken, Profile profile) {
+    private void openLobby(AccessToken accessToken, Profile profile) {
         Intent i = new Intent(this, LobbyActivity.class);
 
         i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
         i.putExtra(CityOfTwo.KEY_PROFILE, profile);
 
+        Log.i("Lobby Actiity", "Opening Lobby Activity");
         startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+
     }
 
-    private void OpenLobby() {
+    private void openLobby() {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
         Profile profile = Profile.getCurrentProfile();
 
-        OpenLobby(accessToken, profile);
+        openLobby(accessToken, profile);
     }
 
-    private void OpenLobby(AccessToken accessToken) {
+    private void openLobby(AccessToken accessToken) {
         Profile profile = Profile.getCurrentProfile();
 
-        OpenLobby(accessToken, profile);
+        openLobby(accessToken, profile);
     }
 
     private boolean isLoggedIn() {
-            AccessToken accessToken = AccessToken.getCurrentAccessToken();
-            return accessToken != null;
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        return accessToken != null;
     }
 
     @Override
@@ -146,23 +191,6 @@ public class LoginActivity extends AppCompatActivity {
 
         // Logs 'install' and 'messenger activate' App Events.
         AppEventsLogger.activateApp(this);
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-
-        ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
-
-        int width = BackgroundView.getMeasuredWidth(),
-                height = BackgroundView.getMeasuredHeight();
-
-        Picasso.with(this)
-                .load(R.drawable.background)
-                .resize(width, height)
-                .centerCrop()
-                .into(BackgroundView);
-
     }
 
     @Override

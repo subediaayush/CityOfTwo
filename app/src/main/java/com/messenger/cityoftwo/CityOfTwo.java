@@ -21,18 +21,27 @@ import java.security.NoSuchAlgorithmException;
  */
 public class CityOfTwo extends Application {
 
-    public static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN",
-            KEY_PROFILE = "PROFILE",
-            KEY_SELECTED_ANSWER = "SELECTED",
-            KEY_TEST = "TEST",
-            KEY_MESSAGE = "MESSAGE",
-            KEY_TYPE = "TYPE",
-            KEY_TEXT = "TEXT",
-            KEY_SESSION_TOKEN = "SESSION_TOKEN";
+    public static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN";
+    public static final String KEY_PROFILE = "PROFILE";
+    public static final String KEY_SELECTED_ANSWER = "SELECTED";
+    public static final String KEY_TEST = "TEST";
+    public static final String KEY_MESSAGE = "MESSAGE";
+    public static final String KEY_TYPE = "TYPE";
+    public static final String KEY_TEXT = "TEXT";
+    public static final String KEY_CURRENT_CHAT = "CURRENT_CHAT";
+    public static final String KEY_SESSION_TOKEN = "SESSION_TOKEN";
+
+    public static final int APPLICATION_FOREGROUND = 0,
+            APPLICATION_BACKGROUND = 1;
 
     public static final int ACTIVITY_LOBBY = 1,
             ACTIVITY_TEST = 2,
             ACTIVITY_CONVERSATION = 3;
+
+    public static final int SENT = 1,
+            RECEIVED = 2,
+            START = 0,
+            END = -1;
 
     public static final String PACKAGE_NAME = "com.messenger.cityoftwo",
             HOST = "coyrudy.com",
@@ -46,7 +55,9 @@ public class CityOfTwo extends Application {
 
     public static final String API_KEY = "AIzaSyB_Wco0Sdad38QGHsCcode9P1iZ3tsqqXY";
     private static final String SENDER_ID = "584281533020";
+
     public static GoogleCloudMessaging GCM;
+    public static Integer APPLICATION_STATE;
 
     /**
      * @param value

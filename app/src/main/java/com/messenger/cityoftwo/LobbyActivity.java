@@ -13,9 +13,9 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ViewFlipper;
 
 import com.facebook.AccessToken;
 import com.facebook.Profile;
@@ -33,16 +33,20 @@ import de.hdodenhof.circleimageview.CircleImageView;
  */
 public class LobbyActivity extends AppCompatActivity {
 
+    private final static int ERROR = -1,
+            BEGIN = 0,
+            SIGNED_UP = 1,
+            LOGGED_IN = 2;
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
     BroadcastReceiver mBroadcastReceiver;
-
     ProgressBar mLobbyProgressBar;
     TextView mLobbyDescription;
-
     AccessToken mAccessToken;
     Profile mProfile;
     Boolean mCanPutText = true;
     String mDescriptionBuffer = "";
+    ArrayList<String> mLobbyDescriptionBuffer = new ArrayList<>();
+    int lobbyState = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,10 +68,18 @@ public class LobbyActivity extends AppCompatActivity {
         }
 
         CircleImageView ProfileImageView = (CircleImageView) findViewById(R.id.lobby_profile_image);
+        CircleImageView ProfileMaskedImageView = (CircleImageView) findViewById(R.id.lobby_profile_masked);
         TextView ProfileTextView = (TextView) findViewById(R.id.lobby_profile_name);
 
         mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
+
+        ViewFlipper imageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
+        imageFlipper.setAutoStart(true);
+        imageFlipper.setFlipInterval(1000);
+        imageFlipper.startFlipping();
+        imageFlipper.setInAnimation(this, R.anim.card_flip_in);
+        imageFlipper.setOutAnimation(this, R.anim.card_flip_out);
 
         ImageButton ReloadButton = (ImageButton) findViewById(R.id.refresh_button);
 
@@ -81,8 +93,14 @@ public class LobbyActivity extends AppCompatActivity {
                 .centerCrop()
                 .placeholder(R.drawable.user_placeholder)
                 .error(R.drawable.user_placeholder)
-                .resize(100, 100)
+                .resize(width, height)
                 .into(ProfileImageView);
+
+        Picasso.with(this)
+                .load(R.drawable.user_placeholder)
+                .centerCrop()
+                .resize(width, height)
+                .into(ProfileMaskedImageView);
 
         ProfileTextView.setText(profile.getName());
 
@@ -109,12 +127,12 @@ public class LobbyActivity extends AppCompatActivity {
         ReloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Status.setStatus(State.BEGIN);
+                setStatus(BEGIN);
                 facebookLogin(mAccessToken);
             }
         });
 
-        switch (Status.getStatus()) {
+        switch (getStatus()) {
             case BEGIN:
                 facebookLogin(mAccessToken);
                 break;
@@ -124,10 +142,28 @@ public class LobbyActivity extends AppCompatActivity {
             case LOGGED_IN:
                 waitForServer();
                 break;
+            case ERROR:
+                setStatus(BEGIN);
+                facebookLogin(mAccessToken);
             default:
                 break;
         }
 
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_BACKGROUND;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_FOREGROUND;
     }
 
     @Override
@@ -138,12 +174,11 @@ public class LobbyActivity extends AppCompatActivity {
             mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
             mProfile = savedInstanceState.getParcelable("LOBBY_PROFILE");
 
-            State s = State.values()[savedInstanceState.getInt("LOBBY_STATUS")];
-            Status.setStatus(s);
+            setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
         } else {
             mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
             mProfile = getIntent().getParcelableExtra(CityOfTwo.KEY_PROFILE);
-            Status.setStatus(State.BEGIN);
+            setStatus(BEGIN);
         }
     }
 
@@ -151,7 +186,7 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putInt("LOBBY_STATUS", Status.getStatus().ordinal());
+        outState.putInt("LOBBY_STATUS", getStatus());
         outState.putParcelable("LOBBY_ACCESS_TOKEN", mAccessToken);
         outState.putParcelable("LOBBY_PROFILE", mProfile);
     }
@@ -167,7 +202,6 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler LoginHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, header, token) {
             @Override
             protected void onPreRun() {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
                 setLobbyDescription("Please wait while we set up your profile...");
             }
 
@@ -217,10 +251,9 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
+                setStatus(ERROR);
             }
         };
 
@@ -269,10 +302,9 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
+                setStatus(ERROR);
             }
         };
 
@@ -317,7 +349,6 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler BroadcastGCMHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
             @Override
             protected void onPreRun() {
-                mLobbyProgressBar.setVisibility(View.VISIBLE);
                 setLobbyDescription("Waiting for server to respond");
             }
 
@@ -329,9 +360,9 @@ public class LobbyActivity extends AppCompatActivity {
                     Boolean status = Response.getBoolean("parsadi");
 
                     if (!status) {
-                        mLobbyProgressBar.setVisibility(View.INVISIBLE);
                         setLobbyDescription("Seems like there is a problem.\n" +
                                 "Please try again later.");
+                        setStatus(ERROR);
                     } else {
                         setLobbyDescription("Please wait while we find someone for you to talk to.");
                         mBroadcastReceiver = new BroadcastReceiver() {
@@ -361,10 +392,9 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
-
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
+                setStatus(ERROR);
             }
         };
 
@@ -379,16 +409,6 @@ public class LobbyActivity extends AppCompatActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
 
-        ImageView BackgroundView = (ImageView) findViewById(R.id.background_view);
-
-        int width = BackgroundView.getMeasuredWidth(),
-                height = BackgroundView.getMeasuredHeight();
-
-        Picasso.with(this)
-                .load(R.drawable.background)
-                .resize(width, height)
-                .centerCrop()
-                .into(BackgroundView);
     }
 
     @Override
@@ -429,9 +449,9 @@ public class LobbyActivity extends AppCompatActivity {
                     Boolean status = Response.getBoolean("parsadi");
 
                     if (!status) {
-                        mLobbyProgressBar.setVisibility(View.INVISIBLE);
                         setLobbyDescription("Seems like there is a problem.\n" +
                                 "Please try again later.");
+                        setStatus(ERROR);
                     } else {
                         setLobbyDescription("Please wait while we find someone for you to talk to.");
                         waitForServer();
@@ -444,9 +464,9 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                mLobbyProgressBar.setVisibility(View.INVISIBLE);
                 setLobbyDescription("Seems like there is a problem.\n" +
                         "Please try again later.");
+                setStatus(ERROR);
             }
         };
 
@@ -479,7 +499,7 @@ public class LobbyActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 
-    public void setLobbyDescription(final String lobbyDescription) {
+    public void setLobbyDescription(String lobbyDescription) {
         if (mLobbyDescription == null)
             mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
@@ -488,9 +508,19 @@ public class LobbyActivity extends AppCompatActivity {
 
         // Do not do anything else if animation is running
         // or if two consecutive description are same
-        if (lobbyDescription.equals(mLobbyDescription.getText()) || !mCanPutText) {
+        try {
+            if (!lobbyDescription.equals(mLobbyDescriptionBuffer.get(0)))
+                mLobbyDescriptionBuffer.add(lobbyDescription);
+        } catch (IndexOutOfBoundsException e) {
+            mLobbyDescriptionBuffer.add(lobbyDescription);
+        }
+
+        if (!mCanPutText) {
             return;
         }
+
+        final String currentDescription = mLobbyDescriptionBuffer.get(0);
+        mLobbyDescriptionBuffer.remove(0);
 
         final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
         Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_to_left);
@@ -504,8 +534,10 @@ public class LobbyActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animation animation) {
                 mCanPutText = true;
-                mLobbyDescription.setText(mDescriptionBuffer);
+                mLobbyDescription.setText(currentDescription);
                 mLobbyDescription.startAnimation(slideFromRight);
+                if (!mLobbyDescriptionBuffer.isEmpty())
+                    setLobbyDescription(mLobbyDescriptionBuffer.get(0));
             }
 
             @Override
@@ -535,24 +567,25 @@ public class LobbyActivity extends AppCompatActivity {
 
     }
 
-    public enum State {
-        BEGIN,
-        SIGNED_UP,
-        LOGGED_IN
+    private int getStatus() {
+        return lobbyState;
     }
 
-    static class Status {
-        static State status = State.BEGIN;
+    private void setStatus(int state) {
+        // Run code before changing state
 
-        public static State getStatus() {
-            return status;
-        }
+        lobbyState = state;
 
-        public static void setStatus(State s) {
-            status = s;
-            Log.i("Lobby Status", "Status set " + status.name());
+        // Run code after changing state
+        if (lobbyState == ERROR) {
+            if (mLobbyProgressBar == null)
+                mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
+            mLobbyProgressBar.setVisibility(View.INVISIBLE);
+        } else {
+            if (mLobbyProgressBar == null)
+                mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
+            mLobbyProgressBar.setVisibility(View.VISIBLE);
+
         }
     }
-
-
 }

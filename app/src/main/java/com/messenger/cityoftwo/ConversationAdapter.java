@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
@@ -24,14 +25,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
 
     @Override
     public int getItemViewType(int position) {
-        Conversation currentConv = ConversationList.get(position);
-
-        if (currentConv.getType() == Conversation.RECEIVED)
-            return 1;
-        else if (currentConv.getType() == Conversation.SENT)
-            return 0;
-
-        return 0;
+        return ConversationList.get(position).getType();
     }
 
 
@@ -39,34 +33,47 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     public ConversationListViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater li = LayoutInflater.from(context);
 
-        View view = null;
+        View view;
 
-        if (viewType == 1)
+        if (viewType == CityOfTwo.RECEIVED)
             view = li.inflate(R.layout.layout_msg_received, null);
-        else if (viewType == 0)
+        else if (viewType == CityOfTwo.SENT)
             view = li.inflate(R.layout.layout_msg_sent, null);
+        else if (viewType == CityOfTwo.START)
+            view = li.inflate(R.layout.layout_msg_start, null);
+        else
+            view = li.inflate(R.layout.layout_msg_end, null);
 
         return new ConversationListViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(ConversationListViewHolder holder, int position) {
+    public void onBindViewHolder(final ConversationListViewHolder holder, final int position) {
         Conversation currentConv = ConversationList.get(position);
-        final String BufferText = currentConv.getText();
 
-        holder.TextContainer.setText(BufferText);
-        holder.BackgroundView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // TODO Implement click based event
-//                Toast.makeText(context, BufferText, Toast.LENGTH_SHORT).show();
-            }
-        });
+        if (currentConv.getType() != CityOfTwo.START &&
+                currentConv.getType() != CityOfTwo.END) {
+            final String BufferText = currentConv.getText();
+
+            String Time = new SimpleDateFormat("hh:mm a").format(currentConv.getTime());
+
+            holder.textContainer.setText(BufferText);
+            holder.dateContainer.setText(Time);
+            holder.textContainer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    toggleVisibility(holder.dateContainer);
+                    ConversationAdapter.this.notifyItemChanged(position);
+                }
+            });
+        }
     }
 
-    public void addItem(Conversation conv){
-        ConversationList.add(conv);
-        notifyItemInserted(getItemCount());
+    private void toggleVisibility(View view) {
+        if (view.getVisibility() == View.VISIBLE)
+            view.setVisibility(View.GONE);
+        else
+            view.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -75,13 +82,13 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     }
 
     class ConversationListViewHolder extends RecyclerView.ViewHolder {
-        TextView TextContainer;
-        View BackgroundView;
+        TextView dateContainer;
+        TextView textContainer;
 
         public ConversationListViewHolder(View itemView) {
             super(itemView);
-            TextContainer = (TextView) itemView.findViewById(R.id.text);
-            BackgroundView = itemView;
+            textContainer = (TextView) itemView.findViewById(R.id.text);
+            dateContainer = (TextView) itemView.findViewById(R.id.time);
         }
     }
 }

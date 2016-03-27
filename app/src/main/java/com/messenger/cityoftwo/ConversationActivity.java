@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -13,9 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
-import org.java_websocket.client.WebSocketClient;
 import org.json.JSONObject;
 import org.solovyev.android.views.llm.LinearLayoutManager;
 
@@ -30,7 +29,6 @@ public class ConversationActivity extends AppCompatActivity {
     ImageButton mSendButton;
     RecyclerView mConversationListView;
     View mConnectionIndicatorView;
-    WebSocketClient mWebSocketClient;
     Toolbar mToolbar;
     HttpHandler mHttpHandler;
 
@@ -41,34 +39,39 @@ public class ConversationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mInputText = (EditText) findViewById(R.id.input_text);
         mSendButton = (ImageButton) findViewById(R.id.send_button);
         mConversationListView = (RecyclerView) findViewById(R.id.conversation_listview);
-        mConnectionIndicatorView = findViewById(R.id.network_indicator);
+//        mConnectionIndicatorView = findViewById(R.id.network_indicator);
 
-        setSupportActionBar(mToolbar);
+//        setSupportActionBar(mToolbar);
 
-        getSupportActionBar().setTitle("Conversation");
+//        getSupportActionBar().setTitle("Conversation");
 
         mConversationList = new ArrayList<>();
         mConversationAdapter = new ConversationAdapter(this, mConversationList);
 
-        OvershootInUpAnimator itemAnimator = new OvershootInUpAnimator();
+        ChatItemAnimator itemAnimator = new ChatItemAnimator(0.1f, 200);
 
-//        itemAnimator.setAddDuration(200);
-//        itemAnimator.setInterpolator(new OvershootInterpolator(2.0f));
         mConversationListView.setItemAnimator(itemAnimator);
 
+        mConversationList.add(new Conversation("", CityOfTwo.START));
+        mConversationList.add(new Conversation("", CityOfTwo.END));
         mConversationListView.setAdapter(mConversationAdapter);
-        mConversationListView.setLayoutManager(new LinearLayoutManager(this));
+
+        LinearLayoutManager l = new LinearLayoutManager(this);
+        l.setStackFromEnd(true);
+        mConversationListView.setLayoutManager(l);
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 final String bufferText = mInputText.getText().toString().replaceFirst("\\s+$", "");
 
-                sendMessage(new Conversation(bufferText, Conversation.SENT));
+                if (!bufferText.isEmpty()) {
+                    mInputText.setText("");
+                    sendMessage(new Conversation(bufferText, CityOfTwo.SENT));
+                }
             }
         });
 
@@ -84,26 +87,18 @@ public class ConversationActivity extends AppCompatActivity {
                 switch (message) {
                     case "MESSAGE":
                         String text = intent.getStringExtra(CityOfTwo.KEY_TEXT);
-                        mConversationList.add(new Conversation(text, Conversation.RECEIVED));
-                        mConversationAdapter.notifyDataSetChanged();
-                        mConversationListView.smoothScrollToPosition(mConversationAdapter.getItemCount());
+
+                        Conversation c = new Conversation(text, CityOfTwo.RECEIVED);
+                        mConversationList.add(mConversationList.size() - 1, c);
+
+                        mConversationAdapter.notifyItemInserted(mConversationList.indexOf(c));
+                        mConversationListView.smoothScrollToPosition(mConversationList.size());
                         break;
                     case "END_CHAT":
                         exitActivity(RESULT_OK, new Intent());
                 }
             }
         };
-
-//        mInputText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-//            @Override
-//            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-//                if (i == EditorInfo.IME_ACTION_SEND
-//                        && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-//                    sendMessage();
-//                }
-//                return true;
-//            }
-//        });
     }
 
     private void exitActivity(int resultCode, Intent intent) {
@@ -111,10 +106,67 @@ public class ConversationActivity extends AppCompatActivity {
         finish();
     }
 
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            ArrayList<String> textList = savedInstanceState.getStringArrayList(CityOfTwo.KEY_CURRENT_CHAT);
+            mConversationList.clear();
+            for (String text : textList)
+                mConversationList.add(new Conversation(text));
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_BACKGROUND;
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_FOREGROUND;
+        Bundle extras = getIntent().getExtras();
+        try {
+            String conv = extras.getString(CityOfTwo.KEY_MESSAGE);
+
+            if (conv != null) {
+                Conversation c = new Conversation(extras.getString(CityOfTwo.KEY_MESSAGE));
+                extras.remove(CityOfTwo.KEY_MESSAGE);
+
+                if (mConversationList == null) mConversationList = new ArrayList<>();
+                mConversationList.add(c);
+            }
+        } catch (NullPointerException e) {
+            Log.i("Chat Activity", "Starting new chat");
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        if (!mConversationList.isEmpty()) {
+            ArrayList<String> textList = new ArrayList<>();
+            for (Conversation c : mConversationList) {
+                textList.add(c.toString());
+            }
+            outState.putStringArrayList(CityOfTwo.KEY_CURRENT_CHAT, textList);
+        }
+
+
+    }
+
     private void sendMessage(final Conversation bufferConv) {
-        mConversationList.add(bufferConv);
-        mConversationAdapter.notifyDataSetChanged();
-        mConversationListView.smoothScrollToPosition(mConversationAdapter.getItemCount());
+        mConversationList.add(mConversationList.size() - 1, bufferConv);
+
+        mConversationAdapter.notifyItemInserted(mConversationList.indexOf(bufferConv));
+        mConversationListView.smoothScrollToPosition(mConversationList.size());
 
         final String value = bufferConv.getText().replaceFirst("\\s+$", "");
 
@@ -137,11 +189,7 @@ public class ConversationActivity extends AppCompatActivity {
 
                         Boolean status = Response.getBoolean("parsadi");
 
-                        if (!status) {
-                            onFailure(getResponseStatus());
-                        } else {
-                            mInputText.setText("");
-                        }
+                        if (!status) onFailure(getResponseStatus());
 
                     } catch (Exception e) {
                         onFailure(getResponseStatus());
@@ -151,13 +199,31 @@ public class ConversationActivity extends AppCompatActivity {
 
                 @Override
                 protected void onFailure(Integer status) {
-                    Toast.makeText(ConversationActivity.this, "Message couldnot be sent." +
-                            " Please try again later", Toast.LENGTH_SHORT).show();
-                    if (BuildConfig.DEBUG)
-                        return;
+//                    Toast.makeText(ConversationActivity.this, "Message couldnot be sent." +
+//                            " Please try again later", Toast.LENGTH_SHORT).show();
 
-                    mConversationList.remove(bufferConv);
-                    mConversationAdapter.notifyDataSetChanged();
+                    Snackbar s = Snackbar.make(
+                            mConversationListView,
+                            "Your message was not sent!",
+                            Snackbar.LENGTH_SHORT
+                    );
+
+                    s.setAction("Try Again", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            sendMessage(new Conversation(
+                                    bufferConv.getText(),
+                                    bufferConv.getType()
+                            ));
+                        }
+                    });
+
+                    s.show();
+
+                    if (!BuildConfig.DEBUG) {
+                        mConversationList.remove(bufferConv);
+                        mConversationAdapter.notifyDataSetChanged();
+                    }
                 }
             };
 
@@ -165,7 +231,6 @@ public class ConversationActivity extends AppCompatActivity {
                     .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
             mHttpHandler.addHeader("Authorization", token);
-
             mHttpHandler.execute();
         }
     }

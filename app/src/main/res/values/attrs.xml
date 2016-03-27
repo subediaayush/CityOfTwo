@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TriangleView">
+        <attr name="shape_color" format="color" />
+        <attr name="rotation" format="float" />
+        <attr name="offset" format="integer" />
+    </declare-styleable>
+</resources>

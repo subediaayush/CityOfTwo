@@ -1,68 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:lib="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimaryDark">
 
-    <ImageView
-        android:id="@+id/background_view"
+    <com.messenger.cityoftwo.TriangleView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:shape_color="@color/colorPrimary" />
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:background="@color/Black" />
+        android:layout_centerVertical="true"
+        android:layout_marginTop="50dp"
+        android:gravity="center"
+        android:orientation="vertical">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="true">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="50dp"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical">
+            android:text="Welcome"
+            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+            android:textColor="@color/White" />
+        <!--android:textSize="48sp" />-->
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Welcome"
-                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
-                android:textColor="@color/White"
-                android:textSize="48sp" />
+        <ViewFlipper
+            android:id="@+id/lobby_image_flipper"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_margin="10dp">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/lobby_profile_image"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_margin="50dp"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
                 android:src="@color/Gray" />
 
-            <TextView
-                android:id="@+id/lobby_profile_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Profile"
-                android:textColor="@color/White"
-                android:textSize="24sp" />
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/lobby_profile_masked"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@color/Gray" />
 
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_gravity="center_horizontal" />
+        </ViewFlipper>
 
-            <TextView
-                android:id="@+id/lobby_progress_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Loading for some reason"
-                android:textColor="@color/White"
-                android:textSize="24sp" />
-        </LinearLayout>
-    </ScrollView>
+        <TextView
+            android:id="@+id/lobby_profile_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/White"
+            android:visibility="gone" />
+        <!--android:textSize="24sp" />-->
+
+        <TextView
+            android:id="@+id/lobby_progress_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:minLines="3"
+            android:textColor="@color/White" />
+        <!--android:textSize="18sp" />-->
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/lobby_progressbar"

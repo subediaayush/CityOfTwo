@@ -1,6 +1,9 @@
 package com.messenger.cityoftwo;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -10,11 +13,10 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class GcmMessageHandler extends IntentService {
 
-    private LocalBroadcastManager mBroadcaster;
-
     private static Integer mBeginChatSignalCounter = 0,
             mEndChatSignalCounter = 0,
             mReceiveMessageSignalCounter = 0;
+    private LocalBroadcastManager mBroadcaster;
 
     public GcmMessageHandler() {
         super("GcmMessageHandler");
@@ -40,12 +42,36 @@ public class GcmMessageHandler extends IntentService {
         try {
             String messageType = extras.getString("TYPE");
 
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
             switch (messageType) {
                 case "MESSAGE":
-                    intent.setAction(CityOfTwo.PACKAGE_NAME);
-                    mBroadcaster.sendBroadcast(intent);
-                    Log.i("Chat", "Received message: " + extras.getString("TEXT"));
-                    Log.i("Chat", "Receving message" + ++mReceiveMessageSignalCounter);
+                    if (CityOfTwo.APPLICATION_STATE == CityOfTwo.APPLICATION_FOREGROUND) {
+                        intent.setAction(CityOfTwo.PACKAGE_NAME);
+                        mBroadcaster.sendBroadcast(intent);
+                        Log.i("Chat", "Received message: " + extras.getString("TEXT"));
+                        Log.i("Chat", "Receving message" + ++mReceiveMessageSignalCounter);
+                    } else {
+                        Intent i = new Intent(this, ConversationActivity.class);
+                        i.putExtra(CityOfTwo.KEY_MESSAGE, new Conversation(
+                                extras.getString("TEXT"),
+                                CityOfTwo.RECEIVED
+                        ).toString());
+                        PendingIntent p = PendingIntent.getActivity(
+                                this,
+                                (int) System.currentTimeMillis(),
+                                i,
+                                0
+                        );
+                        Notification n = new Notification.Builder(this)
+                                .setContentTitle("You have a message")
+                                .setContentText(extras.getString("TEXT"))
+                                .setSmallIcon(R.drawable.ic_small)
+                                .setContentIntent(p)
+                                .setAutoCancel(true)
+                                .build();
+                        nm.notify(0, n);
+                    }
                     break;
                 case "CHAT_BEGIN":
                     intent = new Intent();
