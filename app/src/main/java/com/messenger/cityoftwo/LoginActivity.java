@@ -62,7 +62,7 @@ public class LoginActivity extends AppCompatActivity {
 //            return;
 //
 //            startActivity(new Intent(this, ConversationActivity.class));
-//             return;
+//            return;
         }
 
         Button getStartedButton = (Button) findViewById(R.id.get_started_button);

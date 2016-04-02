@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -13,10 +14,12 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.squareup.picasso.Picasso;
@@ -26,7 +29,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import de.hdodenhof.circleimageview.CircleImageView;
+//import com.squareup.picasso.Callback;
+//import com.squareup.picasso.Picasso;
 
 /**
  * Created by Aayush on 2/5/2016.
@@ -37,6 +41,7 @@ public class LobbyActivity extends AppCompatActivity {
             BEGIN = 0,
             SIGNED_UP = 1,
             LOGGED_IN = 2;
+
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
     BroadcastReceiver mBroadcastReceiver;
     ProgressBar mLobbyProgressBar;
@@ -45,8 +50,8 @@ public class LobbyActivity extends AppCompatActivity {
     Profile mProfile;
     Boolean mCanPutText = true;
     String mDescriptionBuffer = "";
-    ArrayList<String> mLobbyDescriptionBuffer = new ArrayList<>();
-    int lobbyState = 0;
+    int lobbyState = BEGIN;
+    SimpleTarget<Bitmap> mUserProfileBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,74 +60,87 @@ public class LobbyActivity extends AppCompatActivity {
 
         Profile profile = null;
 
-        try {
-            mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
-            profile = getIntent().getParcelableExtra(CityOfTwo.KEY_PROFILE);
+        if (savedInstanceState != null) {
+            mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
+            mProfile = savedInstanceState.getParcelable("LOBBY_PROFILE");
 
-            if (profile == null) throw new NullPointerException("");
-        } catch (Exception e) {
-            Log.i("Error", "Error while loading user");
-            setResult(RESULT_CANCELED, new Intent());
-            finish();
-            return;
+            setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
+        } else {
+            mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
+            mProfile = getIntent().getParcelableExtra(CityOfTwo.KEY_PROFILE);
+            setStatus(BEGIN);
+
+            if (mProfile == null) finish();
         }
 
-        CircleImageView ProfileImageView = (CircleImageView) findViewById(R.id.lobby_profile_image);
-        CircleImageView ProfileMaskedImageView = (CircleImageView) findViewById(R.id.lobby_profile_masked);
+        ImageView ProfileImageOne = (ImageView) findViewById(R.id.lobby_progress_one);
+        ImageView ProfileImageTwo = (ImageView) findViewById(R.id.lobby_progress_two);
+        ImageView ProfileImageThree = (ImageView) findViewById(R.id.lobby_progress_three);
+        ImageView ProfileImageFour = (ImageView) findViewById(R.id.lobby_progress_four);
+
         TextView ProfileTextView = (TextView) findViewById(R.id.lobby_profile_name);
 
         mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
-        ViewFlipper imageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
-        imageFlipper.setAutoStart(true);
+        final ViewFlipper imageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
+
         imageFlipper.setFlipInterval(1000);
+        imageFlipper.setInAnimation(this, android.R.anim.fade_in);
+        imageFlipper.setOutAnimation(this, android.R.anim.fade_out);
+        imageFlipper.setAutoStart(true);
         imageFlipper.startFlipping();
-        imageFlipper.setInAnimation(this, R.anim.card_flip_in);
-        imageFlipper.setOutAnimation(this, R.anim.card_flip_out);
 
         ImageButton ReloadButton = (ImageButton) findViewById(R.id.refresh_button);
 
-        int width = ProfileImageView.getLayoutParams().width,
-                height = ProfileImageView.getLayoutParams().height;
+        int width = ProfileImageOne.getLayoutParams().width,
+                height = ProfileImageOne.getLayoutParams().height;
 
-        Uri uri = profile.getProfilePictureUri(width, height);
-
-        Picasso.with(this)
-                .load(uri)
-                .centerCrop()
-                .placeholder(R.drawable.user_placeholder)
-                .error(R.drawable.user_placeholder)
-                .resize(width, height)
-                .into(ProfileImageView);
+        Uri uri = mProfile.getProfilePictureUri(width, height);
 
         Picasso.with(this)
-                .load(R.drawable.user_placeholder)
-                .centerCrop()
+                .load(R.drawable.mipmap_1)
                 .resize(width, height)
-                .into(ProfileMaskedImageView);
+                .into(ProfileImageOne);
 
-        ProfileTextView.setText(profile.getName());
+        Picasso.with(this)
+                .load(R.drawable.mipmap_2)
+                .resize(width, height)
+                .into(ProfileImageTwo);
+        Picasso.with(this)
+                .load(R.drawable.mipmap_3)
+                .resize(width, height)
+                .into(ProfileImageThree);
+        Picasso.with(this)
+                .load(R.drawable.mipmap_4)
+                .resize(width, height)
+                .into(ProfileImageFour);
+
+        ProfileTextView.setText(mProfile.getName());
 
         CityOfTwo.RegisterGCM(this);
 
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String s = intent.getStringExtra(CityOfTwo.KEY_TYPE);
+        mBroadcastReceiver = new
 
-                Log.i("Receiver", "Signal Received: " + s);
+                BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        String s = intent.getStringExtra(CityOfTwo.KEY_TYPE);
 
-                switch (s) {
-                    case "CHAT_BEGIN":
-                        Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
+                        Log.i("Receiver", "Signal Received: " + s);
 
-                        LocalBroadcastManager.getInstance(LobbyActivity.this).unregisterReceiver(mBroadcastReceiver);
+                        switch (s) {
+                            case "CHAT_BEGIN":
+                                Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
 
-                        startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
+                                LocalBroadcastManager.getInstance(LobbyActivity.this).unregisterReceiver(mBroadcastReceiver);
+
+                                startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
+                        }
+                    }
                 }
-            }
-        };
+
+        ;
 
         ReloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -131,7 +149,6 @@ public class LobbyActivity extends AppCompatActivity {
                 facebookLogin(mAccessToken);
             }
         });
-
         switch (getStatus()) {
             case BEGIN:
                 facebookLogin(mAccessToken);
@@ -145,6 +162,7 @@ public class LobbyActivity extends AppCompatActivity {
             case ERROR:
                 setStatus(BEGIN);
                 facebookLogin(mAccessToken);
+                break;
             default:
                 break;
         }
@@ -156,6 +174,8 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+
         CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_BACKGROUND;
     }
 
@@ -163,23 +183,17 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(CityOfTwo.PACKAGE_NAME);
+
+        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
+
         CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_FOREGROUND;
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-
-        if (savedInstanceState != null) {
-            mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
-            mProfile = savedInstanceState.getParcelable("LOBBY_PROFILE");
-
-            setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
-        } else {
-            mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
-            mProfile = getIntent().getParcelableExtra(CityOfTwo.KEY_PROFILE);
-            setStatus(BEGIN);
-        }
     }
 
     @Override
@@ -200,11 +214,6 @@ public class LobbyActivity extends AppCompatActivity {
                 token = accessToken.getToken();
 
         HttpHandler LoginHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, header, token) {
-            @Override
-            protected void onPreRun() {
-                setLobbyDescription("Please wait while we set up your profile...");
-            }
-
             @Override
             protected void onSuccess(String response) {
                 try {
@@ -230,9 +239,7 @@ public class LobbyActivity extends AppCompatActivity {
                         answers.add(1);
                         answers.add(0);
 
-                        submitTest(answers);
-
-                        waitForServer();
+                        submitTest(answers, accessToken);
 
                         // Modify code to adapt for testing phase
 
@@ -251,8 +258,6 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                setLobbyDescription("Seems like there is a problem.\n" +
-                        "Please try again later.");
                 setStatus(ERROR);
             }
         };
@@ -267,11 +272,6 @@ public class LobbyActivity extends AppCompatActivity {
 
         HttpHandler SignUpHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, CityOfTwo.HEADER_ACCESS_TOKEN, token) {
             @Override
-            protected void onPreRun() {
-                setLobbyDescription("Please wait while we set up your profile...");
-            }
-
-            @Override
             protected void onSuccess(String response) {
                 try {
                     JSONObject Response = new JSONObject(response);
@@ -281,9 +281,6 @@ public class LobbyActivity extends AppCompatActivity {
                     if (!registered) {
                         facebookLogin(accessToken);
                     } else {
-
-                        setLobbyDescription("Please wait while we find someone for you to talk to.");
-
                         // Testing/Simulating test phase
 
                         ArrayList<Integer> answers = new ArrayList<>();
@@ -291,8 +288,7 @@ public class LobbyActivity extends AppCompatActivity {
                         answers.add(1);
                         answers.add(0);
 
-                        submitTest(answers);
-                        waitForServer();
+                        submitTest(answers, accessToken);
                     }
 
                 } catch (JSONException e) {
@@ -302,8 +298,6 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                setLobbyDescription("Seems like there is a problem.\n" +
-                        "Please try again later.");
                 setStatus(ERROR);
             }
         };
@@ -314,11 +308,6 @@ public class LobbyActivity extends AppCompatActivity {
 //        path[1] = test;
 
 //        TestHttpHandler = new HttpHandler(CityOfTwo.HOST, path) {
-//            @Override
-//            protected void onPreRun() {
-//                setLobbyDescription("Currently downloading your test to set up your profile...");
-//            }
-//
 //            @Override
 //            protected void onSuccess(String response) {
 //                Intent intent = new Intent(LobbyActivity.this, TestActivity.class);
@@ -331,8 +320,6 @@ public class LobbyActivity extends AppCompatActivity {
 //
 //            @Override
 //            protected void onFailure(Integer status) {
-//                setLobbyDescription("Seems like there is a problem.\n" +
-//                        "Please try again later.");
 //            }
 //        };
 
@@ -349,7 +336,7 @@ public class LobbyActivity extends AppCompatActivity {
         HttpHandler BroadcastGCMHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
             @Override
             protected void onPreRun() {
-                setLobbyDescription("Waiting for server to respond");
+
             }
 
             @Override
@@ -360,11 +347,9 @@ public class LobbyActivity extends AppCompatActivity {
                     Boolean status = Response.getBoolean("parsadi");
 
                     if (!status) {
-                        setLobbyDescription("Seems like there is a problem.\n" +
-                                "Please try again later.");
                         setStatus(ERROR);
                     } else {
-                        setLobbyDescription("Please wait while we find someone for you to talk to.");
+                        setStatus(LOGGED_IN);
                         mBroadcastReceiver = new BroadcastReceiver() {
                             @Override
                             public void onReceive(Context context, Intent intent) {
@@ -392,8 +377,6 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                setLobbyDescription("Seems like there is a problem.\n" +
-                        "Please try again later.");
                 setStatus(ERROR);
             }
         };
@@ -418,13 +401,13 @@ public class LobbyActivity extends AppCompatActivity {
         switch (requestCode) {
             case CityOfTwo.ACTIVITY_TEST:
                 if (resultCode == RESULT_OK) {
-                    submitTest(data.getExtras().getIntegerArrayList(CityOfTwo.KEY_SELECTED_ANSWER));
+                    submitTest(data.getExtras().getIntegerArrayList(CityOfTwo.KEY_SELECTED_ANSWER), mAccessToken);
 
                 }
         }
     }
 
-    private void submitTest(ArrayList<Integer> answers) {
+    private void submitTest(ArrayList<Integer> answers, final AccessToken accessToken) {
         String submit_test = getString(R.string.url_test),
                 header = CityOfTwo.HEADER_TEST_RESULT;
 
@@ -438,22 +421,14 @@ public class LobbyActivity extends AppCompatActivity {
 
         HttpHandler TestHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
             @Override
-            protected void onPreRun() {
-                setLobbyDescription("Submitting your test results to set up your profile...");
-            }
-
-            @Override
             protected void onSuccess(String response) {
                 try {
                     JSONObject Response = new JSONObject(response);
                     Boolean status = Response.getBoolean("parsadi");
 
                     if (!status) {
-                        setLobbyDescription("Seems like there is a problem.\n" +
-                                "Please try again later.");
                         setStatus(ERROR);
                     } else {
-                        setLobbyDescription("Please wait while we find someone for you to talk to.");
                         waitForServer();
                     }
 
@@ -464,8 +439,6 @@ public class LobbyActivity extends AppCompatActivity {
 
             @Override
             protected void onFailure(Integer status) {
-                setLobbyDescription("Seems like there is a problem.\n" +
-                        "Please try again later.");
                 setStatus(ERROR);
             }
         };
@@ -484,20 +457,6 @@ public class LobbyActivity extends AppCompatActivity {
         finish();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(CityOfTwo.PACKAGE_NAME);
-
-        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
-    }
 
     public void setLobbyDescription(String lobbyDescription) {
         if (mLobbyDescription == null)
@@ -508,22 +467,12 @@ public class LobbyActivity extends AppCompatActivity {
 
         // Do not do anything else if animation is running
         // or if two consecutive description are same
-        try {
-            if (!lobbyDescription.equals(mLobbyDescriptionBuffer.get(0)))
-                mLobbyDescriptionBuffer.add(lobbyDescription);
-        } catch (IndexOutOfBoundsException e) {
-            mLobbyDescriptionBuffer.add(lobbyDescription);
-        }
-
-        if (!mCanPutText) {
+        if (!mCanPutText)
             return;
-        }
 
-        final String currentDescription = mLobbyDescriptionBuffer.get(0);
-        mLobbyDescriptionBuffer.remove(0);
 
         final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
-        Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_to_left);
+        final Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_to_left);
 
         slideToLeft.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -534,10 +483,8 @@ public class LobbyActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animation animation) {
                 mCanPutText = true;
-                mLobbyDescription.setText(currentDescription);
+                mLobbyDescription.setText(mDescriptionBuffer);
                 mLobbyDescription.startAnimation(slideFromRight);
-                if (!mLobbyDescriptionBuffer.isEmpty())
-                    setLobbyDescription(mLobbyDescriptionBuffer.get(0));
             }
 
             @Override
@@ -581,11 +528,19 @@ public class LobbyActivity extends AppCompatActivity {
             if (mLobbyProgressBar == null)
                 mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
             mLobbyProgressBar.setVisibility(View.INVISIBLE);
+
+            setLobbyDescription("There was an error. Please try again later.");
         } else {
             if (mLobbyProgressBar == null)
                 mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
             mLobbyProgressBar.setVisibility(View.VISIBLE);
+        }
 
+        if (lobbyState == BEGIN) {
+            setLobbyDescription("Setting up your profile");
+        }
+        if (lobbyState == LOGGED_IN) {
+            setLobbyDescription("Finding a match");
         }
     }
 }

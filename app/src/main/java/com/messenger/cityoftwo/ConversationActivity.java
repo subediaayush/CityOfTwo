@@ -1,5 +1,6 @@
 package com.messenger.cityoftwo;
 
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +21,8 @@ import org.solovyev.android.views.llm.LinearLayoutManager;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.messenger.cityoftwo.CityOfTwo.BackgroundConversation;
 
 public class ConversationActivity extends AppCompatActivity {
     public static final String HOST = "http://192.168.100.1:5000";
@@ -116,6 +119,11 @@ public class ConversationActivity extends AppCompatActivity {
             for (String text : textList)
                 mConversationList.add(new Conversation(text));
         }
+
+        mConversationAdapter.notifyDataSetChanged();
+        mConversationListView.scrollToPosition(
+                mConversationList.size()
+        );
     }
 
     @Override
@@ -130,21 +138,17 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        nm.cancel("CHAT_NOTIFICATION", 0);
+
         CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_FOREGROUND;
-        Bundle extras = getIntent().getExtras();
-        try {
-            String conv = extras.getString(CityOfTwo.KEY_MESSAGE);
+        if (BackgroundConversation == null)
+            BackgroundConversation = new ArrayList<>();
 
-            if (conv != null) {
-                Conversation c = new Conversation(extras.getString(CityOfTwo.KEY_MESSAGE));
-                extras.remove(CityOfTwo.KEY_MESSAGE);
-
-                if (mConversationList == null) mConversationList = new ArrayList<>();
-                mConversationList.add(c);
-            }
-        } catch (NullPointerException e) {
-            Log.i("Chat Activity", "Starting new chat");
-        }
+        mConversationList.addAll(mConversationList.size() - 1, BackgroundConversation);
+        mConversationAdapter.notifyDataSetChanged();
+        BackgroundConversation.clear();
     }
 
     @Override
@@ -251,7 +255,7 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
         super.onStop();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 }

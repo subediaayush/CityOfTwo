@@ -12,7 +12,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
+//import com.squareup.picasso.Picasso;
+
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
@@ -97,7 +99,7 @@ public class TestAdapter extends PagerAdapter {
             ImageView Option = (ImageView) convertView.findViewById(R.id.option_image);
             TextView Description = (TextView) convertView.findViewById(R.id.option_description);
 
-            Picasso.with(context)
+            Glide.with(context)
                     .load(answers.get(position).second)
                     .into(Option);
 

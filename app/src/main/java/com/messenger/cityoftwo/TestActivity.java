@@ -11,13 +11,15 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+
+//import com.squareup.picasso.Picasso;
 
 /**
  * Created by Aayush on 2/5/2016.
@@ -103,9 +105,9 @@ public class TestActivity extends AppCompatActivity {
         int width = BackgroundView.getMeasuredWidth(),
                 height = BackgroundView.getMeasuredHeight();
 
-        Picasso.with(this)
+        Glide.with(this)
                 .load(R.drawable.background)
-                .resize(width, height)
+                .override(width, height)
                 .centerCrop()
                 .into(BackgroundView);
 

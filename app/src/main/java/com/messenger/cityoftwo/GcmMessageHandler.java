@@ -11,6 +11,10 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+import java.util.ArrayList;
+
+import static com.messenger.cityoftwo.CityOfTwo.BackgroundConversation;
+
 public class GcmMessageHandler extends IntentService {
 
     private static Integer mBeginChatSignalCounter = 0,
@@ -52,25 +56,34 @@ public class GcmMessageHandler extends IntentService {
                         Log.i("Chat", "Received message: " + extras.getString("TEXT"));
                         Log.i("Chat", "Receving message" + ++mReceiveMessageSignalCounter);
                     } else {
-                        Intent i = new Intent(this, ConversationActivity.class);
-                        i.putExtra(CityOfTwo.KEY_MESSAGE, new Conversation(
+
+                        if (BackgroundConversation == null)
+                            BackgroundConversation = new ArrayList<>();
+
+                        Intent notificationIntent = new Intent(this, ConversationActivity.class);
+
+                        BackgroundConversation.add(new Conversation(
                                 extras.getString("TEXT"),
                                 CityOfTwo.RECEIVED
-                        ).toString());
+                        ));
+
                         PendingIntent p = PendingIntent.getActivity(
                                 this,
                                 (int) System.currentTimeMillis(),
-                                i,
-                                0
+                                notificationIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT
                         );
+
                         Notification n = new Notification.Builder(this)
                                 .setContentTitle("You have a message")
                                 .setContentText(extras.getString("TEXT"))
                                 .setSmallIcon(R.drawable.ic_small)
                                 .setContentIntent(p)
+                                .setPriority(Notification.PRIORITY_HIGH)
                                 .setAutoCancel(true)
                                 .build();
-                        nm.notify(0, n);
+
+                        nm.notify("CHAT_NOTIFICATION", 0, n);
                     }
                     break;
                 case "CHAT_BEGIN":

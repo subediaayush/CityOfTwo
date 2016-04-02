@@ -15,6 +15,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 /**
  * Created by Aayush on 2/5/2016.
@@ -58,6 +59,8 @@ public class CityOfTwo extends Application {
 
     public static GoogleCloudMessaging GCM;
     public static Integer APPLICATION_STATE;
+
+    public static ArrayList<Conversation> BackgroundConversation;
 
     /**
      * @param value

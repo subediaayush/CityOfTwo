@@ -24,7 +24,8 @@
             android:gravity="center"
             android:text="Welcome"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
-            android:textColor="@color/White" />
+            android:textColor="@color/White"
+            android:textStyle="bold" />
         <!--android:textSize="48sp" />-->
 
         <ViewFlipper
@@ -33,18 +34,25 @@
             android:layout_height="100dp"
             android:layout_margin="10dp">
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/lobby_profile_image"
+            <ImageView
+                android:id="@+id/lobby_progress_one"
                 android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@color/Gray" />
+                android:layout_height="100dp" />
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/lobby_profile_masked"
+            <ImageView
+                android:id="@+id/lobby_progress_two"
                 android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@color/Gray" />
+                android:layout_height="100dp" />
 
+            <ImageView
+                android:id="@+id/lobby_progress_three"
+                android:layout_width="100dp"
+                android:layout_height="100dp" />
+
+            <ImageView
+                android:id="@+id/lobby_progress_four"
+                android:layout_width="100dp"
+                android:layout_height="100dp" />
         </ViewFlipper>
 
         <TextView
