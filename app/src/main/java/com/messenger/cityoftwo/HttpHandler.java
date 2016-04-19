@@ -89,7 +89,7 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
         HttpUrl url = urlBuilder.build();
 
-        Log.i("Http URL", "URL set to " + url.toString());
+//        Log.i("Http URL", "URL set to " + url.toString());
         this.URL = url;
         RequestBuilder.url(URL);
     }
@@ -172,6 +172,7 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
             Log.i("Http Connection", "Call to " + URL.toString() + " completed");
             Log.i("Http Response", response.message());
+            Log.i("Http Response", Response);
             return true;
         } catch (IOException e) {
             Log.i("Http Connection", "Call to " + URL.toString() + " failed with an exception: " + e.toString());

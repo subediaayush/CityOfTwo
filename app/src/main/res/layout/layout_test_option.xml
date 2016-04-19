@@ -6,13 +6,18 @@
 
     <ImageView
         android:id="@+id/option_image"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:adjustViewBounds="true"
         android:scaleType="fitCenter" />
 
     <TextView
         android:id="@+id/option_description"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="10dp"
+        android:textSize="12sp" />
 
 </LinearLayout>

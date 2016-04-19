@@ -6,16 +6,16 @@ import android.graphics.Typeface;
 /**
  * Created by Aayush on 3/19/2016.
  */
-public class Century {
+public class Montserrat {
 
-    private static Century instance;
+    private static Montserrat instance;
     private static Typeface typeface;
 
-    public static Century getInstance(Context context) {
-        synchronized (Century.class) {
+    public static Montserrat getInstance(Context context) {
+        synchronized (Montserrat.class) {
             if (instance == null) {
-                instance = new Century();
-                typeface = Typeface.createFromAsset(context.getAssets(), "c_gothic.ttf");
+                instance = new Montserrat();
+                typeface = Typeface.createFromAsset(context.getAssets(), "montserrat_alternates.ttf");
             }
             return instance;
         }

@@ -10,17 +10,17 @@ import android.widget.TextView;
 public class FontTextView extends TextView {
     public FontTextView(Context context) {
         super(context);
-        setTypeface(Century.getInstance(context).getTypeFace());
+        setTypeface(Montserrat.getInstance(context).getTypeFace());
     }
 
     public FontTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setTypeface(Century.getInstance(context).getTypeFace());
+        setTypeface(Montserrat.getInstance(context).getTypeFace());
     }
 
     public FontTextView(Context context, AttributeSet attrs,
                         int defStyle) {
         super(context, attrs, defStyle);
-        setTypeface(Century.getInstance(context).getTypeFace());
+        setTypeface(Montserrat.getInstance(context).getTypeFace());
     }
 }

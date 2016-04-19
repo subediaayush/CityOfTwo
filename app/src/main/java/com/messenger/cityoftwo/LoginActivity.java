@@ -4,11 +4,14 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
@@ -20,6 +23,8 @@ import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +37,8 @@ public class LoginActivity extends AppCompatActivity {
     private CallbackManager mCallbackManager;
     private LoginManager mLoginManager;
     private AccessTokenTracker mAccessTokenTracker;
+    private Button mGetStartedButton;
+    private ImageView mLogoImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,17 +72,17 @@ public class LoginActivity extends AppCompatActivity {
 //            return;
         }
 
-        Button getStartedButton = (Button) findViewById(R.id.get_started_button);
+        mGetStartedButton = (Button) findViewById(R.id.get_started_button);
+        mLogoImage = (ImageView) findViewById(R.id.coyrudy_logo);
 
         mCallbackManager = CallbackManager.Factory.create();
         mLoginManager = LoginManager.getInstance();
 
-        getStartedButton.setOnClickListener(new View.OnClickListener() {
+
+        mGetStartedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateAccessToken(
-                        AccessToken.getCurrentAccessToken()
-                );
+                updateAccessToken(AccessToken.getCurrentAccessToken());
             }
         });
 
@@ -111,6 +118,35 @@ public class LoginActivity extends AppCompatActivity {
                 updateAccessToken(currentAccessToken);
             }
         };
+
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        int width = mLogoImage.getWidth(),
+                height = mLogoImage.getHeight();
+
+        Picasso.with(this)
+                .load(R.drawable.mipmap_1)
+                .resize(width, height)
+                .into(new Target() {
+                    @Override
+                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        CityOfTwo.logoBitmap = bitmap;
+                    }
+
+                    @Override
+                    public void onBitmapFailed(Drawable errorDrawable) {
+
+                    }
+
+                    @Override
+                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                    }
+                });
 
     }
 
@@ -155,16 +191,42 @@ public class LoginActivity extends AppCompatActivity {
         warningDialog.show();
     }
 
-    private void openLobby(AccessToken accessToken, Profile profile) {
+    private void openLobby(final AccessToken accessToken, final Profile profile) {
+        final long duration = 120;
+//        launchLobbyActivity(accessToken, profile);
+        mGetStartedButton.animate()
+                .setDuration(120)
+                .alpha(0);
+        findViewById(R.id.coyrudy_label).animate()
+                .setDuration(120)
+                .alpha(0)
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        launchLobbyActivity(accessToken, profile);
+                    }
+                });
+    }
+
+    private void launchLobbyActivity(AccessToken accessToken, Profile profile) {
         Intent i = new Intent(this, LobbyActivity.class);
+
+        mLogoImage = (ImageView) findViewById(R.id.coyrudy_logo);
+
+        int[] location = new int[2];
+        mLogoImage.getLocationOnScreen(location);
 
         i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
         i.putExtra(CityOfTwo.KEY_PROFILE, profile);
+        i.putExtra(CityOfTwo.KEY_LOCATION_X, location[0]);
+        i.putExtra(CityOfTwo.KEY_LOCATION_Y, location[1]);
+        i.putExtra(CityOfTwo.KEY_WIDTH, mLogoImage.getWidth());
+        i.putExtra(CityOfTwo.KEY_HEIGHT, mLogoImage.getHeight());
+
 
         Log.i("Lobby Actiity", "Opening Lobby Activity");
         startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-
+        overridePendingTransition(0, 0);
     }
 
     private void openLobby() {
@@ -212,7 +274,8 @@ public class LoginActivity extends AppCompatActivity {
                         recreate();
                         break;
                     case RESULT_OK:
-                        finish();
+//                        finish();
+                        recreate();
                         break;
                 }
                 break;

@@ -5,29 +5,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.net.Uri;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.facebook.AccessToken;
-import com.facebook.Profile;
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
 
 //import com.squareup.picasso.Callback;
 //import com.squareup.picasso.Picasso;
@@ -43,112 +41,168 @@ public class LobbyActivity extends AppCompatActivity {
             LOGGED_IN = 2;
 
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
-    BroadcastReceiver mBroadcastReceiver;
+    BroadcastReceiver mBroadcastReceiver, mTestBroadcastReceiver;
     ProgressBar mLobbyProgressBar;
     TextView mLobbyDescription;
     AccessToken mAccessToken;
-    Profile mProfile;
     Boolean mCanPutText = true;
     String mDescriptionBuffer = "";
     int lobbyState = BEGIN;
-    SimpleTarget<Bitmap> mUserProfileBitmap;
+
+    // Attributes for animation
+    int xDelta;
+    int yDelta;
+    float xScaleFactor;
+    float yScaleFactor;
+    Interpolator interpolator = new DecelerateInterpolator();
+    long mDuration = 500;
+
+    ViewFlipper mImageFlipper;
+    ImageView mLogoImage;
+    ImageButton mReloadButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lobby);
 
-        Profile profile = null;
-
-        if (savedInstanceState != null) {
-            mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
-            mProfile = savedInstanceState.getParcelable("LOBBY_PROFILE");
-
-            setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
-        } else {
-            mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
-            mProfile = getIntent().getParcelableExtra(CityOfTwo.KEY_PROFILE);
-            setStatus(BEGIN);
-
-            if (mProfile == null) finish();
-        }
-
-        ImageView ProfileImageOne = (ImageView) findViewById(R.id.lobby_progress_one);
-        ImageView ProfileImageTwo = (ImageView) findViewById(R.id.lobby_progress_two);
-        ImageView ProfileImageThree = (ImageView) findViewById(R.id.lobby_progress_three);
-        ImageView ProfileImageFour = (ImageView) findViewById(R.id.lobby_progress_four);
-
-        TextView ProfileTextView = (TextView) findViewById(R.id.lobby_profile_name);
-
         mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
-        final ViewFlipper imageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
+        mImageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
+        mLogoImage = (ImageView) findViewById(R.id.lobby_logo_dummy);
 
-        imageFlipper.setFlipInterval(1000);
-        imageFlipper.setInAnimation(this, android.R.anim.fade_in);
-        imageFlipper.setOutAnimation(this, android.R.anim.fade_out);
-        imageFlipper.setAutoStart(true);
-        imageFlipper.startFlipping();
+        if (savedInstanceState != null) {
+            mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
 
-        ImageButton ReloadButton = (ImageButton) findViewById(R.id.refresh_button);
+            setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
+        } else {
+            Bundle args = getIntent().getExtras();
 
-        int width = ProfileImageOne.getLayoutParams().width,
-                height = ProfileImageOne.getLayoutParams().height;
+            final int initialX = args.getInt(CityOfTwo.KEY_LOCATION_X),
+                    initialY = args.getInt(CityOfTwo.KEY_LOCATION_Y),
+                    initialWidth = args.getInt(CityOfTwo.KEY_WIDTH),
+                    initialHeight = args.getInt(CityOfTwo.KEY_HEIGHT);
 
-        Uri uri = mProfile.getProfilePictureUri(width, height);
+            ViewTreeObserver treeObserver = mImageFlipper.getViewTreeObserver();
+            treeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    mImageFlipper.getViewTreeObserver().removeOnPreDrawListener(this);
 
-        Picasso.with(this)
-                .load(R.drawable.mipmap_1)
-                .resize(width, height)
-                .into(ProfileImageOne);
+                    int[] location = new int[2];
+                    mImageFlipper.getLocationOnScreen(location);
 
-        Picasso.with(this)
-                .load(R.drawable.mipmap_2)
-                .resize(width, height)
-                .into(ProfileImageTwo);
-        Picasso.with(this)
-                .load(R.drawable.mipmap_3)
-                .resize(width, height)
-                .into(ProfileImageThree);
-        Picasso.with(this)
-                .load(R.drawable.mipmap_4)
-                .resize(width, height)
-                .into(ProfileImageFour);
+                    xDelta = initialX - location[0];
+                    yDelta = initialY - location[1];
 
-        ProfileTextView.setText(mProfile.getName());
+                    xScaleFactor = (float) initialWidth / mImageFlipper.getWidth();
+                    yScaleFactor = (float) initialHeight / mImageFlipper.getHeight();
 
-        CityOfTwo.RegisterGCM(this);
+                    Log.i("xScaleFactor", String.valueOf(xScaleFactor));
+                    Log.i("yScaleFactor", String.valueOf(yScaleFactor));
 
-        mBroadcastReceiver = new
+                    startEnterAnimation();
 
-                BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        String s = intent.getStringExtra(CityOfTwo.KEY_TYPE);
+                    return true;
+                }
+            });
 
-                        Log.i("Receiver", "Signal Received: " + s);
+            mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
+        }
 
-                        switch (s) {
-                            case "CHAT_BEGIN":
-                                Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
+        mReloadButton = (ImageButton) findViewById(R.id.refresh_button);
 
-                                LocalBroadcastManager.getInstance(LobbyActivity.this).unregisterReceiver(mBroadcastReceiver);
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                Bundle data = intent.getExtras();
 
-                                startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
+                Log.i("LobbyReceiver", "Signal Received: " + action);
+
+                switch (action) {
+                    case CityOfTwo.PACKAGE_NAME: {
+                        String s = data.getString(CityOfTwo.KEY_TYPE, "");
+
+                        if (s.equals("CHAT_BEGIN")) {
+                            Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
+                            LocalBroadcastManager.getInstance(LobbyActivity.this).unregisterReceiver(mBroadcastReceiver);
+                            startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
                         }
+                        break;
+                    }
+                    case CityOfTwo.KEY_MESSAGE: {
+                        break;
                     }
                 }
+            }
+        };
 
-        ;
-
-        ReloadButton.setOnClickListener(new View.OnClickListener() {
+        mReloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setStatus(BEGIN);
                 facebookLogin(mAccessToken);
             }
         });
+    }
+
+    private void startEnterAnimation() {
+        mImageFlipper.setPivotX(0);
+        mImageFlipper.setPivotY(0);
+        mImageFlipper.setScaleX(xScaleFactor);
+        mImageFlipper.setScaleY(yScaleFactor);
+        mImageFlipper.setTranslationX(xDelta);
+        mImageFlipper.setTranslationY(yDelta);
+        mImageFlipper.setAlpha(1.f);
+
+//        final View traingleBackground = findViewById(R.id.triangle_background);
+        final TextView welcomeLabel = (TextView) findViewById(R.id.welcome_label);
+
+        // Animate scale and translation to go from thumbnail to full size
+        mImageFlipper.animate().setDuration(mDuration)
+                .scaleX(1).scaleY(1)
+                .translationX(0).translationY(0)
+                .setInterpolator(interpolator)
+                .withStartAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        welcomeLabel.setAlpha(0.f);
+                        mReloadButton.setAlpha(0.f);
+
+//                        traingleBackground.setAlpha(1);
+//
+//                        ColorDrawable backgroundColor = new ColorDrawable(ContextCompat.getColor(
+//                                LobbyActivity.this,
+//                                R.color.colorPrimaryDark)
+//                        );
+//                        backgroundColor.setAlpha(255);
+//                        findViewById(R.id.lobby_background).setBackground(backgroundColor);
+                        revealView(mReloadButton);
+                        revealView(welcomeLabel);
+                    }
+                })
+                .withEndAction(new Runnable() {
+                    public void run() {
+                        // Animate the description in after the image animation
+                        // is done. Slide and fade the text in from underneath
+                        // the picture.
+
+                        mImageFlipper.setFlipInterval(1000);
+                        mImageFlipper.setInAnimation(LobbyActivity.this, android.R.anim.fade_in);
+                        mImageFlipper.setOutAnimation(LobbyActivity.this, android.R.anim.fade_out);
+
+                        setStatus(BEGIN);
+                        CityOfTwo.RegisterGCM(LobbyActivity.this);
+
+                        startAppLogic();
+
+                    }
+                });
+    }
+
+    private void startAppLogic() {
         switch (getStatus()) {
             case BEGIN:
                 facebookLogin(mAccessToken);
@@ -166,16 +220,29 @@ public class LobbyActivity extends AppCompatActivity {
             default:
                 break;
         }
-
     }
 
+    private void revealView(View view) {
+        view.animate().setDuration(mDuration / 2)
+                .alpha(1)
+                .setInterpolator(interpolator);
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
+        b.unregisterReceiver(mBroadcastReceiver);
+        b.unregisterReceiver(mTestBroadcastReceiver);
+    }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
-
+        Log.i("LobbyActivity", "Activity paused");
         CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_BACKGROUND;
     }
 
@@ -183,17 +250,31 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(CityOfTwo.PACKAGE_NAME);
-
-        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
-
         CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_FOREGROUND;
+        Log.i("LobbyActivity", "Activity Resumed");
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
+    protected void onStart() {
+        super.onStart();
+
+        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
+
+        b.registerReceiver(
+                mBroadcastReceiver,
+                new IntentFilter(CityOfTwo.PACKAGE_NAME)
+        );
+
+        b.registerReceiver(
+                mBroadcastReceiver,
+                new IntentFilter(CityOfTwo.KEY_TEST_RESULT)
+        );
+
+        b.registerReceiver(
+                mBroadcastReceiver,
+                new IntentFilter(CityOfTwo.KEY_MESSAGE)
+        );
+
     }
 
     @Override
@@ -202,7 +283,6 @@ public class LobbyActivity extends AppCompatActivity {
 
         outState.putInt("LOBBY_STATUS", getStatus());
         outState.putParcelable("LOBBY_ACCESS_TOKEN", mAccessToken);
-        outState.putParcelable("LOBBY_PROFILE", mProfile);
     }
 
     private void facebookLogin(final AccessToken accessToken) {
@@ -231,27 +311,27 @@ public class LobbyActivity extends AppCompatActivity {
                                 .putString(CityOfTwo.KEY_SESSION_TOKEN, sessionToken)
                                 .apply();
 
+                        int pool = Response.getInt("pool");
 
-                        // Testing/Simulating test phase
+                        if (pool != 0) {
+                            waitForServer();
+                        } else {
 
-                        ArrayList<Integer> answers = new ArrayList<>();
-                        answers.add(1);
-                        answers.add(1);
-                        answers.add(0);
-
-                        submitTest(answers, accessToken);
+                            startTest(Response.getString("test"));
+                        }
 
                         // Modify code to adapt for testing phase
 
                         // String test = Response.getString("test");
 
-                        // Intent intent = new Intent(LobbyActivity.this, TestActivity.class);
+                        // Intent intent = new Intent(LobbyActivity.this, TestFragment.class);
                         // intent.putExtra(CityOfTwo.KEY_TEST, test);
 
                         // startActivityForResult(intent, CityOfTwo.ACTIVITY_TEST);
                     }
 
                 } catch (JSONException e) {
+                    setStatus(ERROR);
                     e.printStackTrace();
                 }
             }
@@ -263,6 +343,12 @@ public class LobbyActivity extends AppCompatActivity {
         };
 
         LoginHttpHandler.execute();
+    }
+
+    private void startTest(String test) {
+        Intent intent = new Intent(this, IntroductionActivity.class);
+        intent.putExtra(CityOfTwo.KEY_TEST, test);
+        startActivityForResult(intent, CityOfTwo.ACTIVITY_INTRODUCTION);
     }
 
     private void signUp(final AccessToken accessToken) {
@@ -279,19 +365,19 @@ public class LobbyActivity extends AppCompatActivity {
                     Boolean registered = Response.getBoolean("parsadi");
 
                     if (!registered) {
-                        facebookLogin(accessToken);
-                    } else {
+                        startTest(Response.getString("test"));
+
                         // Testing/Simulating test phase
-
-                        ArrayList<Integer> answers = new ArrayList<>();
-                        answers.add(1);
-                        answers.add(1);
-                        answers.add(0);
-
-                        submitTest(answers, accessToken);
+//
+//                        ArrayList<Integer> answers = new ArrayList<>();
+//                        answers.add(1);
+//                        answers.add(1);
+//                        answers.add(0);
+//
+//                        submitTest(answers, accessToken);
                     }
-
                 } catch (JSONException e) {
+                    setStatus(ERROR);
                     e.printStackTrace();
                 }
             }
@@ -310,7 +396,7 @@ public class LobbyActivity extends AppCompatActivity {
 //        TestHttpHandler = new HttpHandler(CityOfTwo.HOST, path) {
 //            @Override
 //            protected void onSuccess(String response) {
-//                Intent intent = new Intent(LobbyActivity.this, TestActivity.class);
+//                Intent intent = new Intent(LobbyActivity.this, TestFragment.class);
 //
 //                Bundle extras = new Bundle();
 //                intent.putExtra(CityOfTwo.KEY_TEST, response);
@@ -371,6 +457,7 @@ public class LobbyActivity extends AppCompatActivity {
                     }
 
                 } catch (JSONException e) {
+                    setStatus(ERROR);
                     e.printStackTrace();
                 }
             }
@@ -392,34 +479,49 @@ public class LobbyActivity extends AppCompatActivity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
 
+        final ImageView ProfileImageOne = (ImageView) findViewById(R.id.lobby_progress_one);
+        final ImageView ProfileImageTwo = (ImageView) findViewById(R.id.lobby_progress_two);
+        final ImageView ProfileImageThree = (ImageView) findViewById(R.id.lobby_progress_three);
+        final ImageView ProfileImageFour = (ImageView) findViewById(R.id.lobby_progress_four);
+
+        int width = ProfileImageOne.getWidth(),
+                height = ProfileImageOne.getHeight();
+
+        mLogoImage.setImageBitmap(CityOfTwo.logoBitmap);
+
+//        Picasso.with(this)
+//                .load(R.drawable.mipmap_1)
+//                .resize(width, height)
+//                .into(ProfileImageOne);
+//
+//        Picasso.with(this)
+//                .load(R.drawable.mipmap_2)
+//                .resize(width, height)
+//                .into(ProfileImageTwo);
+//
+//        Picasso.with(this)
+//                .load(R.drawable.mipmap_3)
+//                .resize(width, height)
+//                .into(ProfileImageThree);
+//
+//        Picasso.with(this)
+//                .load(R.drawable.mipmap_4)
+//                .resize(width, height)
+//                .into(ProfileImageFour);
+
+        ProfileImageOne.setImageBitmap(CityOfTwo.logoBitmap);
+        ProfileImageTwo.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 90));
+        ProfileImageThree.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 180));
+        ProfileImageFour.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 270));
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        switch (requestCode) {
-            case CityOfTwo.ACTIVITY_TEST:
-                if (resultCode == RESULT_OK) {
-                    submitTest(data.getExtras().getIntegerArrayList(CityOfTwo.KEY_SELECTED_ANSWER), mAccessToken);
-
-                }
-        }
-    }
-
-    private void submitTest(ArrayList<Integer> answers, final AccessToken accessToken) {
+    private void submitTest(String answers) {
         String submit_test = getString(R.string.url_test),
                 header = CityOfTwo.HEADER_TEST_RESULT;
 
-        StringBuilder sb = new StringBuilder();
-        for (Integer number : answers)
-            sb.append(number != null ? number.toString() : "");
-
-        String value = sb.toString();
-
         String[] Path = {CityOfTwo.API, submit_test};
 
-        HttpHandler TestHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
+        HttpHandler TestHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, answers) {
             @Override
             protected void onSuccess(String response) {
                 try {
@@ -429,10 +531,12 @@ public class LobbyActivity extends AppCompatActivity {
                     if (!status) {
                         setStatus(ERROR);
                     } else {
+                        setStatus(LOGGED_IN);
                         waitForServer();
                     }
 
                 } catch (JSONException e) {
+                    setStatus(ERROR);
                     e.printStackTrace();
                 }
             }
@@ -522,6 +626,8 @@ public class LobbyActivity extends AppCompatActivity {
         // Run code before changing state
 
         lobbyState = state;
+        if (mImageFlipper == null)
+            mImageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
 
         // Run code after changing state
         if (lobbyState == ERROR) {
@@ -529,18 +635,43 @@ public class LobbyActivity extends AppCompatActivity {
                 mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
             mLobbyProgressBar.setVisibility(View.INVISIBLE);
 
+            mImageFlipper.stopFlipping();
+
             setLobbyDescription("There was an error. Please try again later.");
         } else {
             if (mLobbyProgressBar == null)
                 mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
             mLobbyProgressBar.setVisibility(View.VISIBLE);
+
+            if (!mImageFlipper.isFlipping())
+                mImageFlipper.startFlipping();
         }
 
         if (lobbyState == BEGIN) {
             setLobbyDescription("Setting up your profile");
         }
         if (lobbyState == LOGGED_IN) {
-            setLobbyDescription("Finding a match");
+            setLobbyDescription("Finding a match...");
+        }
+    }
+
+    private Bitmap rotateBitmap(Bitmap source, int angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case CityOfTwo.ACTIVITY_INTRODUCTION: {
+                if (resultCode == RESULT_OK) {
+                    String answers = data.getStringExtra(CityOfTwo.KEY_TEST_RESULT);
+                    submitTest(answers);
+                }
+            }
         }
     }
 }

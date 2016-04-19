@@ -49,9 +49,10 @@
             android:screenOrientation="sensorPortrait" />
         <activity
             android:name=".LobbyActivity"
-            android:screenOrientation="sensorPortrait" />
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/Transparent" />
         <activity
-            android:name=".TestActivity"
+            android:name=".IntroductionActivity"
             android:screenOrientation="sensorPortrait" />
         <activity
             android:name=".LoginActivity"

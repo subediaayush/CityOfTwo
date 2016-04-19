@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/lobby_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryDark">
 
     <com.messenger.cityoftwo.TriangleView
+        android:id="@+id/triangle_background"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:shape_color="@color/colorPrimary" />
@@ -19,6 +21,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/welcome_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -27,6 +30,13 @@
             android:textColor="@color/White"
             android:textStyle="bold" />
         <!--android:textSize="48sp" />-->
+
+        <ImageView
+            android:id="@+id/lobby_logo_dummy"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_margin="10dp"
+            android:visibility="gone" />
 
         <ViewFlipper
             android:id="@+id/lobby_image_flipper"

@@ -85,7 +85,7 @@ public class ConversationActivity extends AppCompatActivity {
 
                 String message = intent.getStringExtra(CityOfTwo.KEY_TYPE);
 
-                Log.i("Receiver", "Signal Received: " + message);
+                Log.i("ConversationReceiver", "Signal Received: " + message);
 
                 switch (message) {
                     case "MESSAGE":
@@ -132,6 +132,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_BACKGROUND;
 
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
@@ -149,6 +150,11 @@ public class ConversationActivity extends AppCompatActivity {
         mConversationList.addAll(mConversationList.size() - 1, BackgroundConversation);
         mConversationAdapter.notifyDataSetChanged();
         BackgroundConversation.clear();
+
+        IntentFilter filter = new IntentFilter();
+
+        filter.addAction(CityOfTwo.PACKAGE_NAME);
+        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
     }
 
     @Override
@@ -244,18 +250,9 @@ public class ConversationActivity extends AppCompatActivity {
         exitActivity(RESULT_CANCELED, new Intent());
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        IntentFilter filter = new IntentFilter();
-
-        filter.addAction(CityOfTwo.PACKAGE_NAME);
-        LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
-    }
 
     @Override
     protected void onStop() {
         super.onStop();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
 }

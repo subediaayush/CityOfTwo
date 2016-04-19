@@ -5,6 +5,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -82,6 +85,14 @@ public class GcmMessageHandler extends IntentService {
                                 .setPriority(Notification.PRIORITY_HIGH)
                                 .setAutoCancel(true)
                                 .build();
+
+                        try {
+                            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+                            r.play();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
                         nm.notify("CHAT_NOTIFICATION", 0, n);
                     }

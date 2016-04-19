@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
@@ -31,29 +32,36 @@ public class CityOfTwo extends Application {
     public static final String KEY_TEXT = "TEXT";
     public static final String KEY_CURRENT_CHAT = "CURRENT_CHAT";
     public static final String KEY_SESSION_TOKEN = "SESSION_TOKEN";
+    public static final String KEY_CURRENT_ANSWER = "current_answer";
+    public static final String KEY_LOCATION_X = "location_x";
+    public static final String KEY_LOCATION_Y = "location_y";
+    public static final String KEY_WIDTH = "width";
+    public static final String KEY_HEIGHT = "height";
 
+    public static final String KEY_TEST_RESULT = "test_result";
     public static final int APPLICATION_FOREGROUND = 0,
+
             APPLICATION_BACKGROUND = 1;
+    public static final int ACTIVITY_LOBBY = 1;
+    public static final int ACTIVITY_TEST = 2;
+    public static final int ACTIVITY_CONVERSATION = 3;
 
-    public static final int ACTIVITY_LOBBY = 1,
-            ACTIVITY_TEST = 2,
-            ACTIVITY_CONVERSATION = 3;
-
+    public static final int ACTIVITY_INTRODUCTION = 4;
     public static final int SENT = 1,
             RECEIVED = 2,
             START = 0,
-            END = -1;
 
+    END = -1;
     public static final String PACKAGE_NAME = "com.messenger.cityoftwo",
             HOST = "coyrudy.com",
-            API = "api";
 
+    API = "api";
     public static final String HEADER_ACCESS_TOKEN = "access_token",
             HEADER_TEST = "test",
             HEADER_TEST_RESULT = "questions",
             HEADER_SEND_MESSAGE = "message",
-            HEADER_GCM_ID = "gcm_id";
 
+    HEADER_GCM_ID = "gcm_id";
     public static final String API_KEY = "AIzaSyB_Wco0Sdad38QGHsCcode9P1iZ3tsqqXY";
     private static final String SENDER_ID = "584281533020";
 
@@ -61,6 +69,7 @@ public class CityOfTwo extends Application {
     public static Integer APPLICATION_STATE;
 
     public static ArrayList<Conversation> BackgroundConversation;
+    public static Bitmap logoBitmap;
 
     /**
      * @param value
