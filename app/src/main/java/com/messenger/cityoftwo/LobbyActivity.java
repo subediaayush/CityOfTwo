@@ -4,20 +4,25 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
+import android.view.animation.OvershootInterpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
@@ -54,12 +59,14 @@ public class LobbyActivity extends AppCompatActivity {
     int yDelta;
     float xScaleFactor;
     float yScaleFactor;
-    Interpolator interpolator = new DecelerateInterpolator();
-    long mDuration = 500;
+    Interpolator mInterpolator = new DecelerateInterpolator();
+    long mDuration = 250;
 
-    ViewFlipper mImageFlipper;
-    ImageView mLogoImage;
+    FrameLayout mImageFlipper;
     ImageButton mReloadButton;
+    LogoFadeFragment mImageFlipperFragment;
+    private BackgroundAnimationFragment mBackgroundAnimationFragment;
+    private TextView mWelcomeLabel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,46 +76,63 @@ public class LobbyActivity extends AppCompatActivity {
         mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
-        mImageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
-        mLogoImage = (ImageView) findViewById(R.id.lobby_logo_dummy);
+        mWelcomeLabel = (TextView) findViewById(R.id.welcome_label);
+
+
+        mImageFlipper = (FrameLayout) findViewById(R.id.lobby_image_flipper);
+
+        mImageFlipperFragment = LogoFadeFragment.newInstance();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.lobby_image_flipper, mImageFlipperFragment)
+                .commit();
+
+        mBackgroundAnimationFragment = BackgroundAnimationFragment.newInstance();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.lobby_background, mBackgroundAnimationFragment)
+                .commit();
 
         if (savedInstanceState != null) {
             mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
 
             setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
         } else {
+
             Bundle args = getIntent().getExtras();
 
-            final int initialX = args.getInt(CityOfTwo.KEY_LOCATION_X),
-                    initialY = args.getInt(CityOfTwo.KEY_LOCATION_Y),
-                    initialWidth = args.getInt(CityOfTwo.KEY_WIDTH),
-                    initialHeight = args.getInt(CityOfTwo.KEY_HEIGHT);
-
-            ViewTreeObserver treeObserver = mImageFlipper.getViewTreeObserver();
-            treeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    mImageFlipper.getViewTreeObserver().removeOnPreDrawListener(this);
-
-                    int[] location = new int[2];
-                    mImageFlipper.getLocationOnScreen(location);
-
-                    xDelta = initialX - location[0];
-                    yDelta = initialY - location[1];
-
-                    xScaleFactor = (float) initialWidth / mImageFlipper.getWidth();
-                    yScaleFactor = (float) initialHeight / mImageFlipper.getHeight();
-
-                    Log.i("xScaleFactor", String.valueOf(xScaleFactor));
-                    Log.i("yScaleFactor", String.valueOf(yScaleFactor));
-
-                    startEnterAnimation();
-
-                    return true;
-                }
-            });
-
             mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
+
+            if (!args.getBoolean(CityOfTwo.KEY_FROM_INTRO, false)) {
+
+
+                final int initialX = args.getInt(CityOfTwo.KEY_LOCATION_X),
+                        initialY = args.getInt(CityOfTwo.KEY_LOCATION_Y),
+                        initialWidth = args.getInt(CityOfTwo.KEY_WIDTH),
+                        initialHeight = args.getInt(CityOfTwo.KEY_HEIGHT);
+
+                ViewTreeObserver treeObserver = mImageFlipper.getViewTreeObserver();
+                treeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        mImageFlipper.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                        int[] location = new int[2];
+                        mImageFlipper.getLocationOnScreen(location);
+
+                        xDelta = initialX - location[0];
+                        yDelta = initialY - location[1];
+
+                        xScaleFactor = (float) initialWidth / mImageFlipper.getWidth();
+                        yScaleFactor = (float) initialHeight / mImageFlipper.getHeight();
+
+                        Log.i("xScaleFactor", String.valueOf(xScaleFactor));
+                        Log.i("yScaleFactor", String.valueOf(yScaleFactor));
+
+                        startEnterAnimation();
+
+                        return true;
+                    }
+                });
+            }
         }
 
         mReloadButton = (ImageButton) findViewById(R.id.refresh_button);
@@ -127,8 +151,15 @@ public class LobbyActivity extends AppCompatActivity {
 
                         if (s.equals("CHAT_BEGIN")) {
                             Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
+                            i.putExtras(data);
+
                             LocalBroadcastManager.getInstance(LobbyActivity.this).unregisterReceiver(mBroadcastReceiver);
                             startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
+
+                            overridePendingTransition(
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left
+                            );
                         }
                         break;
                     }
@@ -146,7 +177,78 @@ public class LobbyActivity extends AppCompatActivity {
                 facebookLogin(mAccessToken);
             }
         });
+
+        mImageFlipper.setOnTouchListener(new View.OnTouchListener() {
+
+            long touchDownMs = 0, lastTapTimeMs = 0;
+            int numberOfTaps = 0;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN: {
+                        int pivotX = mImageFlipper.getWidth() / 2,
+                                pivotY = mImageFlipper.getHeight() / 2;
+
+                        mImageFlipper.setPivotX(pivotX);
+                        mImageFlipper.setPivotY(pivotY);
+
+                        mImageFlipper.animate().setDuration(100)
+                                .scaleX(.9f)
+                                .scaleY(.9f);
+
+                        touchDownMs = System.currentTimeMillis();
+                        Log.i("ImageFlipperTouch", "Event: DOWN");
+                        return true;
+                    }
+                    case MotionEvent.ACTION_UP: {
+                        int pivotX = mImageFlipper.getWidth() / 2,
+                                pivotY = mImageFlipper.getHeight() / 2;
+
+                        mImageFlipper.setPivotX(pivotX);
+                        mImageFlipper.setPivotY(pivotY);
+
+                        mImageFlipper.animate().setDuration(100)
+                                .scaleX(1)
+                                .scaleY(1);
+
+                        Log.i("ImageFlipperTouch", "Event: UP");
+                        if ((System.currentTimeMillis() - touchDownMs) > ViewConfiguration.getTapTimeout()) {
+                            //it was not a tap
+                            numberOfTaps = 0;
+                            lastTapTimeMs = 0;
+                            return true;
+                        }
+
+                        if (numberOfTaps > 0
+                                && (System.currentTimeMillis() - lastTapTimeMs) < ViewConfiguration.getDoubleTapTimeout()) {
+                            numberOfTaps += 1;
+                        } else {
+                            numberOfTaps = 1;
+                        }
+
+                        lastTapTimeMs = System.currentTimeMillis();
+
+                        if (numberOfTaps == 3) {
+                            //handle triple tap
+                            Animation wobble = AnimationUtils.loadAnimation(
+                                    LobbyActivity.this,
+                                    R.anim.wobble
+                            );
+                            mImageFlipper.startAnimation(wobble);
+                        }
+                        return true;
+                    }
+                    default:
+                        return false;
+                }
+            }
+        });
+
     }
+
 
     private void startEnterAnimation() {
         mImageFlipper.setPivotX(0);
@@ -155,32 +257,21 @@ public class LobbyActivity extends AppCompatActivity {
         mImageFlipper.setScaleY(yScaleFactor);
         mImageFlipper.setTranslationX(xDelta);
         mImageFlipper.setTranslationY(yDelta);
-        mImageFlipper.setAlpha(1.f);
-
-//        final View traingleBackground = findViewById(R.id.triangle_background);
-        final TextView welcomeLabel = (TextView) findViewById(R.id.welcome_label);
+        mImageFlipper.setAlpha(1f);
 
         // Animate scale and translation to go from thumbnail to full size
         mImageFlipper.animate().setDuration(mDuration)
                 .scaleX(1).scaleY(1)
                 .translationX(0).translationY(0)
-                .setInterpolator(interpolator)
+                .setInterpolator(mInterpolator)
                 .withStartAction(new Runnable() {
                     @Override
                     public void run() {
-                        welcomeLabel.setAlpha(0.f);
-                        mReloadButton.setAlpha(0.f);
+                        mWelcomeLabel.setAlpha(0);
+                        mReloadButton.setAlpha(0f);
 
-//                        traingleBackground.setAlpha(1);
-//
-//                        ColorDrawable backgroundColor = new ColorDrawable(ContextCompat.getColor(
-//                                LobbyActivity.this,
-//                                R.color.colorPrimaryDark)
-//                        );
-//                        backgroundColor.setAlpha(255);
-//                        findViewById(R.id.lobby_background).setBackground(backgroundColor);
                         revealView(mReloadButton);
-                        revealView(welcomeLabel);
+                        revealView(mWelcomeLabel);
                     }
                 })
                 .withEndAction(new Runnable() {
@@ -189,12 +280,8 @@ public class LobbyActivity extends AppCompatActivity {
                         // is done. Slide and fade the text in from underneath
                         // the picture.
 
-                        mImageFlipper.setFlipInterval(1000);
-                        mImageFlipper.setInAnimation(LobbyActivity.this, android.R.anim.fade_in);
-                        mImageFlipper.setOutAnimation(LobbyActivity.this, android.R.anim.fade_out);
-
                         setStatus(BEGIN);
-                        CityOfTwo.RegisterGCM(LobbyActivity.this);
+//                        CityOfTwo.RegisterGCM(LobbyActivity.this);
 
                         startAppLogic();
 
@@ -225,55 +312,63 @@ public class LobbyActivity extends AppCompatActivity {
     private void revealView(View view) {
         view.animate().setDuration(mDuration / 2)
                 .alpha(1)
-                .setInterpolator(interpolator);
-    }
-
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
-        b.unregisterReceiver(mBroadcastReceiver);
-        b.unregisterReceiver(mTestBroadcastReceiver);
+                .setInterpolator(mInterpolator);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
+        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
+        b.unregisterReceiver(mBroadcastReceiver);
+        b.unregisterReceiver(mTestBroadcastReceiver);
+
         Log.i("LobbyActivity", "Activity paused");
-        CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_BACKGROUND;
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        CityOfTwo.APPLICATION_STATE = CityOfTwo.APPLICATION_FOREGROUND;
+        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
+        b.registerReceiver(
+                mBroadcastReceiver,
+                new IntentFilter(CityOfTwo.PACKAGE_NAME)
+        );
+        b.registerReceiver(
+                mBroadcastReceiver,
+                new IntentFilter(CityOfTwo.KEY_TEST_RESULT)
+        );
+        b.registerReceiver(
+                mBroadcastReceiver,
+                new IntentFilter(CityOfTwo.KEY_MESSAGE)
+        );
+
         Log.i("LobbyActivity", "Activity Resumed");
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
+        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOBBY);
+
+        SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+        Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
+
+        if (chatPending) {
+            Intent i = new Intent(this, ConversationActivity.class);
+            i.putExtra(CityOfTwo.KEY_COMMON_LIKES, sp.getString(CityOfTwo.KEY_COMMON_LIKES, ""));
+            i.putExtra(CityOfTwo.KEY_TYPE, sp.getInt(CityOfTwo.KEY_TYPE, -1));
+            startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
+        }
+
+        sp.edit().remove(CityOfTwo.KEY_CHAT_PENDING)
+                .remove(CityOfTwo.KEY_COMMON_LIKES)
+                .remove(CityOfTwo.KEY_TYPE)
+                .apply();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
-
-        b.registerReceiver(
-                mBroadcastReceiver,
-                new IntentFilter(CityOfTwo.PACKAGE_NAME)
-        );
-
-        b.registerReceiver(
-                mBroadcastReceiver,
-                new IntentFilter(CityOfTwo.KEY_TEST_RESULT)
-        );
-
-        b.registerReceiver(
-                mBroadcastReceiver,
-                new IntentFilter(CityOfTwo.KEY_MESSAGE)
-        );
 
     }
 
@@ -286,16 +381,10 @@ public class LobbyActivity extends AppCompatActivity {
     }
 
     private void facebookLogin(final AccessToken accessToken) {
-        String login = getString(R.string.url_login);
 
-        String[] path = {login};
-
-        final String header = CityOfTwo.HEADER_ACCESS_TOKEN,
-                token = accessToken.getToken();
-
-        HttpHandler LoginHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, header, token) {
+        new FacebookLogin(this, accessToken) {
             @Override
-            protected void onSuccess(String response) {
+            void onSuccess(String response) {
                 try {
                     JSONObject Response = new JSONObject(response);
 
@@ -304,11 +393,35 @@ public class LobbyActivity extends AppCompatActivity {
                     if (!registered) {
                         signUp(accessToken);
                     } else {
-                        String sessionToken = Response.getString("token");
+                        String sessionToken = Response.getString(CityOfTwo.KEY_TOKEN);
+                        String uniqueCode = Response.getString(CityOfTwo.KEY_CODE);
+                        Integer credits = Response.getInt(CityOfTwo.KEY_CREDITS);
+                        Boolean filters_applied = Response.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED);
 
-                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                                .edit()
-                                .putString(CityOfTwo.KEY_SESSION_TOKEN, sessionToken)
+                        SharedPreferences.Editor editor = getSharedPreferences(
+                                CityOfTwo.PACKAGE_NAME,
+                                MODE_PRIVATE
+                        ).edit();
+
+                        if (filters_applied) {
+                            JSONObject filters = Response.getJSONObject(CityOfTwo.KEY_FILTERS);
+                            Integer minAge = filters.getInt(CityOfTwo.KEY_MIN_AGE);
+                            Integer maxAge = filters.getInt(CityOfTwo.KEY_MAX_AGE);
+                            Integer distance = filters.getInt(CityOfTwo.KEY_DISTANCE);
+                            Boolean matchMale = filters.getBoolean(CityOfTwo.KEY_MATCH_MALE);
+                            Boolean matchFemale = filters.getBoolean(CityOfTwo.KEY_MATCH_FEMALE);
+
+                            editor.putInt(CityOfTwo.KEY_MIN_AGE, minAge)
+                                    .putInt(CityOfTwo.KEY_MAX_AGE, maxAge)
+                                    .putInt(CityOfTwo.KEY_DISTANCE, distance)
+                                    .putBoolean(CityOfTwo.KEY_MATCH_MALE, matchMale)
+                                    .putBoolean(CityOfTwo.KEY_MATCH_FEMALE, matchFemale);
+                        }
+
+                        editor.putString(CityOfTwo.KEY_SESSION_TOKEN, sessionToken)
+                                .putString(CityOfTwo.KEY_CODE, uniqueCode)
+                                .putInt(CityOfTwo.KEY_CREDITS, credits)
+                                .putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, filters_applied)
                                 .apply();
 
                         int pool = Response.getInt("pool");
@@ -316,7 +429,6 @@ public class LobbyActivity extends AppCompatActivity {
                         if (pool != 0) {
                             waitForServer();
                         } else {
-
                             startTest(Response.getString("test"));
                         }
 
@@ -337,44 +449,70 @@ public class LobbyActivity extends AppCompatActivity {
             }
 
             @Override
-            protected void onFailure(Integer status) {
+            void onFailure(Integer status) {
                 setStatus(ERROR);
             }
         };
-
-        LoginHttpHandler.execute();
     }
 
-    private void startTest(String test) {
-        Intent intent = new Intent(this, IntroductionActivity.class);
-        intent.putExtra(CityOfTwo.KEY_TEST, test);
-        startActivityForResult(intent, CityOfTwo.ACTIVITY_INTRODUCTION);
+    private void startTest(final String test) {
+        long duration = 500;
+
+        final Intent introductionActivity = new Intent(this, IntroductionActivity.class);
+
+        mLobbyDescription.animate().setDuration(duration / 4)
+                .alpha(0);
+
+        mLobbyProgressBar.animate().setDuration(duration / 4)
+                .alpha(0);
+
+        mWelcomeLabel.animate().setDuration(duration / 4)
+                .alpha(0)
+                .withStartAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        CityOfTwo.logoSmallBitmap = mImageFlipperFragment.getCurrentBitmap();
+                        mImageFlipperFragment.stopFlipping();
+                    }
+                })
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        int[] location = new int[2];
+                        mImageFlipper.getLocationOnScreen(location);
+
+                        introductionActivity.putExtra(CityOfTwo.KEY_LOCATION_X, location[0]);
+                        introductionActivity.putExtra(CityOfTwo.KEY_LOCATION_Y, location[1]);
+                        introductionActivity.putExtra(CityOfTwo.KEY_WIDTH, mImageFlipper.getWidth());
+                        introductionActivity.putExtra(CityOfTwo.KEY_HEIGHT, mImageFlipper.getHeight());
+                        introductionActivity.putExtra(CityOfTwo.KEY_TEST, test);
+
+                        startActivityForResult(introductionActivity, CityOfTwo.ACTIVITY_INTRODUCTION);
+
+                        new Handler().postDelayed(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                mImageFlipper.setAlpha(0);
+                            }
+                        }, 100);
+                        overridePendingTransition(0, 0);
+                    }
+                });
     }
 
     private void signUp(final AccessToken accessToken) {
-        String signup = getString(R.string.url_signup);
-        String[] path = {signup};
-        String token = accessToken.getToken();
-
-        HttpHandler SignUpHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, CityOfTwo.HEADER_ACCESS_TOKEN, token) {
+        new FacebookSignUp(this, accessToken) {
             @Override
-            protected void onSuccess(String response) {
+            void onSuccess(String response) {
                 try {
                     JSONObject Response = new JSONObject(response);
 
                     Boolean registered = Response.getBoolean("parsadi");
 
                     if (!registered) {
-                        startTest(Response.getString("test"));
-
-                        // Testing/Simulating test phase
-//
-//                        ArrayList<Integer> answers = new ArrayList<>();
-//                        answers.add(1);
-//                        answers.add(1);
-//                        answers.add(0);
-//
-//                        submitTest(answers, accessToken);
+                        setStatus(SIGNED_UP);
+                        facebookLogin(accessToken);
                     }
                 } catch (JSONException e) {
                     setStatus(ERROR);
@@ -383,48 +521,21 @@ public class LobbyActivity extends AppCompatActivity {
             }
 
             @Override
-            protected void onFailure(Integer status) {
+            void onFailure(Integer status) {
                 setStatus(ERROR);
             }
-        };
-
-        SignUpHttpHandler.execute();
-
-//        String test = getString(R.string.url_test);
-//        path[1] = test;
-
-//        TestHttpHandler = new HttpHandler(CityOfTwo.HOST, path) {
-//            @Override
-//            protected void onSuccess(String response) {
-//                Intent intent = new Intent(LobbyActivity.this, TestFragment.class);
-//
-//                Bundle extras = new Bundle();
-//                intent.putExtra(CityOfTwo.KEY_TEST, response);
-//
-//                startActivityForResult(intent, CityOfTwo.ACTIVITY_TEST);
-//            }
-//
-//            @Override
-//            protected void onFailure(Integer status) {
-//            }
-//        };
-
+        }.execute();
     }
 
     private void waitForServer() {
         String broadcast_gcm = getString(R.string.url_broadcast_gcm),
                 header = CityOfTwo.HEADER_GCM_ID,
                 value = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                        .getString("REG_ID", "");
+                        .getString(CityOfTwo.KEY_REG_ID, "");
 
         String[] Path = {CityOfTwo.API, broadcast_gcm};
 
         HttpHandler BroadcastGCMHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, header, value) {
-            @Override
-            protected void onPreRun() {
-
-            }
-
             @Override
             protected void onSuccess(String response) {
                 try {
@@ -436,24 +547,6 @@ public class LobbyActivity extends AppCompatActivity {
                         setStatus(ERROR);
                     } else {
                         setStatus(LOGGED_IN);
-                        mBroadcastReceiver = new BroadcastReceiver() {
-                            @Override
-                            public void onReceive(Context context, Intent intent) {
-                                Bundle data = intent.getExtras();
-
-                                String message = data.getString(CityOfTwo.KEY_MESSAGE, "");
-
-                                if (!message.isEmpty()) {
-                                    switch (message) {
-                                        case "START_CHAT":
-                                            Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
-
-                                            startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
-                                    }
-                                }
-                            }
-                        };
-
                     }
 
                 } catch (JSONException e) {
@@ -473,46 +566,6 @@ public class LobbyActivity extends AppCompatActivity {
 
         BroadcastGCMHttpHandler.addHeader("Authorization", token);
         BroadcastGCMHttpHandler.execute();
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-
-        final ImageView ProfileImageOne = (ImageView) findViewById(R.id.lobby_progress_one);
-        final ImageView ProfileImageTwo = (ImageView) findViewById(R.id.lobby_progress_two);
-        final ImageView ProfileImageThree = (ImageView) findViewById(R.id.lobby_progress_three);
-        final ImageView ProfileImageFour = (ImageView) findViewById(R.id.lobby_progress_four);
-
-        int width = ProfileImageOne.getWidth(),
-                height = ProfileImageOne.getHeight();
-
-        mLogoImage.setImageBitmap(CityOfTwo.logoBitmap);
-
-//        Picasso.with(this)
-//                .load(R.drawable.mipmap_1)
-//                .resize(width, height)
-//                .into(ProfileImageOne);
-//
-//        Picasso.with(this)
-//                .load(R.drawable.mipmap_2)
-//                .resize(width, height)
-//                .into(ProfileImageTwo);
-//
-//        Picasso.with(this)
-//                .load(R.drawable.mipmap_3)
-//                .resize(width, height)
-//                .into(ProfileImageThree);
-//
-//        Picasso.with(this)
-//                .load(R.drawable.mipmap_4)
-//                .resize(width, height)
-//                .into(ProfileImageFour);
-
-        ProfileImageOne.setImageBitmap(CityOfTwo.logoBitmap);
-        ProfileImageTwo.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 90));
-        ProfileImageThree.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 180));
-        ProfileImageFour.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 270));
     }
 
     private void submitTest(String answers) {
@@ -575,46 +628,84 @@ public class LobbyActivity extends AppCompatActivity {
             return;
 
 
-        final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_from_right);
-        final Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_to_left);
+        mLobbyDescription.animate().setDuration(500)
+                .alpha(0)
+                .translationX(-250)
+                .setInterpolator(new OvershootInterpolator())
+                .withStartAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        mCanPutText = false;
+                    }
+                })
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLobbyDescription.setTranslationX(250);
 
-        slideToLeft.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                mCanPutText = false;
-            }
+                        mCanPutText = true;
+                        mLobbyDescription.setText(mDescriptionBuffer);
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                mCanPutText = true;
-                mLobbyDescription.setText(mDescriptionBuffer);
-                mLobbyDescription.startAnimation(slideFromRight);
-            }
+                        mLobbyDescription.animate().setDuration(500)
+                                .alpha(1)
+                                .translationX(0)
+                                .setInterpolator(new OvershootInterpolator())
+                                .withStartAction(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mCanPutText = false;
+                                    }
+                                })
+                                .withEndAction(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mCanPutText = true;
+                                    }
+                                });
+                    }
+                });
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
 
-            }
-        });
+//        final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_in_right);
+//        final Animation slideToLeft = AnimationUtils.loadAnimation(this, R.anim.slide_out_left);
 
-        slideFromRight.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                mCanPutText = false;
-            }
+//        slideToLeft.setAnimationListener(new Animation.AnimationListener() {
+//            @Override
+//            public void onAnimationStart(Animation animation) {
+//                mCanPutText = false;
+//            }
+//
+//            @Override
+//            public void onAnimationEnd(Animation animation) {
+//                mCanPutText = true;
+//                mLobbyDescription.setText(mDescriptionBuffer);
+//                mLobbyDescription.startAnimation(slideFromRight);
+//            }
+//
+//            @Override
+//            public void onAnimationRepeat(Animation animation) {
+//
+//            }
+//        });
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                mCanPutText = true;
-            }
+//        slideFromRight.setAnimationListener(new Animation.AnimationListener() {
+//            @Override
+//            public void onAnimationStart(Animation animation) {
+//                mCanPutText = false;
+//            }
+//
+//            @Override
+//            public void onAnimationEnd(Animation animation) {
+//
+//            }
+//
+//            @Override
+//            public void onAnimationRepeat(Animation animation) {
+//
+//            }
+//        });
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
-
-        mLobbyDescription.startAnimation(slideToLeft);
+//        mLobbyDescription.startAnimation(slideToLeft);
 
     }
 
@@ -631,20 +722,29 @@ public class LobbyActivity extends AppCompatActivity {
 
         // Run code after changing state
         if (lobbyState == ERROR) {
-            if (mLobbyProgressBar == null)
-                mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
+
+            // Code for debug version
+            if (BuildConfig.DEBUG) {
+                Intent conversationActivity = new Intent(
+                        this,
+                        ConversationActivity.class
+                );
+                startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
+                overridePendingTransition(
+                        R.anim.slide_in_right,
+                        R.anim.slide_out_left
+                );
+            }
             mLobbyProgressBar.setVisibility(View.INVISIBLE);
 
-            mImageFlipper.stopFlipping();
+            mImageFlipperFragment.stopFlipping();
 
             setLobbyDescription("There was an error. Please try again later.");
         } else {
-            if (mLobbyProgressBar == null)
-                mLobbyProgressBar = (ProgressBar) findViewById(R.id.lobby_progressbar);
             mLobbyProgressBar.setVisibility(View.VISIBLE);
 
-            if (!mImageFlipper.isFlipping())
-                mImageFlipper.startFlipping();
+            if (!mImageFlipperFragment.isFlipping())
+                mImageFlipperFragment.startFlipping();
         }
 
         if (lobbyState == BEGIN) {
@@ -668,10 +768,33 @@ public class LobbyActivity extends AppCompatActivity {
         switch (requestCode) {
             case CityOfTwo.ACTIVITY_INTRODUCTION: {
                 if (resultCode == RESULT_OK) {
-                    String answers = data.getStringExtra(CityOfTwo.KEY_TEST_RESULT);
+                    restoreActivity();
+                    String answers = data.getExtras().getString(CityOfTwo.KEY_TEST_RESULT);
                     submitTest(answers);
+                } else {
+                    restoreActivity();
                 }
+                break;
+            }
+            case CityOfTwo.ACTIVITY_CONVERSATION: {
+                restoreActivity();
+                break;
             }
         }
+    }
+
+    private void restoreActivity() {
+        revealView(mImageFlipper);
+        revealView(mWelcomeLabel);
+        revealView(mReloadButton);
+        revealView(mLobbyProgressBar);
+        mImageFlipperFragment.startFlipping();
+
+        setLobbyDescription("");
+        setLobbyDescription("Setting up your profile");
+        mLobbyDescription.setAlpha(1);
+
+        setStatus(LOGGED_IN);
+        facebookLogin(mAccessToken);
     }
 }

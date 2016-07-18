@@ -2,6 +2,7 @@ package com.messenger.cityoftwo;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -18,9 +19,7 @@ import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
 import com.facebook.Profile;
-import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.squareup.picasso.Picasso;
@@ -28,6 +27,8 @@ import com.squareup.picasso.Target;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static com.messenger.cityoftwo.CityOfTwo.isGooglePlayServicesAvailable;
 
 /**
  * Created by Aayush on 2/3/2016.
@@ -43,16 +44,18 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
 
         setContentView(R.layout.activity_login);
 
+
         if (BuildConfig.DEBUG) {
             try {
-                String regID = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                        .getString("REG_ID", "EMPTY");
+//                FirebaseInstanceId.getInstance().getToken();
 
-                Log.i("GCM ID", regID);
+                String regID = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+                        .getString(CityOfTwo.KEY_REG_ID, "");
+
+                Log.i("FCM ID", regID);
             } catch (NullPointerException e) {
                 Log.e("NullPointer Exception", "Shared Preferences not found");
             }
@@ -72,6 +75,8 @@ public class LoginActivity extends AppCompatActivity {
 //            return;
         }
 
+//        FirebaseInstanceId.getInstance().getToken();
+
         mGetStartedButton = (Button) findViewById(R.id.get_started_button);
         mLogoImage = (ImageView) findViewById(R.id.coyrudy_logo);
 
@@ -82,6 +87,12 @@ public class LoginActivity extends AppCompatActivity {
         mGetStartedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!isGooglePlayServicesAvailable(LoginActivity.this, new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        finish();
+                    }
+                })) return;
                 updateAccessToken(AccessToken.getCurrentAccessToken());
             }
         });
@@ -93,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
                 AccessToken accessToken = loginResult.getAccessToken();
                 Log.i("Facebook Access Token", accessToken.getToken());
 
-//                openLobby(accessToken);
+                openLobby(accessToken);
             }
 
             @Override
@@ -104,20 +115,21 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onError(FacebookException error) {
-                Log.i("Facebook Login", "Login Error");
+                Log.e("Facebook Login", "Login Error", error);
                 showLoginError();
             }
         });
 
-        // Registering access toke228n tracker to handle changes in access tokens
-        mAccessTokenTracker = new AccessTokenTracker() {
-            @Override
-            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
 
-                Log.i("AccessToken", "AccessToken updated");
-                updateAccessToken(currentAccessToken);
-            }
-        };
+//        // Registering access toke228n tracker to handle changes in access tokens
+//        mAccessTokenTracker = new AccessTokenTracker() {
+//            @Override
+//            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
+//
+//                Log.i("AccessToken", "AccessToken updated");
+//                updateAccessToken(currentAccessToken);
+//            }
+//        };
 
     }
 
@@ -135,6 +147,7 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                         CityOfTwo.logoBitmap = bitmap;
+                        Log.i("Bitmap", "Bitmap Loaded");
                     }
 
                     @Override
@@ -151,18 +164,52 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void updateAccessToken(AccessToken currentAccessToken) {
+
         if (currentAccessToken == null) {
-            // No AccessToken found
-            // Attempting to re login
             mLoginManager.logInWithReadPermissions(
                     this,
                     permissionList
             );
             Log.i("Facebook Login", "No user found");
+        } else if (currentAccessToken.isExpired()) {
+            Log.i("Facebook Login", "AccessToken expired");
+
+            final ProgressDialog loginDialog;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                loginDialog = new ProgressDialog(this, android.R.style.Theme_Material_Light_Dialog);
+            } else {
+                loginDialog = new ProgressDialog(this);
+            }
+
+            loginDialog.setTitle("Logging in");
+            loginDialog.setMessage("Please wait while we log you in");
+            loginDialog.show();
+
+            AccessToken.refreshCurrentAccessTokenAsync(new AccessToken.AccessTokenRefreshCallback() {
+                @Override
+                public void OnTokenRefreshed(AccessToken accessToken) {
+                    Log.i("Facebook Login", "New AccessToken generated");
+                    openLobby(accessToken);
+                    loginDialog.cancel();
+                }
+
+                @Override
+                public void OnTokenRefreshFailed(FacebookException exception) {
+                    mLoginManager.logOut();
+
+                    mLoginManager.logInWithReadPermissions(
+                            LoginActivity.this,
+                            permissionList
+                    );
+                    Log.i("Facebook Login", "Generating new AccessToken");
+                    loginDialog.cancel();
+                }
+            });
         } else {
             // Starting app with current logged in account
             openLobby(currentAccessToken);
             Log.i("Facebook Login", "Logging in with current account");
+
         }
     }
 
@@ -192,13 +239,14 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void openLobby(final AccessToken accessToken, final Profile profile) {
-        final long duration = 120;
+        final long duration = 80;
 //        launchLobbyActivity(accessToken, profile);
         mGetStartedButton.animate()
-                .setDuration(120)
+                .setDuration(duration)
                 .alpha(0);
+
         findViewById(R.id.coyrudy_label).animate()
-                .setDuration(120)
+                .setDuration(duration)
                 .alpha(0)
                 .withEndAction(new Runnable() {
                     @Override
@@ -251,16 +299,15 @@ public class LoginActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        // Logs 'install' and 'messenger activate' App Events.
-        AppEventsLogger.activateApp(this);
+        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOGIN);
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        // Logs 'messenger deactivate' App Event.
-        AppEventsLogger.deactivateApp(this);
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
     }
 
     @Override

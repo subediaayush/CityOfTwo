@@ -2,6 +2,7 @@ package com.messenger.cityoftwo;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
@@ -30,9 +31,8 @@ public class TestAdapter extends PagerAdapter {
     StringBuilder answer;
 
     public TestAdapter(Context context) {
-        this.context = context;
-        Tests = new ArrayList<>();
-        answer = new StringBuilder();
+        this(context, new ArrayList<Test>());
+
     }
 
     public TestAdapter(Context context, ArrayList<Test> tests) {
@@ -50,6 +50,7 @@ public class TestAdapter extends PagerAdapter {
     public Object instantiateItem(ViewGroup container, final int position) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View view = inflater.inflate(R.layout.layout_test, container, false);
+
         TextView question = (TextView) view.findViewById(R.id.test_question);
         final ListView answers_listview = (ListView) view.findViewById(R.id.test_answers);
 
@@ -57,7 +58,7 @@ public class TestAdapter extends PagerAdapter {
 
         question.setText(t.getQuestion());
 
-        AnswersAdapter a = new AnswersAdapter(context, t.getAnswers());
+        AnswersAdapter a = new AnswersAdapter(context, t.getAnswers(), position);
 
         answers_listview.setAdapter(a);
 
@@ -86,7 +87,7 @@ public class TestAdapter extends PagerAdapter {
 
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
-        ((NonSwipeableViewPager) container).removeView((View) object);
+        container.removeView((View) object);
     }
 
     @Override
@@ -94,48 +95,5 @@ public class TestAdapter extends PagerAdapter {
         return view.equals(object);
     }
 
-    class AnswersAdapter extends BaseAdapter {
 
-        Context context;
-        ArrayList<AnswerPair> answers;
-
-        public AnswersAdapter(Context context, ArrayList<AnswerPair> answers) {
-            this.context = context;
-            this.answers = answers;
-        }
-
-        @Override
-        public int getCount() {
-            return answers.size();
-        }
-
-        @Override
-        public AnswerPair getItem(int position) {
-            return answers.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return -1;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                LayoutInflater li = LayoutInflater.from(context);
-                convertView = li.inflate(R.layout.layout_test_option, null);
-            }
-
-            ImageView Option = (ImageView) convertView.findViewById(R.id.option_image);
-            TextView Description = (TextView) convertView.findViewById(R.id.option_description);
-
-            Picasso.with(context)
-                    .load(answers.get(position).second)
-                    .into(Option);
-
-            Description.setText(answers.get(position).first);
-
-            return convertView;
-        }
-    }
 }

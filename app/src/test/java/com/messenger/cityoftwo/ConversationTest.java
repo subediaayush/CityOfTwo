@@ -11,7 +11,7 @@ public class ConversationTest {
     public void ToString() throws Exception {
         Conversation origConversation = new Conversation(
                 "Hello",
-                CityOfTwo.RECEIVED
+                CityOfTwo.FLAG_RECEIVED
         );
 
         String c = origConversation.toString();

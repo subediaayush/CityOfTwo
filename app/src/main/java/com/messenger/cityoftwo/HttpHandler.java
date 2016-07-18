@@ -198,11 +198,10 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
     @Override
     protected void onPostExecute(Boolean aBoolean) {
+        onPostExecute();
         if (aBoolean) {
             onSuccess(getResponse());
-            Log.i("Http Connection", "onSuccess called for " + URL.toString());
         } else {
-            Log.i("Http Connection", "onFailure called for " + URL.toString());
             try {
                 onFailure(getResponseStatus());
             } catch (Exception e) {
@@ -225,5 +224,8 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
     protected void onFailure(Integer status) {
 
+    }
+
+    protected void onPostExecute() {
     }
 }

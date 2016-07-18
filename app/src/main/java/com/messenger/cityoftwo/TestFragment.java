@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,11 +15,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 //import com.squareup.picasso.Picasso;
 
@@ -64,10 +70,36 @@ public class TestFragment extends Fragment {
             questionList = GetQuestionList(Questions);
         } catch (JSONException e) {
             e.printStackTrace();
+            Log.i("TestFragment", "Test Not Received");
         }
         Log.i("TestFragment", "Test Received");
 
         testAdapter = new TestAdapter(context, questionList);
+
+        CityOfTwo.answerBitmapList = new HashMap<>();
+
+        for (int i = 0; i < questionList.size(); i++) {
+            ArrayList<AnswerPair> answerPairs = questionList.get(i).getAnswers();
+            for (int j = 0; j < answerPairs.size(); j++) {
+                final String key = String.valueOf(i) + String.valueOf(j);
+                Picasso.with(context)
+                        .load(answerPairs.get(j).second)
+                        .into(new Target() {
+                            @Override
+                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                                CityOfTwo.answerBitmapList.put(key, bitmap);
+                            }
+
+                            @Override
+                            public void onBitmapFailed(Drawable errorDrawable) {
+                            }
+
+                            @Override
+                            public void onPrepareLoad(Drawable placeHolderDrawable) {
+                            }
+                        });
+            }
+        }
 
         TestPager.setAdapter(testAdapter);
 
@@ -96,7 +128,6 @@ public class TestFragment extends Fragment {
                 }
             }
         };
-
         return rootView;
     }
 
@@ -120,9 +151,7 @@ public class TestFragment extends Fragment {
 
             Tests.add(new Test(q, a));
         }
-
         return Tests;
-
     }
 
     protected void setAnswer(int answer, int position) {

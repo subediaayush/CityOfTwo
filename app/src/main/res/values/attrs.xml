@@ -5,4 +5,9 @@
         <attr name="rotation" format="float" />
         <attr name="offset" format="integer" />
     </declare-styleable>
+
+    <declare-styleable name="LabelledButtonLayout">
+        <attr name="text" format="string" />
+        <attr name="image" format="integer" />
+    </declare-styleable>
 </resources>

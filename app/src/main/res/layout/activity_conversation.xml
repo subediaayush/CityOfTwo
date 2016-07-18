@@ -1,19 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/WhiteSmoke"
     tools:context=".ConversationActivity">
 
+    <View
+        android:id="@+id/snackbar_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/bottom_layout"
+        android:layout_below="@+id/conversation_toolbar" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/conversation_listview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-    <!--android:layout_weight="1" />-->
+
+    <View
+        android:id="@+id/option_dismiss_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/conversation_toolbar"
+        android:visibility="gone" />
 
     <LinearLayout
+        android:id="@+id/chat_options_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/conversation_toolbar"
+        android:background="@color/colorPrimaryDark"
+        android:gravity="center_horizontal"
+        android:padding="5dp"
+        android:visibility="invisible">
+
+        <com.messenger.cityoftwo.LabelledButtonLayout
+            android:id="@+id/new_chat"
+            style="@style/ChatOptionButtonLayout"
+            android:onClick="newChat"
+            app:image="@drawable/ic_small"
+            app:text="New Chat" />
+
+        <com.messenger.cityoftwo.LabelledButtonLayout
+            android:id="@+id/share_facebook"
+            style="@style/ChatOptionButtonLayout"
+            android:onClick="revealProfile"
+            app:image="@drawable/com_facebook_button_icon"
+            app:text="Share Facebook Profile" />
+
+        <com.messenger.cityoftwo.LabelledButtonLayout
+            android:id="@+id/apply_filter"
+            style="@style/ChatOptionButtonLayout"
+            android:onClick="applyFilter"
+            app:image="@drawable/ic_send"
+            app:text="Apply Filters" />
+
+        <com.messenger.cityoftwo.LabelledButtonLayout
+            android:id="@+id/refer_button"
+            style="@style/ChatOptionButtonLayout"
+            android:onClick="referCoyRudy"
+            app:image="@drawable/ic_send"
+            app:text="Share CoyRudy" />
+    </LinearLayout>
+
+
+    <RelativeLayout
         android:id="@+id/conversation_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,11 +75,14 @@
         android:gravity="center">
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:id="@+id/coyrudy_logo"
+            android:layout_width="@dimen/toolbar_icon_size"
+            android:layout_height="@dimen/toolbar_icon_size"
             android:adjustViewBounds="true"
             android:src="@drawable/ic_normal" />
-    </LinearLayout>
+
+    </RelativeLayout>
+
     <!--<com.google.android.gms.ads.AdView-->
     <!--android:id="@+id/adView"-->
     <!--android:layout_width="match_parent"-->
@@ -36,6 +93,7 @@
     <!--ads:adUnitId="@string/banner_ad_unit_id" />-->
 
     <LinearLayout
+        android:id="@+id/bottom_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"

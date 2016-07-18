@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/lobby_background"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/colorPrimaryDark">
+    android:layout_height="match_parent">
+    <!--android:background="@color/appBackground"-->
 
-    <com.messenger.cityoftwo.TriangleView
-        android:id="@+id/triangle_background"
+    <FrameLayout
+        android:id="@+id/lobby_background"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:shape_color="@color/colorPrimary" />
+        android:layout_height="match_parent" />
+
+    <!--<com.messenger.cityoftwo.TriangleView-->
+    <!--android:id="@+id/triangle_background"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--app:shape_color="@color/colorPrimary" />-->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,14 +24,14 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <TextView
+        <com.messenger.cityoftwo.FontTextView
             android:id="@+id/welcome_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="Welcome"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
-            android:textColor="@color/White"
+            android:textColor="@color/appLobbyColor"
             android:textStyle="bold" />
         <!--android:textSize="48sp" />-->
 
@@ -38,32 +42,11 @@
             android:layout_margin="10dp"
             android:visibility="gone" />
 
-        <ViewFlipper
+        <FrameLayout
             android:id="@+id/lobby_image_flipper"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_margin="10dp">
-
-            <ImageView
-                android:id="@+id/lobby_progress_one"
-                android:layout_width="100dp"
-                android:layout_height="100dp" />
-
-            <ImageView
-                android:id="@+id/lobby_progress_two"
-                android:layout_width="100dp"
-                android:layout_height="100dp" />
-
-            <ImageView
-                android:id="@+id/lobby_progress_three"
-                android:layout_width="100dp"
-                android:layout_height="100dp" />
-
-            <ImageView
-                android:id="@+id/lobby_progress_four"
-                android:layout_width="100dp"
-                android:layout_height="100dp" />
-        </ViewFlipper>
+            android:layout_margin="10dp" />
 
         <TextView
             android:id="@+id/lobby_profile_name"
@@ -80,7 +63,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:minLines="3"
-            android:textColor="@color/White" />
+            android:textColor="@color/appLobbyColor" />
         <!--android:textSize="18sp" />-->
     </LinearLayout>
 

@@ -1,75 +1,122 @@
 package com.messenger.cityoftwo;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
+import android.util.TypedValue;
 
-import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by Aayush on 2/5/2016.
  */
 public class CityOfTwo extends Application {
+    public static final List<String> FACEBOOK_PERMISSION_LIST = Arrays.asList(
+            "user_likes"
+    );
 
     public static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN";
+    public static final String KEY_PROFILE_IMAGE = "image_uri";
+    public static final String KEY_PROFILE_NAME = "user_name";
     public static final String KEY_PROFILE = "PROFILE";
     public static final String KEY_SELECTED_ANSWER = "SELECTED";
     public static final String KEY_TEST = "TEST";
     public static final String KEY_MESSAGE = "MESSAGE";
+    public static final String KEY_CHAT_BEGIN = "CHAT_BEGIN";
     public static final String KEY_TYPE = "TYPE";
     public static final String KEY_TEXT = "TEXT";
     public static final String KEY_CURRENT_CHAT = "CURRENT_CHAT";
+    public static final String KEY_CURRENT_CHAT_ID = "CURRENT_CHAT_ID";
     public static final String KEY_SESSION_TOKEN = "SESSION_TOKEN";
-    public static final String KEY_CURRENT_ANSWER = "current_answer";
-    public static final String KEY_LOCATION_X = "location_x";
-    public static final String KEY_LOCATION_Y = "location_y";
-    public static final String KEY_WIDTH = "width";
-    public static final String KEY_HEIGHT = "height";
+    public static final String KEY_CURRENT_ANSWER = "CURRENT_ANSWER";
+    public static final String KEY_LOCATION_X = "LOCATION_X";
+    public static final String KEY_LOCATION_Y = "LOCATION_Y";
+    public static final String KEY_WIDTH = "WIDTH";
+    public static final String KEY_HEIGHT = "HEIGHT";
+    public static final String KEY_COMMON_LIKES = "LIKES";
+    public static final String KEY_TEST_RESULT = "TEST_RESULT";
+    public static final String KEY_CHATROOM_ID = "CHATROOM_ID";
 
-    public static final String KEY_TEST_RESULT = "test_result";
-    public static final int APPLICATION_FOREGROUND = 0,
+    public static final int APPLICATION_FOREGROUND = 0;
+    public static final int APPLICATION_BACKGROUND = 1;
 
-            APPLICATION_BACKGROUND = 1;
     public static final int ACTIVITY_LOBBY = 1;
     public static final int ACTIVITY_TEST = 2;
     public static final int ACTIVITY_CONVERSATION = 3;
-
     public static final int ACTIVITY_INTRODUCTION = 4;
-    public static final int SENT = 1,
-            RECEIVED = 2,
-            START = 0,
 
-    END = -1;
-    public static final String PACKAGE_NAME = "com.messenger.cityoftwo",
-            HOST = "coyrudy.com",
+    public static final int FLAG_SENT = 0b0000001;
+    public static final int FLAG_RECEIVED = 0b0000010;
+    public static final int FLAG_TEXT = 0b0000100;
+    public static final int FLAG_REVEAL = 0b0001000;
+    public static final int FLAG_CHAT_END = 0b0010000;
+    public static final int FLAG_START = 0b0100000;
+    public static final int FLAG_END = 0b100000;
 
-    API = "api";
-    public static final String HEADER_ACCESS_TOKEN = "access_token",
-            HEADER_TEST = "test",
-            HEADER_TEST_RESULT = "questions",
-            HEADER_SEND_MESSAGE = "message",
+    public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
+    public static final String HOST = "coyrudy.com";
+    public static final String API = "api";
 
-    HEADER_GCM_ID = "gcm_id";
+    public static final String HEADER_ACCESS_TOKEN = "access_token";
+    public static final String HEADER_TEST = "test";
+    public static final String HEADER_TEST_RESULT = "questions";
+    public static final String HEADER_SEND_MESSAGE = "message";
+    public static final String HEADER_GCM_ID = "gcm_id";
+
     public static final String API_KEY = "AIzaSyB_Wco0Sdad38QGHsCcode9P1iZ3tsqqXY";
+    public static final String HEADER_CHATROOM_ID = "chatroom_id";
+    public static final String KEY_MIN_AGE = "min_age";
+    public static final String KEY_MAX_AGE = "max_age";
+    public static final String KEY_DISTANCE = "distance";
+    public static final String KEY_MATCH_MALE = "gender_male";
+    public static final String KEY_MATCH_FEMALE = "gender_female";
+    public static final String KEY_DISTANCE_IN_MILES = "distance_miles";
+    public static final Integer MINIMUM_AGE = 18;
+    public static final Integer MAXIMUM_AGE = 100;
+    public static final Integer MINIMUM_DISTANCE = 0;
+    public static final Integer MAXIMUM_DISTANCE = 100;
+    public static final String KEY_PROFILE_ID = "profile_id";
+    public static final String KEY_PROFILE_URI = "profile_uri";
+    public static final String KEY_MESSAGE_FLAGS = "FLAGS";
+    public static final String KEY_TIME = "TIME";
+    public static final String HEADER_FLAGS = "flags";
+    public static final String HEADER_TIME = "time";
+    public static final String KEY_TOKEN = "token";
+    public static final String KEY_CODE = "code";
+    public static final String KEY_CREDITS = "credits";
+    public static final String KEY_FILTERS_APPLIED = "filters_applied";
+    public static final String KEY_FILTERS = "filters";
+    public static final String KEY_CHAT_PENDING = "chat_pending";
+    public static final String KEY_REG_ID = "reg_id";
+    public static final Integer ACTIVITY_LOGIN = 0;
+    public static final String KEY_CHAT_END = "END_CHAT";
+    public static final String KEY_FROM_INTRO = "from_intro";
     private static final String SENDER_ID = "584281533020";
-
-    public static GoogleCloudMessaging GCM;
-    public static Integer APPLICATION_STATE;
-
-    public static ArrayList<Conversation> BackgroundConversation;
+    public static ArrayList<Conversation> mBackgroundConversation;
     public static Bitmap logoBitmap;
+    public static Bitmap logoSmallBitmap;
+    public static HashMap<String, Bitmap> answerBitmapList;
+
+    private static Integer currentActivity;
+    private static Integer applicationState;
 
     /**
      * @param value
@@ -81,67 +128,121 @@ public class CityOfTwo extends Application {
         return tempArray;
     }
 
-    public static boolean GCMRegistered(final Context context) {
-        String Version = "";
-
-        try {
-            PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            Version = pInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        SharedPreferences sp = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-        if (!Version.isEmpty()) {
-            String PREV_VERSION = sp.getString("PREV_VERSION", "EMPTY");
-            if (!PREV_VERSION.equals(Version)) {
-                sp.edit()
-                        .putString("PREV_VERSION", Version)
-                        .apply();
-                return false;
-            }
-        }
-
-        String REG_ID = sp.getString("REG_ID", "EMPTY");
-
-        return !REG_ID.equals("EMPTY");
+    public static Integer getApplicationState() {
+        return applicationState;
     }
 
-    public static void RegisterGCM(final Context context) {
-        //TODO Remove this if
-        new AsyncTask<Void, Void, String>() {
-            @Override
-            protected String doInBackground(Void... params) {
-                String msg = "";
-                String regid;
-                try {
-                    if (GCM == null) {
-                        GCM = GoogleCloudMessaging.getInstance(context.getApplicationContext());
-                    }
+    public static void setApplicationState(int applicationState) {
+        CityOfTwo.applicationState = applicationState;
+    }
 
-                    regid = GCM.register(SENDER_ID);
+    public static Integer getCurrentActivity() {
+        return currentActivity;
+    }
 
-                    context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE)
-                            .edit()
-                            .putString("REG_ID", regid)
-                            .apply();
+    public static void setCurrentActivity(Integer currentActivity) {
+        CityOfTwo.currentActivity = currentActivity;
+    }
 
-                    msg = "Device registered, registration ID=" + regid;
-                    Log.i("GCM", msg + " " + regid);
+//    public static boolean GCMRegistered(final Context context) {
+//        String Version = "";
+//
+//        try {
+//            PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+//            Version = pInfo.versionName;
+//        } catch (PackageManager.NameNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//
+//        SharedPreferences sp = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+//        if (!Version.isEmpty()) {
+//            String PREV_VERSION = sp.getString("PREV_VERSION", "EMPTY");
+//            if (!PREV_VERSION.equals(Version)) {
+//                sp.edit()
+//                        .putString("PREV_VERSION", Version)
+//                        .apply();
+//                return false;
+//            }
+//        }
+//
+//        String REG_ID = sp.getString("REG_ID", "EMPTY");
+//
+//        return !REG_ID.equals("EMPTY");
+//    }
+//
+//    public static void RegisterGCM(final Context context) {
+//        //TODO Remove this if
+//        new AsyncTask<Void, Void, String>() {
+//            @Override
+//            protected String doInBackground(Void... params) {
+//                String msg = "";
+//                String regid;
+//                try {
+//                    if (GCM == null) {
+//                        GCM = GoogleCloudMessaging.getInstance(context.getApplicationContext());
+//                    }
+//
+//                    regid = GCM.register(SENDER_ID);
+//
+//                    context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE)
+//                            .edit()
+//                            .putString("REG_ID", regid)
+//                            .apply();
+//
+//                    msg = "Device registered, registration ID=" + regid;
+//                    Log.i("GCM", msg + " " + regid);
+//
+//                } catch (IOException ex) {
+//                    msg = "Error :" + ex.getMessage();
+//                }
+//                return msg;
+//            }
+//
+//        }.execute();
+//    }
 
-                } catch (IOException ex) {
-                    msg = "Error :" + ex.getMessage();
-                }
-                return msg;
+    public static final float dpToPixel(Context context, int dp) {
+        return TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, dp,
+                context.getResources().getDisplayMetrics()
+        );
+    }
+
+    public static Uri getFacebookPageURI(Context context, String profileId) {
+
+        String FACEBOOK_URL = "https://www.facebook.com/";
+
+        PackageManager packageManager = context.getPackageManager();
+        try {
+            int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
+            if (versionCode >= 3002850) { //newer versions of fb app
+                return Uri.parse("fb://facewebmodal/f?href=" + FACEBOOK_URL + profileId);
+            } else { //older versions of fb app
+                return Uri.parse("fb://page/" + profileId);
             }
+        } catch (PackageManager.NameNotFoundException e) {
+            return Uri.parse(FACEBOOK_URL + profileId); //normal web url
+        }
+    }
 
-        }.execute();
+    public static boolean isGooglePlayServicesAvailable(Activity activity, DialogInterface.OnCancelListener cancelListener) {
+        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+        int status = googleApiAvailability.isGooglePlayServicesAvailable(activity);
+        if (status != ConnectionResult.SUCCESS) {
+            if (googleApiAvailability.isUserResolvableError(status)) {
+                googleApiAvailability.getErrorDialog(activity, status, 2404, cancelListener).show();
+            }
+            return false;
+        }
+        return true;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         printHashKey();
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        AppEventsLogger.activateApp(this);
     }
 
     private void printHashKey() {
@@ -161,5 +262,4 @@ public class CityOfTwo extends Application {
 
         }
     }
-
 }

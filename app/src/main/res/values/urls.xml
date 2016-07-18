@@ -5,5 +5,9 @@
     <string name="url_submit_test">submit_test/</string>
     <string name="url_test">test/</string>
     <string name="url_send_message">message/</string>
+    <string name="url_chat_begin">begin_chat/</string>
     <string name="url_broadcast_gcm">broadcast_gcm/</string>
+    <string name="url_chat_end">dump/</string>
+    <string name="url_send_filter">filters/</string>
+    <string name="url_share_coyrudy">http://coyrudy.com/refer?code=</string>
 </resources>

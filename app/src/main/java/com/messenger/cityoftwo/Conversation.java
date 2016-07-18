@@ -12,47 +12,52 @@ import java.util.Date;
 public class Conversation {
 
 
-    private final Integer type;
-    private final String text;
-    private final Date time;
+    private Integer flags;
+    private String text;
+    private Date time;
 
     /**
      * @param text
-     * @param type
+     * @param flags
      * @param time
      */
-    public Conversation(String text, Integer type, Date time) {
+    public Conversation(String text, Integer flags, Date time) {
         this.text = text;
-        this.type = type;
+        this.flags = flags;
         this.time = time;
     }
 
-    public Conversation(String text, Integer type) {
-        this.text = text;
-        this.type = type;
-        this.time = Calendar.getInstance().getTime();
+    public Conversation(String text, Integer flags) {
+        this(text, flags, Calendar.getInstance().getTime());
+    }
+
+    public Conversation(String text, Date time) {
+        this(text, 0, time);
     }
 
     public Conversation(String conversation) {
-        String text;
-        Integer type;
-        Long time;
+        String messageText;
+        Integer messageType;
+        Long messageTime;
+
         try {
             JSONObject j = new JSONObject(conversation);
-            text = j.getString("text");
-            type = j.getInt("type");
-            time = j.getLong("time");
+            messageText = j.getString("text");
+            messageType = j.getInt("flags");
+            messageTime = j.getLong("time");
         } catch (JSONException e) {
-            throw new ClassCastException("Could not cast string to class Conversation.");
+            messageText = conversation;
+            messageType = 0;
+            messageTime = Calendar.getInstance().getTime().getTime();
         }
 
-        this.text = text;
-        this.type = type;
-        this.time = new Date(time);
+        this.text = messageText;
+        this.flags = messageType;
+        this.time = new Date(messageTime);
     }
 
-    public Integer getType() {
-        return type;
+    public Integer getFlags() {
+        return flags;
     }
 
     public String getText() {
@@ -63,13 +68,25 @@ public class Conversation {
         return time;
     }
 
+    public void addFlag(int flag) {
+        this.flags |= flag;
+    }
+
+    public void setFlag(int flag) {
+        this.flags = flag;
+    }
+
+    public void removeFlag(int flag) {
+        this.flags &= ~flag;
+    }
+
     @Override
     public String toString() {
         String output;
         try {
             JSONObject j = new JSONObject();
             j.put("text", text);
-            j.put("type", type);
+            j.put("flags", flags);
             j.put("time", time.getTime());
 
             output = j.toString();
@@ -89,7 +106,7 @@ public class Conversation {
         Conversation c = (Conversation) o;
         return (
                 getText().equals(c.getText()) &&
-                        getType().equals(c.getType()) &&
+                        getFlags().equals(c.getFlags()) &&
                         getTime().getTime() == c.getTime().getTime()
         );
     }

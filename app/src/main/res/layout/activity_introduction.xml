@@ -2,64 +2,41 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true"
     android:orientation="vertical">
 
-    <ViewFlipper
+    <com.messenger.cityoftwo.IndicatorViewFlipper
         android:id="@+id/intro_flipper"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+        <include layout="@layout/layout_intro_flipper_1" />
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:src="@color/Blue" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Some text about explaining text and other things" />
-
-        </LinearLayout>
+        <include layout="@layout/layout_intro_flipper_2" />
 
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical">
+        <include
+            android:id="@+id/intro_facebook_login"
+            layout="@layout/layout_intro_facebook_login" />
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:src="@color/Green" />
+        <include
+            android:id="@+id/intro_test_desc"
+            layout="@layout/layout_intro_flipper_4" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Some text about explaining text and other things" />
-
-        </LinearLayout>
-
-        <FrameLayout
+        <ViewFlipper
             android:id="@+id/test_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </ViewFlipper>
+        <include
+            android:id="@+id/intro_last"
+            layout="@layout/layout_intro_flipper_3" />
+
+    </com.messenger.cityoftwo.IndicatorViewFlipper>
 
     <Button
         android:id="@+id/intro_next_button"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Next" />

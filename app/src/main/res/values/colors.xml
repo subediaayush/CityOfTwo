@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6d8089</color>
-    <color name="colorPrimaryDark">#455A64</color>
+    <color name="colorPrimary">#455A64</color>
+    <color name="colorPrimaryDark">#33434a</color>
     <color name="colorPrimaryLight">#CFD8DC</color>
-    <color name="colorAccent">#9E9E9E</color>
+    <color name="colorAccent">#33434a</color>
+
+    <color name="colorSentBackground">#455A64</color>
+    <color name="colorReceivedBackground">#688896</color>
+    <color name="colorMessagePressed">#12171a</color>
+
+    <color name="colorSnackBarError">@color/maroon</color>
+    <color name="colorSnackBarDefault">@color/colorPrimaryDark</color>
+    <color name="colorSnackBarText">@color/colorPrimaryLight</color>
+
 
     <color name="white">#FFFFFFFF</color>
     <color name="yellow">#FFFFFF00</color>
@@ -170,5 +179,19 @@
     <color name="SemiTransparentDarker">#50000000</color>
     <color name="Transparent">#00000000</color>
 
+    <color name="ListRed">#3FF44336</color>
+    <color name="ListPink">#3FE91E63</color>
+    <color name="ListPurple">#3F9C27B0</color>
+    <color name="ListDeepPurple">#3F673AB7</color>
+    <color name="ListIndigo">#3F3F51B5</color>
+    <color name="ListTeal">#3F009688</color>
+    <color name="ListGreen">#3F4CAF50</color>
+    <color name="ListAmber">#3FFFC107</color>
+    <color name="ListOrange">#3FFF9800</color>
+    <color name="ListDeepOrange">#3FFF5722</color>
+
     <color name="separator">#FFEEEEEE</color>
+    <color name="appBackground">@color/colorPrimary</color>
+    <color name="appTextColor">#ffffffff</color>
+    <color name="appLobbyColor">#ff000000</color>
 </resources>

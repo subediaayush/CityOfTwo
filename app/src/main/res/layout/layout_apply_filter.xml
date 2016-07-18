@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="10dp"
+    android:paddingLeft="?dialogPreferredPadding"
+    android:paddingRight="?dialogPreferredPadding"
+    android:paddingTop="10dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/about_filter"
+        android:textColor="@color/Black" />
+
+    <android.support.v4.widget.Space
+        android:layout_width="match_parent"
+        android:layout_height="5dp" />
+
+    <Switch
+        android:id="@+id/filter_enable_switch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enable filters"
+        android:textAppearance="?android:attr/textAppearanceMediumInverse" />
+
+    <android.support.v4.widget.Space
+        android:layout_width="match_parent"
+        android:layout_height="5dp" />
+
+    <LinearLayout
+        android:id="@+id/filters_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Age"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@color/Black"
+                android:textStyle="bold" />
+            <!--<TextView-->
+            <!--android:id="@+id/filter_age_min"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_margin="10dp"-->
+            <!--android:text="18"-->
+            <!--android:textAppearance="@style/TextAppearance.AppCompat.Medium.Inverse"-->
+            <!--android:textColor="@color/black" />-->
+            <com.appyvet.rangebar.RangeBar
+                android:id="@+id/filter_age_range"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:duplicateParentState="true"
+                app:connectingLineColor="@color/colorPrimary"
+                app:pinColor="@color/colorPrimary"
+                app:pinMaxFont="12sp"
+                app:selectorColor="@color/colorPrimaryDark"
+                app:selectorSize="10dp"
+                app:temporaryPins="false"
+                app:tickColor="@color/Transparent"
+                app:tickEnd="100"
+                app:tickInterval="1"
+                app:tickStart="18" />
+            <!--<TextView-->
+            <!--android:id="@+id/filter_age_max"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_margin="10dp"-->
+            <!--android:text="100"-->
+            <!--android:textAppearance="@style/TextAppearance.AppCompat.Medium.Inverse"-->
+            <!--android:textColor="@color/black" />-->
+        </LinearLayout>
+
+        <android.support.v4.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:duplicateParentState="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Gender"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@color/Black"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <Switch
+                    android:id="@+id/filter_male_switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:duplicateParentState="true"
+                    android:text="Male"
+                    android:textAppearance="?android:attr/textAppearanceMediumInverse" />
+
+                <Switch
+                    android:id="@+id/filter_female_switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:duplicateParentState="true"
+                    android:text="Female"
+                    android:textAppearance="?android:attr/textAppearanceMediumInverse" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <android.support.v4.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="15dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Distance"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@color/Black"
+                android:textStyle="bold" />
+
+            <com.appyvet.rangebar.RangeBar
+                android:id="@+id/filter_distance_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:duplicateParentState="true"
+                app:connectingLineColor="@color/colorPrimary"
+                app:pinColor="@color/colorPrimary"
+                app:pinMaxFont="12sp"
+                app:rangeBar="false"
+                app:selectorColor="@color/colorPrimaryDark"
+                app:selectorSize="10dp"
+                app:temporaryPins="false"
+                app:tickColor="@color/Transparent"
+                app:tickEnd="800"
+                app:tickInterval="8"
+                app:tickStart="1" />
+
+            <RadioGroup
+                android:id="@+id/filter_distance_unit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checkedButton="@+id/distance_km"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/distance_km"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:duplicateParentState="true"
+                    android:text="kilometer" />
+
+                <RadioButton
+                    android:id="@+id/distance_miles"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:duplicateParentState="true"
+                    android:text="miles" />
+            </RadioGroup>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
