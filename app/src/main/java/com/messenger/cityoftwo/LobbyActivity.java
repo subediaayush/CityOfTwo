@@ -48,7 +48,7 @@ public class LobbyActivity extends AppCompatActivity {
             LOGGED_IN = 2;
 
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
-    BroadcastReceiver mBroadcastReceiver, mTestBroadcastReceiver;
+    BroadcastReceiver mBroadcastReceiver;
     ProgressBar mLobbyProgressBar;
     TextView mLobbyDescription;
     AccessToken mAccessToken;
@@ -170,6 +170,17 @@ public class LobbyActivity extends AppCompatActivity {
                             waitForServer();
                             tokenNotGenerated = false;
                         }
+                        break;
+                    }
+                    case CityOfTwo.ACTION_USER_OFFLINE: {
+                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                                .remove(CityOfTwo.KEY_CHAT_PENDING)
+                                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                                .apply();
+
+                        setStatus(BEGIN);
+                        facebookLogin();
+                        break;
                     }
                 }
             }
@@ -178,6 +189,12 @@ public class LobbyActivity extends AppCompatActivity {
         mReloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                        .remove(CityOfTwo.KEY_CHATROOM_ID)
+                        .remove(CityOfTwo.KEY_COMMON_LIKES)
+                        .remove(CityOfTwo.KEY_CHAT_PENDING)
+                        .apply();
+
                 setStatus(BEGIN);
                 facebookLogin(mAccessToken);
             }
@@ -252,6 +269,10 @@ public class LobbyActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void facebookLogin() {
+        facebookLogin(AccessToken.getCurrentAccessToken());
     }
 
 
@@ -347,6 +368,19 @@ public class LobbyActivity extends AppCompatActivity {
         CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOBBY);
 
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        Boolean userOffline = sp.getBoolean(CityOfTwo.KEY_USER_OFFLINE, false);
+
+        if (userOffline) {
+            sp.edit().remove(CityOfTwo.KEY_CHATROOM_ID)
+                    .remove(CityOfTwo.KEY_CHAT_PENDING)
+                    .apply();
+
+            setStatus(BEGIN);
+            facebookLogin();
+            return;
+        }
+
         Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
 
         if (chatPending) {
@@ -389,6 +423,7 @@ public class LobbyActivity extends AppCompatActivity {
                         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
                                 .edit().putString(CityOfTwo.KEY_SESSION_TOKEN, sessionToken)
                                 .putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, filters_applied)
+                                .putBoolean(CityOfTwo.KEY_USER_OFFLINE, false)
                                 .apply();
 
                         if (filters_applied) {
@@ -789,6 +824,12 @@ public class LobbyActivity extends AppCompatActivity {
         revealView(mWelcomeLabel);
         revealView(mReloadButton);
         revealView(mLobbyProgressBar);
+
+        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                .remove(CityOfTwo.KEY_COMMON_LIKES)
+                .remove(CityOfTwo.KEY_CHAT_PENDING)
+                .apply();
 
         mLobbyDescription.setAlpha(1);
 

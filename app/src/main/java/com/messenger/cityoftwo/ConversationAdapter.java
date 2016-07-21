@@ -40,6 +40,8 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private boolean isWaiting;
     private ProgressDialog mWaitingDialog;
 
+    private int selectedItem;
+
     private boolean isLastVisible;
 
     public ConversationAdapter(final Context context, List<Conversation> conversationList) {
@@ -53,6 +55,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         isWaiting = false;
         isLastVisible = false;
+        selectedItem = -1;
 
         mWaitingDialog.setTitle("Finding a match");
         mWaitingDialog.setMessage("Finding a new match for you.");
@@ -94,7 +97,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         } else if ((viewType & CityOfTwo.FLAG_CHAT_END) == CityOfTwo.FLAG_CHAT_END) {
             view = li.inflate(R.layout.layout_msg_chat_end, parent, false);
         } else {
-            view = null;
+            view = li.inflate(R.layout.layout_msg_end, parent, false);
         }
 
         if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
@@ -154,11 +157,18 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             holder.dateContainer.setText(messageTime);
 
+            if (selectedItem != position)
+                holder.dateContainer.setVisibility(View.GONE);
+
+
             holder.contentContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    int oldSelected = selectedItem;
+                    selectedItem = position;
                     toggleVisibility(holder.dateContainer);
                     ConversationAdapter.this.notifyItemChanged(position);
+                    if (oldSelected != -1) ConversationAdapter.this.notifyItemChanged(oldSelected);
                 }
             });
         } else if ((flags & CityOfTwo.FLAG_REVEAL) == CityOfTwo.FLAG_REVEAL) {

@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
@@ -18,13 +19,14 @@ import static com.messenger.cityoftwo.CityOfTwo.APPLICATION_FOREGROUND;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MESSAGE;
 import static com.messenger.cityoftwo.CityOfTwo.getApplicationState;
 import static com.messenger.cityoftwo.CityOfTwo.getCurrentActivity;
+import static com.messenger.cityoftwo.CityOfTwo.messageCounter;
+import static com.messenger.cityoftwo.CityOfTwo.pendingMessages;
 
 /**
  * Created by Aayush on 7/16/2016.
  */
 public class FirebaseMessageHandler extends com.google.firebase.messaging.FirebaseMessagingService {
     private LocalBroadcastManager mBroadcaster;
-    private int messageCounter = 0;
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -50,16 +52,25 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                     Integer flags = Integer.parseInt(data.get(CityOfTwo.KEY_MESSAGE_FLAGS));
                     Date time = new Date(Long.parseLong(data.get(CityOfTwo.KEY_TIME)));
 
-                    // If not current conversation then let BEGIN_CHAT handle it
-                    if (!chatroomId.equals(oldChatroomId)) return;
-
                     // Current activity is not Conversation Activity
                     // Current activity is Conversation Activty but is in background
-                    if (getCurrentActivity() != CityOfTwo.ACTIVITY_CONVERSATION ||
-                            (getCurrentActivity() == CityOfTwo.ACTIVITY_CONVERSATION &&
-                                    getApplicationState() == CityOfTwo.APPLICATION_BACKGROUND)) {
+                    int currentActivity = getCurrentActivity(),
+                            applicationState = getApplicationState();
+                    if ((currentActivity == CityOfTwo.ACTIVITY_CONVERSATION &&
+                            applicationState == CityOfTwo.APPLICATION_BACKGROUND) ||
+                            currentActivity != CityOfTwo.ACTIVITY_CONVERSATION) {
 
-                        db.insertMessage(chatroomId, new Conversation(text, flags, time));
+                        Conversation c = new Conversation(text, flags, time);
+                        c.removeFlag(CityOfTwo.FLAG_SENT);
+                        c.addFlag(CityOfTwo.FLAG_RECEIVED);
+
+                        db.insertMessage(chatroomId, c);
+
+                        // If not current conversation then let BEGIN_CHAT handle it
+                        if (!chatroomId.equals(oldChatroomId)) return;
+
+                        if ((flags & CityOfTwo.FLAG_REVEAL) == CityOfTwo.FLAG_REVEAL)
+                            text = "Stranger shared their profile with you";
 
                         Intent notificationIntent = new Intent(this, ConversationActivity.class);
 
@@ -70,8 +81,19 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                                 PendingIntent.FLAG_UPDATE_CURRENT
                         );
 
-                        Notification n = new Notification.Builder(this)
-                                .setContentTitle("You have a message")
+                        if (messageCounter == null) messageCounter = 0;
+                        if (pendingMessages == null) pendingMessages = new ArrayList<>();
+                        pendingMessages.add(text);
+
+                        /* Add Big View Specific Configuration */
+                        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+                        // Sets a title for the Inbox style big view
+                        inboxStyle.setBigContentTitle("New messages");
+                        for (String message : pendingMessages) inboxStyle.addLine(message);
+
+                        Notification n = new NotificationCompat.Builder(this)
+                                .setContentTitle("You have new message")
+                                .setStyle(inboxStyle)
                                 .setContentText(text)
                                 .setNumber(++messageCounter)
                                 .setSmallIcon(R.drawable.ic_small)
@@ -80,17 +102,17 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                                 .setAutoCancel(true)
                                 .build();
 
-                        /* Add Big View Specific Configuration */
-                        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-                        // Sets a title for the Inbox style big view
-                        inboxStyle.setBigContentTitle("Messages:");
-                        inboxStyle.addLine(text);
+                        Log.i("Message Counter", String.valueOf(messageCounter));
 
                         n.defaults |= Notification.DEFAULT_SOUND;
                         n.defaults |= Notification.DEFAULT_VIBRATE;
 
                         nm.notify(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0, n);
                     } else {
+                        // If not current conversation then let BEGIN_CHAT handle it
+                        if (!chatroomId.equals(oldChatroomId)) return;
+
+                        messageCounter = 0;
                         intent.setAction(CityOfTwo.ACTION_NEW_MESSAGE);
 
                         intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
@@ -106,6 +128,7 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                     if (chatroomId == oldChatroomId) break;
                     String commonLikes = data.get(CityOfTwo.KEY_COMMON_LIKES);
                     messageCounter = 0;
+                    if (pendingMessages != null) pendingMessages.clear();
 
                     nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
 
@@ -121,7 +144,10 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                     }
                 }
                 break;
-                case CityOfTwo.KEY_CHAT_END:
+                case CityOfTwo.KEY_CHAT_END: {
+                    messageCounter = 0;
+                    if (pendingMessages != null) pendingMessages.clear();
+
                     if (getApplicationState() == APPLICATION_FOREGROUND) {
                         mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_END_CHAT));
                     }
@@ -133,6 +159,25 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                             .remove(CityOfTwo.KEY_CHATROOM_ID)
                             .apply();
                     break;
+                }
+                case CityOfTwo.KEY_USER_OFFLINE: {
+                    messageCounter = 0;
+                    if (pendingMessages != null) pendingMessages.clear();
+
+                    if (getApplicationState() == APPLICATION_FOREGROUND) {
+                        mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_USER_OFFLINE));
+                    }
+
+                    nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
+
+                    sharedPreferences.edit()
+                            .putBoolean(CityOfTwo.KEY_USER_OFFLINE, true)
+                            .remove(CityOfTwo.KEY_CHAT_PENDING)
+                            .remove(CityOfTwo.KEY_CHATROOM_ID)
+                            .apply();
+
+                    break;
+                }
                 default:
                     break;
             }

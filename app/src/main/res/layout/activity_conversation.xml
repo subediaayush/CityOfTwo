@@ -10,10 +10,10 @@
 
     <View
         android:id="@+id/snackbar_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
         android:layout_above="@+id/bottom_layout"
-        android:layout_below="@+id/conversation_toolbar" />
+        android:background="@color/colorPrimaryLight" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/conversation_listview"
@@ -41,28 +41,28 @@
             android:id="@+id/new_chat"
             style="@style/ChatOptionButtonLayout"
             android:onClick="newChat"
-            app:image="@drawable/ic_small"
+            app:image="@drawable/ic_new_chat"
             app:text="New Chat" />
 
         <com.messenger.cityoftwo.LabelledButtonLayout
             android:id="@+id/share_facebook"
             style="@style/ChatOptionButtonLayout"
             android:onClick="revealProfile"
-            app:image="@drawable/com_facebook_button_icon"
-            app:text="Share Facebook Profile" />
+            app:image="@drawable/ic_reveal"
+            app:text="Reveal" />
 
         <com.messenger.cityoftwo.LabelledButtonLayout
             android:id="@+id/apply_filter"
             style="@style/ChatOptionButtonLayout"
             android:onClick="applyFilter"
-            app:image="@drawable/ic_send"
+            app:image="@drawable/ic_filters"
             app:text="Apply Filters" />
 
         <com.messenger.cityoftwo.LabelledButtonLayout
             android:id="@+id/refer_button"
             style="@style/ChatOptionButtonLayout"
             android:onClick="referCoyRudy"
-            app:image="@drawable/ic_send"
+            app:image="@drawable/ic_refer"
             app:text="Share CoyRudy" />
     </LinearLayout>
 
@@ -103,11 +103,16 @@
         <EditText
             android:id="@+id/input_text"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
+            android:layout_height="48dp"
+            android:layout_margin="5dp"
             android:layout_weight="1"
+            android:background="@color/colorPrimaryLight"
+            android:gravity="center_vertical"
             android:hint="Enter your message"
-            android:imeOptions="actionSend" />
+            android:imeOptions="actionSend"
+            android:minLines="3"
+            android:padding="5dp"
+            android:textSize="15sp" />
 
         <ImageButton
             android:id="@+id/send_button"
@@ -115,6 +120,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_margin="5dp"
+            android:adjustViewBounds="true"
             android:background="@drawable/send_button_bg"
             android:src="@drawable/ic_send" />
 

@@ -124,12 +124,15 @@ public class CityOfTwo extends Application {
     public static final String SECURED_PREFERENCE = "com.messenger.cityoftwo.secured";
     public static final String ACTION_FCM_ID = "fcm_id";
     public static final String KEY_CHAT_HEADER = "chat_header";
+    public static final String KEY_USER_OFFLINE = "USER_OFFLINE";
+    public static final String ACTION_USER_OFFLINE = "user_offline";
     private static final String SENDER_ID = "584281533020";
     public static ArrayList<Conversation> mBackgroundConversation;
     public static Bitmap logoBitmap;
     public static Bitmap logoSmallBitmap;
     public static HashMap<String, Bitmap> answerBitmapList;
-
+    public static Integer messageCounter;
+    public static List<String> pendingMessages;
     private static Integer currentActivity;
     private static Integer applicationState;
 

@@ -42,7 +42,7 @@ public class ChatItemAnimator extends BaseItemAnimator {
 
     public ChatItemAnimator(float mTension, int mAddDuration, int mRemoveDuration) {
         this.mTension = mTension;
-        this.mAddDuration = mAddDuration;
+        this.mAddDuration = mAddDuration / 2;
         this.mRemoveDuration = mRemoveDuration;
     }
 
@@ -52,11 +52,12 @@ public class ChatItemAnimator extends BaseItemAnimator {
         View view = holder.itemView;
         ViewCompat.setScaleX(view, .01f);
         ViewCompat.setScaleY(view, .01f);
+
         try {
-            if (viewType == CityOfTwo.FLAG_RECEIVED) {
+            if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
                 ViewCompat.setPivotX(view, 0);
                 ViewCompat.setPivotY(view, 0);
-            } else if (viewType == CityOfTwo.FLAG_SENT) {
+            } else if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
                 ViewCompat.setPivotX(view, view.getWidth());
                 ViewCompat.setPivotY(view, view.getHeight());
             }
@@ -70,10 +71,10 @@ public class ChatItemAnimator extends BaseItemAnimator {
         int viewType = holder.getItemViewType();
         View view = holder.itemView;
         try {
-            if (viewType == CityOfTwo.FLAG_RECEIVED) {
+            if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
                 ViewCompat.setPivotX(view, 0);
                 ViewCompat.setPivotY(view, 0);
-            } else if (viewType == CityOfTwo.FLAG_SENT) {
+            } else if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
                 ViewCompat.setPivotX(view, view.getWidth());
                 ViewCompat.setPivotY(view, view.getHeight());
             }

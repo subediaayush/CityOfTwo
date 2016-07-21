@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.List;
 
 import static com.messenger.cityoftwo.CityOfTwo.KEY_CHATROOM_ID;
+import static com.messenger.cityoftwo.CityOfTwo.KEY_CHAT_PENDING;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_CODE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_COMMON_LIKES;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_DISTANCE;
@@ -53,7 +54,7 @@ import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_FEMALE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_MALE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MAX_AGE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MIN_AGE;
-import static com.messenger.cityoftwo.CityOfTwo.RESULT_EXIT_APP;
+import static com.messenger.cityoftwo.CityOfTwo.KEY_USER_OFFLINE;
 
 public class ConversationActivity extends AppCompatActivity {
     public static final String HOST = "http://192.168.100.1:5000";
@@ -80,7 +81,7 @@ public class ConversationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
 
-        Log.i("ConverstionActivity", "Activity Created");
+        Log.i("ConversationActivity", "Activity Created");
 
         mInputText = (EditText) findViewById(R.id.input_text);
         mSendButton = (ImageButton) findViewById(R.id.send_button);
@@ -232,9 +233,12 @@ public class ConversationActivity extends AppCompatActivity {
                         Conversation c = new Conversation(text, flags, time);
                         c.removeFlag(CityOfTwo.FLAG_SENT);
                         c.addFlag(CityOfTwo.FLAG_RECEIVED);
-                        mConversationList.add(mConversationList.size() - 1, c);
 
-                        mConversationAdapter.notifyItemInserted(mConversationList.indexOf(c));
+                        int insertPosition = mConversationList.size() - 1;
+
+                        mConversationList.add(insertPosition, c);
+
+                        mConversationAdapter.notifyItemInserted(insertPosition);
                         if (!mConversationAdapter.isLastVisible())
                             mConversationListView.smoothScrollToPosition(mConversationList.size());
                         break;
@@ -277,6 +281,14 @@ public class ConversationActivity extends AppCompatActivity {
                         mConversationAdapter.notifyDataSetChanged();
                         mConversationListView.smoothScrollToPosition(mConversationList.size());
                         break;
+                    }
+                    case CityOfTwo.ACTION_USER_OFFLINE: {
+                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                                .remove(CityOfTwo.KEY_CHAT_PENDING)
+                                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                                .apply();
+
+                        exitActivity(RESULT_CANCELED);
                     }
                 }
             }
@@ -734,8 +746,8 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
-        Log.i("ConverstionActivity", "Activity Paused");
-        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
+        Log.i("ConversationActivity", "Activity Paused");
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
@@ -744,7 +756,7 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        Log.i("ConverstionActivity", "Activity Resumed");
+        Log.i("ConversationActivity", "Activity Resumed");
         CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
         CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_CONVERSATION);
 
@@ -758,8 +770,35 @@ public class ConversationActivity extends AppCompatActivity {
         filter.addAction(CityOfTwo.ACTION_END_CHAT);
         LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
 
+        if (CityOfTwo.pendingMessages != null) CityOfTwo.pendingMessages.clear();
+        if (CityOfTwo.messageCounter != null) CityOfTwo.pendingMessages.clear();
+
 
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        Boolean userOffline = sp.getBoolean(KEY_USER_OFFLINE, false);
+        if (userOffline) {
+            sp.edit().remove(KEY_CHAT_PENDING)
+                    .remove(KEY_CHATROOM_ID)
+                    .apply();
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Timeout")
+                    .setMessage("Login again")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            exitActivity(RESULT_OK);
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            exitActivity(CityOfTwo.RESULT_EXIT_APP);
+                        }
+                    }).show();
+            return;
+        }
 
         String commonLikes = sp.getString(KEY_COMMON_LIKES, "");
         Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
@@ -795,21 +834,15 @@ public class ConversationActivity extends AppCompatActivity {
             mConversationAdapter.notifyDataSetChanged();
             mConversationListView.scrollToPosition(mConversationList.size());
         }
-
-        facebookLogin(new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                exitActivity(RESULT_EXIT_APP);
-            }
-        });
     }
 
     private void sendMessage(final Conversation bufferConv) {
         final String value = bufferConv.getText().replaceFirst("\\s+$", "");
+        int insertPosition = mConversationList.size() - 1;
 
-        mConversationList.add(mConversationList.size() - 1, bufferConv);
+        mConversationList.add(insertPosition, bufferConv);
 
-        mConversationAdapter.notifyItemInserted(mConversationList.indexOf(bufferConv));
+        mConversationAdapter.notifyItemInserted(insertPosition);
         if (!mConversationAdapter.isLastVisible())
             mConversationListView.smoothScrollToPosition(mConversationList.size());
 
@@ -954,8 +987,10 @@ public class ConversationActivity extends AppCompatActivity {
             void onSuccess(String response) {
                 try {
                     JSONObject j = new JSONObject(response);
-                    Boolean status = j.getBoolean("prasadi");
+                    Boolean status = j.getBoolean("parsadi");
                     if (!status) onFailure(-1);
+                    else getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                            .putBoolean(CityOfTwo.KEY_USER_OFFLINE, false).apply();
                 } catch (JSONException e) {
                     onFailure(-1);
                 }

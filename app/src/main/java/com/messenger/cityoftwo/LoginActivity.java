@@ -47,6 +47,11 @@ public class LoginActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_login);
 
+        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                .remove(CityOfTwo.KEY_COMMON_LIKES)
+                .remove(CityOfTwo.KEY_CHAT_PENDING)
+                .apply();
 
         if (BuildConfig.DEBUG) {
             try {
