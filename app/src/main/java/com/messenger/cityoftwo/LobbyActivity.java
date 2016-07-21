@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.facebook.AccessToken;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -67,6 +69,7 @@ public class LobbyActivity extends AppCompatActivity {
     LogoFadeFragment mImageFlipperFragment;
     private BackgroundAnimationFragment mBackgroundAnimationFragment;
     private TextView mWelcomeLabel;
+    private boolean tokenNotGenerated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,39 +85,36 @@ public class LobbyActivity extends AppCompatActivity {
         mImageFlipper = (FrameLayout) findViewById(R.id.lobby_image_flipper);
 
         mImageFlipperFragment = LogoFadeFragment.newInstance();
-        getSupportFragmentManager().beginTransaction()
+        FragmentManager fm = getSupportFragmentManager();
+        fm.beginTransaction()
                 .replace(R.id.lobby_image_flipper, mImageFlipperFragment)
                 .commit();
-
-        mBackgroundAnimationFragment = BackgroundAnimationFragment.newInstance();
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.lobby_background, mBackgroundAnimationFragment)
-                .commit();
+        fm.executePendingTransactions();
+//        mBackgroundAnimationFragment = BackgroundAnimationFragment.newInstance();
+//        getSupportFragmentManager().beginTransaction()
+//                .replace(R.id.lobby_background, mBackgroundAnimationFragment)
+//                .commit();
 
         if (savedInstanceState != null) {
             mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
-
             setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
         } else {
 
-            Bundle args = getIntent().getExtras();
+            final Bundle args = getIntent().getExtras();
+            mAccessToken = args.getParcelable(CityOfTwo.KEY_ACCESS_TOKEN);
 
-            mAccessToken = getIntent().getParcelableExtra(CityOfTwo.KEY_ACCESS_TOKEN);
+            final int initialX = args.getInt(CityOfTwo.KEY_LOCATION_X, -1),
+                    initialY = args.getInt(CityOfTwo.KEY_LOCATION_Y, -1),
+                    initialWidth = args.getInt(CityOfTwo.KEY_WIDTH, -1),
+                    initialHeight = args.getInt(CityOfTwo.KEY_HEIGHT, -1);
 
-            if (!args.getBoolean(CityOfTwo.KEY_FROM_INTRO, false)) {
+            ViewTreeObserver treeObserver = mImageFlipper.getViewTreeObserver();
+            treeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    mImageFlipper.getViewTreeObserver().removeOnPreDrawListener(this);
 
-
-                final int initialX = args.getInt(CityOfTwo.KEY_LOCATION_X),
-                        initialY = args.getInt(CityOfTwo.KEY_LOCATION_Y),
-                        initialWidth = args.getInt(CityOfTwo.KEY_WIDTH),
-                        initialHeight = args.getInt(CityOfTwo.KEY_HEIGHT);
-
-                ViewTreeObserver treeObserver = mImageFlipper.getViewTreeObserver();
-                treeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                    @Override
-                    public boolean onPreDraw() {
-                        mImageFlipper.getViewTreeObserver().removeOnPreDrawListener(this);
-
+                    if (!args.getBoolean(CityOfTwo.KEY_FROM_INTRO, false)) {
                         int[] location = new int[2];
                         mImageFlipper.getLocationOnScreen(location);
 
@@ -129,10 +129,16 @@ public class LobbyActivity extends AppCompatActivity {
 
                         startEnterAnimation();
 
-                        return true;
+                    } else {
+                        setStatus(BEGIN);
+//                        CityOfTwo.RegisterGCM(LobbyActivity.this);
+
+                        startAppLogic();
                     }
-                });
-            }
+                    return true;
+
+                }
+            });
         }
 
         mReloadButton = (ImageButton) findViewById(R.id.refresh_button);
@@ -146,25 +152,24 @@ public class LobbyActivity extends AppCompatActivity {
                 Log.i("LobbyReceiver", "Signal Received: " + action);
 
                 switch (action) {
-                    case CityOfTwo.PACKAGE_NAME: {
-                        String s = data.getString(CityOfTwo.KEY_TYPE, "");
+                    case CityOfTwo.ACTION_BEGIN_CHAT: {
+                        Intent conversationIntent = new Intent(LobbyActivity.this, ConversationActivity.class);
+                        startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
 
-                        if (s.equals("CHAT_BEGIN")) {
-                            Intent i = new Intent(LobbyActivity.this, ConversationActivity.class);
-                            i.putExtras(data);
-
-                            LocalBroadcastManager.getInstance(LobbyActivity.this).unregisterReceiver(mBroadcastReceiver);
-                            startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
-
-                            overridePendingTransition(
-                                    R.anim.slide_in_right,
-                                    R.anim.slide_out_left
-                            );
-                        }
+                        overridePendingTransition(
+                                R.anim.slide_in_right,
+                                R.anim.slide_out_left
+                        );
                         break;
                     }
-                    case CityOfTwo.KEY_MESSAGE: {
+                    case CityOfTwo.ACTION_NEW_MESSAGE: {
                         break;
+                    }
+                    case CityOfTwo.ACTION_FCM_ID: {
+                        if (tokenNotGenerated) {
+                            waitForServer();
+                            tokenNotGenerated = false;
+                        }
                     }
                 }
             }
@@ -321,7 +326,6 @@ public class LobbyActivity extends AppCompatActivity {
 
         LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
         b.unregisterReceiver(mBroadcastReceiver);
-        b.unregisterReceiver(mTestBroadcastReceiver);
 
         Log.i("LobbyActivity", "Activity paused");
         CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
@@ -331,19 +335,12 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
-        b.registerReceiver(
-                mBroadcastReceiver,
-                new IntentFilter(CityOfTwo.PACKAGE_NAME)
-        );
-        b.registerReceiver(
-                mBroadcastReceiver,
-                new IntentFilter(CityOfTwo.KEY_TEST_RESULT)
-        );
-        b.registerReceiver(
-                mBroadcastReceiver,
-                new IntentFilter(CityOfTwo.KEY_MESSAGE)
-        );
+        IntentFilter filter = new IntentFilter();
+
+        filter.addAction(CityOfTwo.ACTION_BEGIN_CHAT);
+        filter.addAction(CityOfTwo.ACTION_NEW_MESSAGE);
+        filter.addAction(CityOfTwo.ACTION_FCM_ID);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, filter);
 
         Log.i("LobbyActivity", "Activity Resumed");
         CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
@@ -353,23 +350,9 @@ public class LobbyActivity extends AppCompatActivity {
         Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
 
         if (chatPending) {
-            Intent i = new Intent(this, ConversationActivity.class);
-            i.putExtra(CityOfTwo.KEY_COMMON_LIKES, sp.getString(CityOfTwo.KEY_COMMON_LIKES, ""));
-            i.putExtra(CityOfTwo.KEY_TYPE, sp.getInt(CityOfTwo.KEY_TYPE, -1));
-            startActivityForResult(i, CityOfTwo.ACTIVITY_CONVERSATION);
+            Intent conversationIntent = new Intent(this, ConversationActivity.class);
+            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
         }
-
-        sp.edit().remove(CityOfTwo.KEY_CHAT_PENDING)
-                .remove(CityOfTwo.KEY_COMMON_LIKES)
-                .remove(CityOfTwo.KEY_TYPE)
-                .apply();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-
     }
 
     @Override
@@ -398,10 +381,15 @@ public class LobbyActivity extends AppCompatActivity {
                         Integer credits = Response.getInt(CityOfTwo.KEY_CREDITS);
                         Boolean filters_applied = Response.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED);
 
-                        SharedPreferences.Editor editor = getSharedPreferences(
-                                CityOfTwo.PACKAGE_NAME,
-                                MODE_PRIVATE
+                        SharedPreferences.Editor securedEditor = new SecurePreferences(
+                                LobbyActivity.this,
+                                CityOfTwo.SECURED_PREFERENCE
                         ).edit();
+
+                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+                                .edit().putString(CityOfTwo.KEY_SESSION_TOKEN, sessionToken)
+                                .putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, filters_applied)
+                                .apply();
 
                         if (filters_applied) {
                             JSONObject filters = Response.getJSONObject(CityOfTwo.KEY_FILTERS);
@@ -411,17 +399,14 @@ public class LobbyActivity extends AppCompatActivity {
                             Boolean matchMale = filters.getBoolean(CityOfTwo.KEY_MATCH_MALE);
                             Boolean matchFemale = filters.getBoolean(CityOfTwo.KEY_MATCH_FEMALE);
 
-                            editor.putInt(CityOfTwo.KEY_MIN_AGE, minAge)
+                            securedEditor.putInt(CityOfTwo.KEY_MIN_AGE, minAge)
                                     .putInt(CityOfTwo.KEY_MAX_AGE, maxAge)
                                     .putInt(CityOfTwo.KEY_DISTANCE, distance)
                                     .putBoolean(CityOfTwo.KEY_MATCH_MALE, matchMale)
                                     .putBoolean(CityOfTwo.KEY_MATCH_FEMALE, matchFemale);
                         }
-
-                        editor.putString(CityOfTwo.KEY_SESSION_TOKEN, sessionToken)
-                                .putString(CityOfTwo.KEY_CODE, uniqueCode)
+                        securedEditor.putString(CityOfTwo.KEY_CODE, uniqueCode)
                                 .putInt(CityOfTwo.KEY_CREDITS, credits)
-                                .putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, filters_applied)
                                 .apply();
 
                         int pool = Response.getInt("pool");
@@ -429,7 +414,9 @@ public class LobbyActivity extends AppCompatActivity {
                         if (pool != 0) {
                             waitForServer();
                         } else {
-                            startTest(Response.getString("test"));
+                            String testResult = String.valueOf(getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+                                    .getInt(CityOfTwo.KEY_TEST_RESULT, -1));
+                            submitTest(testResult);
                         }
 
                         // Modify code to adapt for testing phase
@@ -452,7 +439,7 @@ public class LobbyActivity extends AppCompatActivity {
             void onFailure(Integer status) {
                 setStatus(ERROR);
             }
-        };
+        }.execute();
     }
 
     private void startTest(final String test) {
@@ -528,10 +515,20 @@ public class LobbyActivity extends AppCompatActivity {
     }
 
     private void waitForServer() {
+        final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
         String broadcast_gcm = getString(R.string.url_broadcast_gcm),
                 header = CityOfTwo.HEADER_GCM_ID,
-                value = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                        .getString(CityOfTwo.KEY_REG_ID, "");
+                value = sharedPreferences.getString(CityOfTwo.KEY_REG_ID, "");
+
+        if (value.isEmpty()) {
+            value = FirebaseInstanceId.getInstance().getToken();
+            if (value == null) {
+                tokenNotGenerated = true;
+                Log.i("Lobby", "Token not yet genereted");
+                return;
+            }
+        }
 
         String[] Path = {CityOfTwo.API, broadcast_gcm};
 
@@ -561,8 +558,7 @@ public class LobbyActivity extends AppCompatActivity {
             }
         };
 
-        String token = "Token " + getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+        String token = "Token " + sharedPreferences.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
         BroadcastGCMHttpHandler.addHeader("Authorization", token);
         BroadcastGCMHttpHandler.execute();
@@ -765,6 +761,11 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (resultCode == CityOfTwo.RESULT_EXIT_APP) {
+            setResult(resultCode);
+            finish();
+        }
+
         switch (requestCode) {
             case CityOfTwo.ACTIVITY_INTRODUCTION: {
                 if (resultCode == RESULT_OK) {
@@ -788,13 +789,10 @@ public class LobbyActivity extends AppCompatActivity {
         revealView(mWelcomeLabel);
         revealView(mReloadButton);
         revealView(mLobbyProgressBar);
-        mImageFlipperFragment.startFlipping();
 
-        setLobbyDescription("");
-        setLobbyDescription("Setting up your profile");
         mLobbyDescription.setAlpha(1);
 
-        setStatus(LOGGED_IN);
+        setStatus(BEGIN);
         facebookLogin(mAccessToken);
     }
 }

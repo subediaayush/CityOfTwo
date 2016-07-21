@@ -4,12 +4,13 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.firebase.messaging.RemoteMessage;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
@@ -17,13 +18,13 @@ import static com.messenger.cityoftwo.CityOfTwo.APPLICATION_FOREGROUND;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MESSAGE;
 import static com.messenger.cityoftwo.CityOfTwo.getApplicationState;
 import static com.messenger.cityoftwo.CityOfTwo.getCurrentActivity;
-import static com.messenger.cityoftwo.CityOfTwo.mBackgroundConversation;
 
 /**
  * Created by Aayush on 7/16/2016.
  */
 public class FirebaseMessageHandler extends com.google.firebase.messaging.FirebaseMessagingService {
     private LocalBroadcastManager mBroadcaster;
+    private int messageCounter = 0;
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -31,41 +32,36 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
         if (mBroadcaster == null) mBroadcaster = LocalBroadcastManager.getInstance(this);
 
         try {
-            Log.i("GCM", "GCM Message received" + data);
+            Log.i("GCM", "GCM Message received " + data);
 
-            String messageType = (String) data.get(CityOfTwo.KEY_TYPE);
+            final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+            String messageType = data.get(CityOfTwo.KEY_TYPE);
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             Intent intent = new Intent();
             Integer chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID)),
-                    oldChatroomId = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                            .getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
+                    oldChatroomId = sharedPreferences.getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
+
+            DatabaseHelper db = new DatabaseHelper(this);
 
             switch (messageType) {
                 case KEY_MESSAGE: {
-                    String text = (String) data.get(CityOfTwo.KEY_TEXT);
+                    String text = data.get(CityOfTwo.KEY_TEXT);
                     Integer flags = Integer.parseInt(data.get(CityOfTwo.KEY_MESSAGE_FLAGS));
-                    Long time = Long.parseLong(data.get(CityOfTwo.KEY_TIME));
+                    Date time = new Date(Long.parseLong(data.get(CityOfTwo.KEY_TIME)));
 
-                    if (!chatroomId.equals(oldChatroomId)) {
-                        mBackgroundConversation.clear();
-                        return;
-                    }
+                    // If not current conversation then let BEGIN_CHAT handle it
+                    if (!chatroomId.equals(oldChatroomId)) return;
 
+                    // Current activity is not Conversation Activity
+                    // Current activity is Conversation Activty but is in background
                     if (getCurrentActivity() != CityOfTwo.ACTIVITY_CONVERSATION ||
                             (getCurrentActivity() == CityOfTwo.ACTIVITY_CONVERSATION &&
                                     getApplicationState() == CityOfTwo.APPLICATION_BACKGROUND)) {
 
-                        if (mBackgroundConversation == null)
-                            mBackgroundConversation = new ArrayList<>();
-
+                        db.insertMessage(chatroomId, new Conversation(text, flags, time));
 
                         Intent notificationIntent = new Intent(this, ConversationActivity.class);
-
-                        mBackgroundConversation.add(new Conversation(
-                                text,
-                                flags,
-                                new Date(time)
-                        ));
 
                         PendingIntent p = PendingIntent.getActivity(
                                 this,
@@ -77,88 +73,71 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                         Notification n = new Notification.Builder(this)
                                 .setContentTitle("You have a message")
                                 .setContentText(text)
+                                .setNumber(++messageCounter)
                                 .setSmallIcon(R.drawable.ic_small)
                                 .setContentIntent(p)
                                 .setPriority(Notification.PRIORITY_HIGH)
                                 .setAutoCancel(true)
                                 .build();
 
+                        /* Add Big View Specific Configuration */
+                        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+                        // Sets a title for the Inbox style big view
+                        inboxStyle.setBigContentTitle("Messages:");
+                        inboxStyle.addLine(text);
+
                         n.defaults |= Notification.DEFAULT_SOUND;
                         n.defaults |= Notification.DEFAULT_VIBRATE;
 
-                        nm.notify("CHAT_NOTIFICATION", 0, n);
+                        nm.notify(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0, n);
                     } else {
-                        intent.setAction(CityOfTwo.PACKAGE_NAME);
+                        intent.setAction(CityOfTwo.ACTION_NEW_MESSAGE);
 
                         intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
                         intent.putExtra(CityOfTwo.KEY_TEXT, text);
                         intent.putExtra(CityOfTwo.KEY_MESSAGE_FLAGS, flags);
-                        intent.putExtra(CityOfTwo.KEY_TIME, time);
-                        intent.putExtra(CityOfTwo.KEY_CHATROOM_ID, chatroomId);
+                        intent.putExtra(CityOfTwo.KEY_TIME, time.getTime());
 
                         mBroadcaster.sendBroadcast(intent);
                     }
                     break;
                 }
                 case CityOfTwo.KEY_CHAT_BEGIN: {
+                    if (chatroomId == oldChatroomId) break;
                     String commonLikes = data.get(CityOfTwo.KEY_COMMON_LIKES);
-                    if ((getCurrentActivity() == CityOfTwo.ACTIVITY_LOBBY ||
-                            getCurrentActivity() == CityOfTwo.ACTIVITY_CONVERSATION) &&
-                            (getApplicationState() == APPLICATION_FOREGROUND)) {
+                    messageCounter = 0;
 
-                        intent = new Intent();
-                        intent.setAction(CityOfTwo.PACKAGE_NAME);
-                        intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
-                        intent.putExtra(CityOfTwo.KEY_COMMON_LIKES, commonLikes);
+                    nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
 
+                    sharedPreferences.edit()
+                            .putBoolean(CityOfTwo.KEY_CHAT_PENDING, true)
+                            .putString(CityOfTwo.KEY_COMMON_LIKES, commonLikes)
+                            .putInt(CityOfTwo.KEY_CHATROOM_ID, chatroomId)
+                            .apply();
 
-                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                                .edit()
-                                .putBoolean(CityOfTwo.KEY_CHAT_PENDING, true)
-                                .putString(CityOfTwo.KEY_COMMON_LIKES, commonLikes)
-                                .putString(CityOfTwo.KEY_TYPE, messageType)
-                                .putInt(CityOfTwo.KEY_CHATROOM_ID, chatroomId)
-                                .apply();
-
-                        if (chatroomId != oldChatroomId) {
-                            if (mBackgroundConversation == null)
-                                mBackgroundConversation = new ArrayList<>();
-                            mBackgroundConversation.clear();
-                        }
-
+                    if (getApplicationState() == APPLICATION_FOREGROUND) {
+                        intent = new Intent(CityOfTwo.ACTION_BEGIN_CHAT);
                         mBroadcaster.sendBroadcast(intent);
-                    } else {
-                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                                .edit()
-                                .putBoolean(CityOfTwo.KEY_CHAT_PENDING, true)
-                                .putString(CityOfTwo.KEY_COMMON_LIKES, commonLikes)
-                                .putInt(CityOfTwo.KEY_CHATROOM_ID, chatroomId)
-                                .apply();
                     }
                 }
                 break;
                 case CityOfTwo.KEY_CHAT_END:
                     if (getApplicationState() == APPLICATION_FOREGROUND) {
-                        mBroadcaster.sendBroadcast(new Intent());
+                        mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_END_CHAT));
                     }
-                    getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                            .edit()
+
+                    nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
+
+                    sharedPreferences.edit()
                             .remove(CityOfTwo.KEY_CHAT_PENDING)
                             .remove(CityOfTwo.KEY_CHATROOM_ID)
-                            .remove(CityOfTwo.KEY_COMMON_LIKES)
                             .apply();
                     break;
                 default:
-                    Log.i("GCM", "GCM Message received" + data);
                     break;
             }
         } catch (Exception e) {
-            Log.i("GCM", "GCM Message received" + data);
             Log.e("GCM Exception", e.toString(), e);
         }
-
-        Log.i("FCM Message Received", remoteMessage.getData().toString());
-
-
     }
 }

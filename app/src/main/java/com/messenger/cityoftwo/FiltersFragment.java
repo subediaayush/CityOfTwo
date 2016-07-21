@@ -82,14 +82,16 @@ public class FiltersFragment extends DialogFragment {
     private View createView(final Context context) {
         View view = getActivity().getLayoutInflater().inflate(R.layout.layout_apply_filter, null);
 
-        SharedPreferences sp = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE);
-        credits = sp.getInt(CityOfTwo.KEY_CREDITS, 0);
+        SharedPreferences securePreferences = new SecurePreferences(context, CityOfTwo.SECURED_PREFERENCE);
+        SharedPreferences sharedPreferences = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE);
+
+        credits = securePreferences.getInt(CityOfTwo.KEY_CREDITS, 0);
         Switch filterToggle = (Switch) view.findViewById(R.id.filter_enable_switch);
 
-        enableFilters = sp.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED, false);
+        enableFilters = sharedPreferences.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED, false);
         if (credits == 0) {
             enableFilters = false;
-            sp.edit().putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, false);
+            securePreferences.edit().putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, false).apply();
         }
 
         final View filtersContainer = view.findViewById(R.id.filters_container);
@@ -102,8 +104,8 @@ public class FiltersFragment extends DialogFragment {
         final RangeBar ageRange = (RangeBar) view.findViewById(R.id.filter_age_range);
         ageRange.setDrawTicks(false);
 
-        Switch maleSwitch = (Switch) view.findViewById(R.id.filter_male_switch);
-        Switch femaleSwitch = (Switch) view.findViewById(R.id.filter_female_switch);
+        final Switch maleSwitch = (Switch) view.findViewById(R.id.filter_male_switch);
+        final Switch femaleSwitch = (Switch) view.findViewById(R.id.filter_female_switch);
 
         final RangeBar distanceRange = (RangeBar) view.findViewById(R.id.filter_distance_bar);
         distanceRange.setDrawTicks(false);
@@ -112,24 +114,24 @@ public class FiltersFragment extends DialogFragment {
         RadioGroup unitChooser = (RadioGroup) view.findViewById(R.id.filter_distance_unit);
 
         minimumAge = Math.max(
-                sp.getInt(CityOfTwo.KEY_MIN_AGE, 0),
+                securePreferences.getInt(CityOfTwo.KEY_MIN_AGE, 0),
                 CityOfTwo.MINIMUM_AGE
         );
         maximumAge = Math.min(
-                sp.getInt(CityOfTwo.KEY_MAX_AGE, CityOfTwo.MAXIMUM_AGE),
+                securePreferences.getInt(CityOfTwo.KEY_MAX_AGE, CityOfTwo.MAXIMUM_AGE),
                 CityOfTwo.MAXIMUM_AGE
         );
 
         maximumDistance = Math.min(
-                sp.getInt(CityOfTwo.KEY_DISTANCE, CityOfTwo.MAXIMUM_DISTANCE),
+                securePreferences.getInt(CityOfTwo.KEY_DISTANCE, CityOfTwo.MAXIMUM_DISTANCE),
                 CityOfTwo.MAXIMUM_DISTANCE
         );
 //        floatingDistance = Float.valueOf(maximumDistance);
 
-        matchMale = sp.getBoolean(CityOfTwo.KEY_MATCH_MALE, true);
-        matchFemale = sp.getBoolean(CityOfTwo.KEY_MATCH_FEMALE, true);
+        matchMale = securePreferences.getBoolean(CityOfTwo.KEY_MATCH_MALE, true);
+        matchFemale = securePreferences.getBoolean(CityOfTwo.KEY_MATCH_FEMALE, true);
 
-        distanceInMiles = sp.getBoolean(CityOfTwo.KEY_DISTANCE_IN_MILES, false);
+        distanceInMiles = securePreferences.getBoolean(CityOfTwo.KEY_DISTANCE_IN_MILES, false);
 
 //        minAge.setText(String.valueOf(minimumAge));
 //        maxAge.setText(String.valueOf(maximumAge));
@@ -183,6 +185,19 @@ public class FiltersFragment extends DialogFragment {
                 } else {
                     enableFilters = isChecked;
                     enableDisableView(filtersContainer, enableFilters);
+                    if (isChecked) {
+                        minimumAge = CityOfTwo.MINIMUM_AGE;
+                        maximumAge = CityOfTwo.MAXIMUM_AGE;
+                        maximumDistance = CityOfTwo.MAXIMUM_DISTANCE;
+                        matchMale = true;
+                        matchFemale = true;
+                    } else {
+                        minimumAge = ageRange.getLeftIndex() + CityOfTwo.MINIMUM_AGE;
+                        maximumAge = ageRange.getRightIndex() + CityOfTwo.MINIMUM_AGE;
+                        maximumDistance = distanceRange.getRightIndex() * (distanceInMiles ? 5 : 8) / 8;
+                        matchMale = maleSwitch.isChecked();
+                        matchFemale = femaleSwitch.isChecked();
+                    }
                 }
             }
         });

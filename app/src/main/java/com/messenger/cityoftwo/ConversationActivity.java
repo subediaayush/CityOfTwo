@@ -26,18 +26,23 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.login.widget.ProfilePictureView;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static com.messenger.cityoftwo.CityOfTwo.KEY_CHATROOM_ID;
@@ -48,7 +53,7 @@ import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_FEMALE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_MALE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MAX_AGE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MIN_AGE;
-import static com.messenger.cityoftwo.CityOfTwo.mBackgroundConversation;
+import static com.messenger.cityoftwo.CityOfTwo.RESULT_EXIT_APP;
 
 public class ConversationActivity extends AppCompatActivity {
     public static final String HOST = "http://192.168.100.1:5000";
@@ -75,6 +80,8 @@ public class ConversationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
 
+        Log.i("ConverstionActivity", "Activity Created");
+
         mInputText = (EditText) findViewById(R.id.input_text);
         mSendButton = (ImageButton) findViewById(R.id.send_button);
         mConversationListView = (RecyclerView) findViewById(R.id.conversation_listview);
@@ -87,7 +94,8 @@ public class ConversationActivity extends AppCompatActivity {
 
         mLogoImage = (ImageView) findViewById(R.id.coyrudy_logo);
 
-        mLogoImage.setImageBitmap(CityOfTwo.logoBitmap);
+        if (CityOfTwo.logoBitmap != null) mLogoImage.setImageBitmap(CityOfTwo.logoBitmap);
+        else Picasso.with(this).load(R.drawable.mipmap_1).into(mLogoImage);
 
 
 //        mConnectionIndicatorView = findViewById(R.id.network_indicator);
@@ -103,13 +111,14 @@ public class ConversationActivity extends AppCompatActivity {
 
         mConversationListView.setItemAnimator(itemAnimator);
 
-        setupChatWindow(getIntent().getExtras());
-
         mConversationListView.setAdapter(mConversationAdapter);
 
         final LinearLayoutManager l = new LinearLayoutManager(this);
         l.setStackFromEnd(true);
         mConversationListView.setLayoutManager(l);
+
+        mConversationList.add(new Conversation("CHAT_BEGIN", CityOfTwo.FLAG_START));
+        mConversationList.add(new Conversation("CHAT_END", CityOfTwo.FLAG_END));
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -121,9 +130,10 @@ public class ConversationActivity extends AppCompatActivity {
 
                 if (!bufferText.isEmpty()) {
                     mInputText.setText("");
-                    Conversation conversation = new Conversation(bufferText);
-                    conversation.addFlag(CityOfTwo.FLAG_SENT);
-                    conversation.addFlag(CityOfTwo.FLAG_TEXT);
+                    Conversation conversation = new Conversation(
+                            bufferText,
+                            CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT
+                    );
                     sendMessage(conversation);
                 }
             }
@@ -208,48 +218,61 @@ public class ConversationActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 Bundle data = intent.getExtras();
 
-                String message = data.getString(CityOfTwo.KEY_TYPE);
+                String action = intent.getAction();
 
-                Log.i("ConversationReceiver", "Signal Received: " + message);
+                Log.i("ConversationReceiver", "Signal Received: " + action);
 
-                switch (message) {
-                    case CityOfTwo.KEY_MESSAGE: {
+                switch (action) {
+                    case CityOfTwo.ACTION_NEW_MESSAGE: {
+
                         String text = data.getString(CityOfTwo.KEY_TEXT);
-                        Integer flags = Integer.parseInt(data.getString(CityOfTwo.KEY_MESSAGE_FLAGS));
-                        Long time = Long.parseLong(data.getString(CityOfTwo.KEY_TIME, "0"));
-                        Conversation c = new Conversation(text);
-                        c.setFlag(flags);
+                        Integer flags = data.getInt(CityOfTwo.KEY_MESSAGE_FLAGS);
+                        Date time = new Date(data.getLong(CityOfTwo.KEY_TIME, 0));
+
+                        Conversation c = new Conversation(text, flags, time);
                         c.removeFlag(CityOfTwo.FLAG_SENT);
                         c.addFlag(CityOfTwo.FLAG_RECEIVED);
-
                         mConversationList.add(mConversationList.size() - 1, c);
 
                         mConversationAdapter.notifyItemInserted(mConversationList.indexOf(c));
-                        mConversationListView.smoothScrollToPosition(mConversationList.size());
+                        if (!mConversationAdapter.isLastVisible())
+                            mConversationListView.smoothScrollToPosition(mConversationList.size());
                         break;
                     }
-                    case "END_CHAT": {
+                    case CityOfTwo.ACTION_END_CHAT: {
                         mInputText.getText().clear();
                         mInputText.setEnabled(false);
 
-                        Conversation c = new Conversation("", CityOfTwo.FLAG_CHAT_END);
-
-                        mConversationList.add(mConversationList.size() - 1, c);
-                        mConversationAdapter.notifyItemInserted(mConversationList.indexOf(c));
-                        mConversationListView.smoothScrollToPosition(mConversationList.size());
+                        new AlertDialog.Builder(ConversationActivity.this)
+                                .setTitle("Stranger has left the chat")
+                                .setMessage("Start a new chat")
+                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        startNewChat();
+                                    }
+                                })
+                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        exitActivity(CityOfTwo.RESULT_EXIT_APP);
+                                    }
+                                });
                         break;
                     }
-                    case "BEGIN_CHAT": {
+                    case CityOfTwo.ACTION_BEGIN_CHAT: {
                         mInputText.getText().clear();
                         mInputText.setEnabled(true);
 
-                        mConversationList.clear();
-                        getIntent().putExtras(data);
+                        SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+                        String commonLikes = sp.getString(KEY_COMMON_LIKES, "");
+
+                        sp.edit().putBoolean(CityOfTwo.KEY_CHAT_PENDING, false).apply();
 
                         if (mConversationAdapter.isWaiting())
                             mConversationAdapter.hideWaitingDialog();
 
-                        setupChatWindow(data);
+                        setupNewChatWindow(commonLikes);
 
                         mConversationAdapter.notifyDataSetChanged();
                         mConversationListView.smoothScrollToPosition(mConversationList.size());
@@ -268,32 +291,40 @@ public class ConversationActivity extends AppCompatActivity {
             }
         });
 
+        restoreActivity(savedInstanceState);
+
         sendBeginChatSignal();
     }
 
-    private void setupChatWindow(Bundle data) {
+    private void exitActivity(int resultExitApp) {
+        setResult(resultExitApp);
+        finish();
+    }
+
+    private void setupNewChatWindow(String headerText) {
+        mConversationList.clear();
         mConversationList.add(new Conversation("CHAT_BEGIN", CityOfTwo.FLAG_START));
         mConversationList.add(new Conversation("CHAT_END", CityOfTwo.FLAG_END));
 
         String likeMessage = "";
-        if (data != null) {
-            String[] likes = data.getString(CityOfTwo.KEY_COMMON_LIKES, "").split("\\, ");
-            int totalLikes = likes.length;
-            if (totalLikes > 0) {
-                StringBuilder likeMessageBuilder = new StringBuilder();
-                for (int i = 0; i < totalLikes; i++) {
-                    likeMessageBuilder.append(likes[i]);
-                    if (i + 2 < totalLikes)
-                        likeMessageBuilder.append(", ");
-                    else if (i + 2 == totalLikes)
-                        likeMessageBuilder.append(" and ");
-                    else
-                        likeMessageBuilder.append(".");
-                }
-                likeMessage = likeMessageBuilder.toString();
+        String[] likes = headerText.split("\\, ");
+        int totalLikes = likes.length;
+        if (totalLikes > 0) {
+            StringBuilder likeMessageBuilder = new StringBuilder();
+            for (int i = 0; i < totalLikes; i++) {
+                likeMessageBuilder.append(likes[i]);
+                if (i + 2 < totalLikes)
+                    likeMessageBuilder.append(", ");
+                else if (i + 2 == totalLikes)
+                    likeMessageBuilder.append(" and ");
+                else
+                    likeMessageBuilder.append(".");
             }
+            likeMessage = likeMessageBuilder.toString();
         }
+
         mConversationAdapter.setHeaderText(likeMessage);
+        mConversationAdapter.notifyDataSetChanged();
     }
 
     public void newChat(View view) {
@@ -322,12 +353,32 @@ public class ConversationActivity extends AppCompatActivity {
     public void revealProfile(View view) {
         hideOptions();
 
+        final SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        Boolean showDialog = sp.getBoolean(CityOfTwo.KEY_SHOW_REVEAL_DIALOG, true);
+
+        if (!showDialog) {
+            revealProfile();
+            return;
+        }
+
         AlertDialog.Builder adb = new AlertDialog.Builder(this);
         adb.setTitle("Reveal Profile");
 
         View profileView = getLayoutInflater().inflate(R.layout.layout_reveal_profile, null);
         ProfilePictureView profileImageView = (ProfilePictureView) profileView.findViewById(R.id.message_profile_image);
         TextView profileTextView = (TextView) profileView.findViewById(R.id.message_profile_name);
+        CheckBox profileCheckBox = (CheckBox) profileView.findViewById(R.id.donot_show_dialog);
+
+        profileCheckBox.setChecked(!showDialog);
+
+        profileCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                sp.edit().putBoolean(CityOfTwo.KEY_SHOW_REVEAL_DIALOG, !isChecked)
+                        .apply();
+            }
+        });
 
         Profile userProfile = Profile.getCurrentProfile();
 
@@ -339,24 +390,28 @@ public class ConversationActivity extends AppCompatActivity {
         adb.setPositiveButton("Share", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                JSONObject revealProfile = new JSONObject();
-                try {
-                    Profile currentProfile = Profile.getCurrentProfile();
-                    revealProfile.put(CityOfTwo.KEY_PROFILE_NAME, currentProfile.getName());
-                    revealProfile.put(CityOfTwo.KEY_PROFILE_ID, currentProfile.getId());
-
-                    Conversation conversation = new Conversation(revealProfile.toString());
-                    conversation.addFlag(CityOfTwo.FLAG_SENT);
-                    conversation.addFlag(CityOfTwo.FLAG_REVEAL);
-
-                    sendMessage(conversation);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                revealProfile();
             }
         });
         adb.show();
 
+    }
+
+    private void revealProfile() {
+        JSONObject revealProfile = new JSONObject();
+        try {
+            Profile currentProfile = Profile.getCurrentProfile();
+            revealProfile.put(CityOfTwo.KEY_PROFILE_NAME, currentProfile.getName());
+            revealProfile.put(CityOfTwo.KEY_PROFILE_ID, currentProfile.getId());
+
+            Conversation conversation = new Conversation(revealProfile.toString());
+            conversation.addFlag(CityOfTwo.FLAG_SENT);
+            conversation.addFlag(CityOfTwo.FLAG_REVEAL);
+
+            sendMessage(conversation);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void applyFilter(View view) {
@@ -385,6 +440,8 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     public void sendFilters(final JSONObject filters) {
+        final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
         String send_message = getString(R.string.url_send_filter);
 
         String[] Path = {CityOfTwo.API, send_message};
@@ -406,7 +463,7 @@ public class ConversationActivity extends AppCompatActivity {
                         Boolean matchFemale = filters.getBoolean(KEY_MATCH_FEMALE),
                                 matchMale = filters.getBoolean(KEY_MATCH_MALE);
 
-                        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+                        sharedPreferences.edit()
                                 .putInt(CityOfTwo.KEY_MIN_AGE, minimumAge)
                                 .putInt(CityOfTwo.KEY_MAX_AGE, maximumAge)
                                 .putInt(CityOfTwo.KEY_DISTANCE, maximumDistance)
@@ -463,8 +520,7 @@ public class ConversationActivity extends AppCompatActivity {
             }
         };
 
-        String token = "Token " + getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE)
-                .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+        String token = "Token " + sharedPreferences.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
         filterHttpHandler.addHeader("Authorization", token);
         filterHttpHandler.execute();
@@ -481,7 +537,7 @@ public class ConversationActivity extends AppCompatActivity {
                 .inflate(R.layout.layout_share_coyrudy, null);
         TextView linkTextView = (TextView) referCoyRudyView.findViewById(R.id.coyrudy_link);
 
-        String uniqueCode = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+        String uniqueCode = new SecurePreferences(this, CityOfTwo.SECURED_PREFERENCE)
                 .getString(KEY_CODE, "");
 
         final String shareText = getString(R.string.url_share_coyrudy) + uniqueCode;
@@ -507,7 +563,7 @@ public class ConversationActivity extends AppCompatActivity {
         targetedApps.add("com.twitter.android");
         targetedApps.add("com.google.android.apps.plus");
 
-        List<LabeledIntent> shareIntentList = new ArrayList<LabeledIntent>();
+        List<LabeledIntent> shareIntentList = new ArrayList<>();
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
 
@@ -634,20 +690,44 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        String headerText = mConversationAdapter.getHeaderText();
+
+        if (!mConversationList.isEmpty()) {
+            ArrayList<String> textList = new ArrayList<>();
+            for (Conversation c : mConversationList) {
+                textList.add(c.toString());
+            }
+            outState.putStringArrayList(CityOfTwo.KEY_CURRENT_CHAT, textList);
+            outState.putString(CityOfTwo.KEY_CHAT_HEADER, headerText);
+        }
+
+        Log.i("Conversation Activity", "Instance Saved");
+
+    }
+
+    @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
+        restoreActivity(savedInstanceState);
+        Log.i("Conversation Activity", "Instance Restored");
+    }
+
+    protected void restoreActivity(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             ArrayList<String> textList = savedInstanceState.getStringArrayList(CityOfTwo.KEY_CURRENT_CHAT);
-            mConversationList.clear();
+            String headerText = savedInstanceState.getString(CityOfTwo.KEY_CHAT_HEADER);
+
+            if (textList == null) textList = new ArrayList<>();
+
             for (String text : textList)
                 mConversationList.add(new Conversation(text));
-        }
 
-        mConversationAdapter.notifyDataSetChanged();
-        mConversationListView.scrollToPosition(
-                mConversationList.size()
-        );
+            mConversationAdapter.setHeaderText(headerText);
+        }
     }
 
     @Override
@@ -669,61 +749,69 @@ public class ConversationActivity extends AppCompatActivity {
         CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_CONVERSATION);
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        nm.cancel("CHAT_NOTIFICATION", 0);
-
-        if (mBackgroundConversation == null)
-            mBackgroundConversation = new ArrayList<>();
-
-        SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-
-        Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
-
-        if (chatPending) {
-            mConversationList.clear();
-            mBackgroundConversation.clear();
-
-            String commonLikes = sp.getString(KEY_COMMON_LIKES, "");
-            Integer chatroomId = sp.getInt(KEY_CHATROOM_ID, -1);
-            Bundle data = new Bundle();
-            data.putString(KEY_COMMON_LIKES, commonLikes);
-            setupChatWindow(data);
-            sp.edit().putBoolean(CityOfTwo.KEY_CHAT_PENDING, false).apply();
-        }
-
-        mConversationList.addAll(mConversationList.size() - 1, mBackgroundConversation);
-        mConversationAdapter.notifyDataSetChanged();
-        mBackgroundConversation.clear();
+        nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
 
         IntentFilter filter = new IntentFilter();
 
-        filter.addAction(CityOfTwo.PACKAGE_NAME);
+        filter.addAction(CityOfTwo.ACTION_NEW_MESSAGE);
+        filter.addAction(CityOfTwo.ACTION_BEGIN_CHAT);
+        filter.addAction(CityOfTwo.ACTION_END_CHAT);
         LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
-    }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
 
-        if (!mConversationList.isEmpty()) {
-            ArrayList<String> textList = new ArrayList<>();
-            for (Conversation c : mConversationList) {
-                textList.add(c.toString());
+        SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        String commonLikes = sp.getString(KEY_COMMON_LIKES, "");
+        Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
+        Integer chatRoomId = sp.getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
+
+        if (chatRoomId == -1) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Stranger has left the chat")
+                    .setMessage("Start a new chat")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startNewChat();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            setResult(CityOfTwo.RESULT_EXIT_APP);
+                            finish();
+                        }
+                    });
+        } else {
+            DatabaseHelper db = new DatabaseHelper(this);
+            ArrayList<Conversation> pendingMessages = db.retrieveMessages(chatRoomId);
+            db.clearTable(chatRoomId);
+
+            if (chatPending) {
+                sp.edit().putBoolean(CityOfTwo.KEY_CHAT_PENDING, false).apply();
+                setupNewChatWindow(commonLikes);
             }
-            outState.putStringArrayList(CityOfTwo.KEY_CURRENT_CHAT, textList);
-            outState.putInt(CityOfTwo.KEY_CURRENT_CHAT_ID, mConversationID);
+            mConversationList.addAll(mConversationList.size() - 1, pendingMessages);
+            mConversationAdapter.notifyDataSetChanged();
+            mConversationListView.scrollToPosition(mConversationList.size());
         }
 
-
+        facebookLogin(new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                exitActivity(RESULT_EXIT_APP);
+            }
+        });
     }
 
     private void sendMessage(final Conversation bufferConv) {
+        final String value = bufferConv.getText().replaceFirst("\\s+$", "");
+
         mConversationList.add(mConversationList.size() - 1, bufferConv);
 
         mConversationAdapter.notifyItemInserted(mConversationList.indexOf(bufferConv));
-        mConversationListView.smoothScrollToPosition(mConversationList.size());
-
-        final String value = bufferConv.getText().replaceFirst("\\s+$", "");
+        if (!mConversationAdapter.isLastVisible())
+            mConversationListView.smoothScrollToPosition(mConversationList.size());
 
         JSONObject params = new JSONObject();
         try {
@@ -736,80 +824,82 @@ public class ConversationActivity extends AppCompatActivity {
 
         String send_message = getString(R.string.url_send_message);
 
-        if (!value.isEmpty()) {
-            String[] Path = {CityOfTwo.API, send_message};
 
-            mHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, params) {
-                @Override
-                protected void onPreRun() {
-                }
+        String[] Path = {CityOfTwo.API, send_message};
 
-                @Override
-                protected void onSuccess(String response) {
-                    try {
-                        JSONObject Response = new JSONObject(response);
+        mHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, params) {
+            @Override
+            protected void onPreRun() {
+            }
 
-                        Boolean status = Response.getBoolean("parsadi");
+            @Override
+            protected void onSuccess(String response) {
+                try {
+                    JSONObject Response = new JSONObject(response);
 
-                        if (!status) onFailure(getResponseStatus());
+                    Boolean status = Response.getBoolean("parsadi");
 
-                    } catch (Exception e) {
+                    if (!status)
                         onFailure(getResponseStatus());
-                        e.printStackTrace();
-                    }
-                }
+                    else
+                        Log.i("Conversation activity", "Message sent successfully");
 
-                @Override
-                protected void onFailure(Integer status) {
+                } catch (Exception e) {
+                    onFailure(getResponseStatus());
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            protected void onFailure(Integer status) {
 //                    Toast.makeText(ConversationActivity.this, "Message couldnot be sent." +
 //                            " Please try again later", Toast.LENGTH_SHORT).show();
 
-                    final Snackbar s = Snackbar.make(
-                            mConversationListView,
-                            "Your message was not sent!",
-                            Snackbar.LENGTH_SHORT
-                    );
+                final Snackbar s = Snackbar.make(
+                        mConversationListView,
+                        "Your message was not sent!",
+                        Snackbar.LENGTH_SHORT
+                );
 
-                    s.setAction("Try Again", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Conversation newConversation = new Conversation(bufferConv.getText(), bufferConv.getFlags());
-                            sendMessage(newConversation);
-                        }
-                    });
-                    View view = s.getView();
-                    view.setBackgroundColor(ContextCompat.getColor(
-                            ConversationActivity.this,
-                            R.color.colorSnackBarError
-                    ));
-
-                    view.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            s.dismiss();
-                        }
-                    });
-
-                    s.setActionTextColor(ContextCompat.getColor(
-                            ConversationActivity.this,
-                            R.color.colorSnackBarText
-                    ));
-
-                    s.show();
-
-                    if (!BuildConfig.DEBUG) {
-                        mConversationList.remove(bufferConv);
-                        mConversationAdapter.notifyDataSetChanged();
+                s.setAction("Try Again", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Conversation newConversation = new Conversation(bufferConv.getText(), bufferConv.getFlags());
+                        sendMessage(newConversation);
                     }
+                });
+                View view = s.getView();
+                view.setBackgroundColor(ContextCompat.getColor(
+                        ConversationActivity.this,
+                        R.color.colorSnackBarError
+                ));
+
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        s.dismiss();
+                    }
+                });
+
+                s.setActionTextColor(ContextCompat.getColor(
+                        ConversationActivity.this,
+                        R.color.colorSnackBarText
+                ));
+
+                s.show();
+
+                if (!BuildConfig.DEBUG) {
+                    mConversationList.remove(bufferConv);
+                    mConversationAdapter.notifyDataSetChanged();
                 }
-            };
+            }
+        };
 
-            String token = "Token " + getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                    .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+        String token = "Token " + getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+                .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
-            mHttpHandler.addHeader("Authorization", token);
-            mHttpHandler.execute();
-        }
+        mHttpHandler.addHeader("Authorization", token);
+        mHttpHandler.execute();
     }
 
     @Override
@@ -829,38 +919,63 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     private void endCurrentChat() {
+        final SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
         String dump_chat = getString(R.string.url_chat_end);
 
         JSONObject j = new JSONObject();
         try {
-            j.put(CityOfTwo.HEADER_CHATROOM_ID, getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                    .getInt(KEY_CHATROOM_ID, -1));
+            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_CHATROOM_ID, -1));
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         String[] Path = {CityOfTwo.API, dump_chat};
 
-        HttpHandler endChatHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, j) {
+        HttpHandler dumpHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, j) {
             @Override
             protected void onPostExecute() {
-                getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                        .edit()
+                sp.edit()
                         .remove(CityOfTwo.KEY_CHATROOM_ID)
                         .apply();
             }
         };
 
-        String token = "Token " + getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
-        endChatHttpHandler.addHeader("Authorization", token);
+        String token = "Token " + sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+        dumpHttpHandler.addHeader("Authorization", token);
 
-        endChatHttpHandler.execute();
+        dumpHttpHandler.execute();
     }
 
+    public void facebookLogin(final DialogInterface.OnClickListener clickListener) {
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
 
-    @Override
-    protected void onStop() {
-        super.onStop();
+        final FacebookLogin facebookLogin = new FacebookLogin(this, accessToken) {
+            @Override
+            void onSuccess(String response) {
+                try {
+                    JSONObject j = new JSONObject(response);
+                    Boolean status = j.getBoolean("prasadi");
+                    if (!status) onFailure(-1);
+                } catch (JSONException e) {
+                    onFailure(-1);
+                }
+            }
+
+            @Override
+            void onFailure(Integer status) {
+                new AlertDialog.Builder(ConversationActivity.this)
+                        .setTitle("Something went wrong")
+                        .setMessage("Do you want to try again?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                facebookLogin(clickListener);
+                            }
+                        })
+                        .setNegativeButton("No", clickListener)
+                        .show();
+            }
+        };
+        facebookLogin.execute();
     }
 }

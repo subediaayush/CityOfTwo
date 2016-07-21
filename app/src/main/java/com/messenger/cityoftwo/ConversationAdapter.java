@@ -34,11 +34,13 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private static final int ID_PROFILE_IMAGE = 0x00F00001;
     private static final int ID_PROFILE_NAME = 0x00F00002;
     //    private static final int ID_PROFILE_URL =
-    String mHeaderText;
+    private String mHeaderText;
     private List<Conversation> ConversationList;
     private Context context;
-    private boolean isWaiting = false;
+    private boolean isWaiting;
     private ProgressDialog mWaitingDialog;
+
+    private boolean isLastVisible;
 
     public ConversationAdapter(final Context context, List<Conversation> conversationList) {
         ConversationList = conversationList;
@@ -49,6 +51,8 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         else
             mWaitingDialog = new ProgressDialog(context);
 
+        isWaiting = false;
+        isLastVisible = false;
 
         mWaitingDialog.setTitle("Finding a match");
         mWaitingDialog.setMessage("Finding a new match for you.");
@@ -101,6 +105,10 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     .findViewById(R.id.message_text);
 
             container.addView(messageTextView);
+            messageTextView.setLayoutParams(
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT)
+            );
 
             return new ContentHolder(view);
         } else if ((viewType & CityOfTwo.FLAG_REVEAL) == CityOfTwo.FLAG_REVEAL) {
@@ -111,9 +119,14 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             container.addView(childView);
 
+            childView.setLayoutParams(
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT)
+            );
+
             return new ContentHolder(view);
         } else if (((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
-                ((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
+                ((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) ||
                 ((viewType & CityOfTwo.FLAG_CHAT_END) == CityOfTwo.FLAG_CHAT_END)) {
             return new GenericHolder(view);
         } else {
@@ -126,6 +139,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         Conversation currentConv = ConversationList.get(position);
 
         int flags = currentConv.getFlags();
+        isLastVisible = false;
 
         if ((flags & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
             final ContentHolder holder = (ContentHolder) viewHolder;
@@ -180,6 +194,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         } else if ((flags & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
             GenericHolder holder = (GenericHolder) viewHolder;
             holder.likeList.setText(mHeaderText);
+        } else if ((flags & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
+            GenericHolder holder = (GenericHolder) viewHolder;
+            isLastVisible = true;
         } else if ((flags & CityOfTwo.FLAG_CHAT_END) == CityOfTwo.FLAG_CHAT_END) {
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -199,17 +216,15 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     private void facebookLogin(final AccessToken accessToken) {
-        String login = context.getString(R.string.url_login);
 
-        String[] path = {login};
-
-        final String header = CityOfTwo.HEADER_ACCESS_TOKEN,
-                token = accessToken.getToken();
-
-        HttpHandler LoginHttpHandler = new HttpHandler(CityOfTwo.HOST, path, HttpHandler.POST, header, token) {
+        new FacebookLogin(context, accessToken) {
             @Override
-            protected void onFailure(Integer status) {
+            void onSuccess(String response) {
 
+            }
+
+            @Override
+            void onFailure(Integer status) {
                 new AlertDialog.Builder(context)
                         .setTitle("Error")
                         .setMessage("An error occured.")
@@ -226,10 +241,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                             }
                         })
                         .show();
-            }
-        };
 
-        LoginHttpHandler.execute();
+            }
+        }.execute();
     }
 
     protected boolean isWaiting() {
@@ -258,12 +272,20 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         return ConversationList.size();
     }
 
+    public String getHeaderText() {
+        return this.mHeaderText;
+    }
+
     public void setHeaderText(String headerText) {
         this.mHeaderText = headerText;
     }
 
     public ProgressDialog getWaitingDialog() {
         return mWaitingDialog;
+    }
+
+    public boolean isLastVisible() {
+        return isLastVisible;
     }
 
     private class ContentHolder extends RecyclerView.ViewHolder {
@@ -279,13 +301,11 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private class GenericHolder extends RecyclerView.ViewHolder {
         TextView likeList;
-        View backgroundView;
 
         public GenericHolder(View itemView) {
             super(itemView);
 
             likeList = (TextView) itemView.findViewById(R.id.likes_list);
-            backgroundView = itemView;
         }
     }
 }

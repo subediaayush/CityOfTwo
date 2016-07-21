@@ -2,6 +2,7 @@ package com.messenger.cityoftwo;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,8 @@ class AnswersAdapter extends BaseAdapter {
     Context context;
     ArrayList<AnswerPair> answers;
     int currentQuestion;
+
+    int selectedPosition = -1;
 
     OnSelectedListener onSelectedListener;
 
@@ -55,14 +58,16 @@ class AnswersAdapter extends BaseAdapter {
 
         if (position % 2 == 1) {
             LinearLayout parentLayout = (LinearLayout) convertView;
-            ArrayList<View> views = new ArrayList<View>();
+            ArrayList<View> views = new ArrayList<>();
 
             for (int x = 0; x < parentLayout.getChildCount(); x++) {
                 views.add(parentLayout.getChildAt(x));
             }
-            parentLayout.removeAllViews();
-            for (int x = views.size() - 1; x >= 0; x--) {
-                parentLayout.addView(views.get(x));
+            if (views.get(0).getId() != R.id.option_description) {
+                parentLayout.removeAllViews();
+                for (int x = views.size() - 1; x >= 0; x--) {
+                    parentLayout.addView(views.get(x));
+                }
             }
         }
 
@@ -82,9 +87,15 @@ class AnswersAdapter extends BaseAdapter {
 
         Description.setText(answers.get(position).first);
 
+        if (selectedPosition == position)
+            convertView.setBackgroundColor(ContextCompat.getColor(context, R.color.colorPrimaryLight));
+        else
+            convertView.setBackgroundColor(ContextCompat.getColor(context, R.color.Transparent));
+
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                setSelectedPosition(position);
                 if (onSelectedListener != null) onSelectedListener.OnSelected(
                         answers.get(position),
                         position
@@ -97,6 +108,11 @@ class AnswersAdapter extends BaseAdapter {
 
     public void setOnSelectedListener(OnSelectedListener onSelectedListener) {
         this.onSelectedListener = onSelectedListener;
+    }
+
+    public void setSelectedPosition(int position) {
+        this.selectedPosition = position;
+        notifyDataSetChanged();
     }
 
     public interface OnSelectedListener {

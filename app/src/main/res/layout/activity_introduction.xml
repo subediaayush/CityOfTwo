@@ -10,7 +10,9 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <include layout="@layout/layout_intro_flipper_1" />
+        <include
+            android:id="@+id/intro_first"
+            layout="@layout/layout_intro_coyrudy" />
 
         <include layout="@layout/layout_intro_flipper_2" />
 

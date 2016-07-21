@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -64,7 +65,7 @@ public class IntroductionActivity extends AppCompatActivity {
     private float xScaleFactor;
     private float yScaleFactor;
     private int currentSelectedAnswer = -1;
-    private int testAnswer = 0;
+    private String testAnswer;
     private long mDuration = 500;
     private LoginManager loginManager;
     private CallbackManager callbackManager;
@@ -79,8 +80,9 @@ public class IntroductionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_introduction);
 
-        int testTaken = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                .getInt(CityOfTwo.KEY_TEST_RESULT, -1);
+        final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        testAnswer = sharedPreferences.getString(CityOfTwo.KEY_TEST_RESULT, "");
 
         if (!isGooglePlayServicesAvailable(this, new DialogInterface.OnCancelListener() {
             @Override
@@ -89,18 +91,19 @@ public class IntroductionActivity extends AppCompatActivity {
             }
         })) return;
 
-        if (testTaken != -1) {
+        if (!testAnswer.isEmpty()) {
             Intent loginIntent = new Intent(this, LoginActivity.class);
             startActivity(loginIntent);
             finish();
             return;
         }
 
-        introViewFlipper = (ViewFlipper) findViewById(R.id.intro_flipper);
+        introViewFlipper = (IndicatorViewFlipper) findViewById(R.id.intro_flipper);
         nextButton = (Button) findViewById(R.id.intro_next_button);
         testContainer = (ViewFlipper) findViewById(R.id.test_container);
 
-//        mLogoImage = (ImageView) findViewById(R.id.coyrudy_logo);
+
+        mLogoImage = (ImageView) findViewById(R.id.intro_first).findViewById(R.id.intro_coyrudy_logo);
 //        mLogoBackground = findViewById(R.id.coyrudy_logo_background);
 
         mTestFragment = TestFragment.newInstance(getIntent().getExtras());
@@ -122,14 +125,18 @@ public class IntroductionActivity extends AppCompatActivity {
                             IntroductionActivity.this,
                             CityOfTwo.FACEBOOK_PERMISSION_LIST
                     );
+                    nextButton.setEnabled(false);
                 } else if (currentViewId == R.id.test_container) {
-                    testAnswer = testAnswer * 10 + currentSelectedAnswer;
+                    testAnswer = testAnswer + String.valueOf(currentSelectedAnswer);
                     if (testContainer.getDisplayedChild() + 1 < testContainer.getChildCount()) {
                         testContainer.setDisplayedChild(testContainer.getDisplayedChild() + 1);
                         nextButton.setEnabled(false);
                     } else {
                         int currentChild = introViewFlipper.getDisplayedChild();
                         introViewFlipper.setDisplayedChild(currentChild + 1);
+                        sharedPreferences.edit()
+                                .putString(CityOfTwo.KEY_TEST_RESULT, testAnswer)
+                                .apply();
                     }
                 } else if (currentViewId == R.id.intro_last) {
                     Intent lobbyIntent = new Intent(IntroductionActivity.this, LobbyActivity.class);
@@ -143,7 +150,7 @@ public class IntroductionActivity extends AppCompatActivity {
                 }
 
                 if (currentViewId == R.id.intro_test_desc) {
-                    setupTest(test);
+//                    setupTest(test);
                     nextButton.setEnabled(false);
                 }
 
@@ -264,8 +271,43 @@ public class IntroductionActivity extends AppCompatActivity {
                 .setTitle("Error")
                 .setMessage("Could login to your Facebook")
                 .setPositiveButton("Try again", clickListener)
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        nextButton.setEnabled(true);
+                    }
+                })
                 .show();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        int width = mLogoImage.getWidth(),
+                height = mLogoImage.getHeight();
+
+        Picasso.with(this)
+                .load(R.drawable.mipmap_1)
+                .resize(width, height)
+                .into(new Target() {
+                    @Override
+                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        CityOfTwo.logoBitmap = bitmap;
+                        mLogoImage.setImageBitmap(bitmap);
+                        Log.i("Bitmap", "Bitmap Loaded");
+                    }
+
+                    @Override
+                    public void onBitmapFailed(Drawable errorDrawable) {
+
+                    }
+
+                    @Override
+                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                    }
+                });
     }
 
     private void showLoginSuccess(final AccessToken accessToken) {
@@ -310,9 +352,11 @@ public class IntroductionActivity extends AppCompatActivity {
 
                     if (!registered) {
                         test = Response.getJSONArray("test");
+                        setupTest(test);
                         int currentChild = introViewFlipper.getDisplayedChild();
                         introViewFlipper.setDisplayedChild(currentChild + 1);
-                        p.hide();
+                        nextButton.setEnabled(true);
+                        p.cancel();
                     }
                 } catch (JSONException e) {
                     onFailure(-1);
@@ -392,7 +436,6 @@ public class IntroductionActivity extends AppCompatActivity {
             answersAdapter.setOnSelectedListener(new AnswersAdapter.OnSelectedListener() {
                 @Override
                 public void OnSelected(AnswerPair answer, int position) {
-                    answerListView.setSelection(position);
                     currentSelectedAnswer = position;
                     nextButton.setEnabled(true);
                 }

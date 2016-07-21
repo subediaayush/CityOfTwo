@@ -69,7 +69,7 @@ public class CityOfTwo extends Application {
     public static final int FLAG_REVEAL = 0b0001000;
     public static final int FLAG_CHAT_END = 0b0010000;
     public static final int FLAG_START = 0b0100000;
-    public static final int FLAG_END = 0b100000;
+    public static final int FLAG_END = 0b1000000;
 
     public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
     public static final String HOST = "coyrudy.com";
@@ -107,8 +107,23 @@ public class CityOfTwo extends Application {
     public static final String KEY_CHAT_PENDING = "chat_pending";
     public static final String KEY_REG_ID = "reg_id";
     public static final Integer ACTIVITY_LOGIN = 0;
-    public static final String KEY_CHAT_END = "END_CHAT";
+    public static final String KEY_CHAT_END = "CHAT_END";
     public static final String KEY_FROM_INTRO = "from_intro";
+    public static final String TABLE_MESSAGES = "message";
+    public static final String COLUMN_ID = "id";
+    public static final String COLUMN_CHATROOM_ID = "chatroom_id";
+    public static final String COLUMN_MESSAGE = "text";
+    public static final String COLUMN_FLAGS = "flags";
+    public static final String COLUMN_TIME = "time";
+    public static final String ACTION_BEGIN_CHAT = "begin_chat";
+    public static final String ACTION_END_CHAT = "end_chat";
+    public static final String ACTION_NEW_MESSAGE = "new_message";
+    public static final String NOTIFICATION_NEW_MESSAGE = "notification_new_message";
+    public static final int RESULT_EXIT_APP = -1;
+    public static final String KEY_SHOW_REVEAL_DIALOG = "show_reveal_dialog";
+    public static final String SECURED_PREFERENCE = "com.messenger.cityoftwo.secured";
+    public static final String ACTION_FCM_ID = "fcm_id";
+    public static final String KEY_CHAT_HEADER = "chat_header";
     private static final String SENDER_ID = "584281533020";
     public static ArrayList<Conversation> mBackgroundConversation;
     public static Bitmap logoBitmap;
@@ -201,7 +216,7 @@ public class CityOfTwo extends Application {
 //        }.execute();
 //    }
 
-    public static final float dpToPixel(Context context, int dp) {
+    public static float dpToPixel(Context context, int dp) {
         return TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, dp,
                 context.getResources().getDisplayMetrics()
@@ -256,9 +271,7 @@ public class CityOfTwo extends Application {
                 Log.d("ATTENTION:", "ATTENTION ATTENTION !!! !!! ^^**&^*%#");
                 Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
             }
-        } catch (PackageManager.NameNotFoundException e) {
-
-        } catch (NoSuchAlgorithmException e) {
+        } catch (PackageManager.NameNotFoundException | NoSuchAlgorithmException ignored) {
 
         }
     }
