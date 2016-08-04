@@ -5,15 +5,15 @@
     android:animateLayoutChanges="true"
     android:gravity="right"
     android:orientation="vertical"
-    android:paddingBottom="2dp"
     android:paddingLeft="25dp"
-    android:paddingRight="5dp"
-    android:paddingTop="2dp">
+    android:paddingRight="5dp">
 
     <FrameLayout
         android:id="@+id/content_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginTop="2dp"
         android:background="@drawable/sent_text_bg" />
 
     <TextView

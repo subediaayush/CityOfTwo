@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -46,6 +47,24 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_login);
+
+        final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        String testAnswers = sharedPreferences.getString(CityOfTwo.KEY_TEST_RESULT, "");
+
+        if (!isGooglePlayServicesAvailable(this, new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                finish();
+            }
+        })) return;
+
+        if (testAnswers.isEmpty()) {
+            Intent introIntent = new Intent(this, IntroductionActivity.class);
+            startActivity(introIntent);
+            finish();
+            return;
+        }
 
         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                 .remove(CityOfTwo.KEY_CHATROOM_ID)
@@ -269,6 +288,7 @@ public class LoginActivity extends AppCompatActivity {
         int[] location = new int[2];
         mLogoImage.getLocationOnScreen(location);
 
+
         i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
         i.putExtra(CityOfTwo.KEY_PROFILE, profile);
         i.putExtra(CityOfTwo.KEY_LOCATION_X, location[0]);
@@ -318,6 +338,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == CityOfTwo.RESULT_EXIT_APP) {
+            setResult(resultCode);
+            finish();
+            return;
+        }
 
         switch (requestCode) {
             case CityOfTwo.ACTIVITY_LOBBY:

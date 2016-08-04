@@ -2,25 +2,43 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:dividerPadding="10dp"
+    android:orientation="vertical"
+    android:padding="10dp">
 
-    <TextView
-        android:id="@+id/test_question"
+    <LinearLayout
+        android:id="@+id/question_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="5dp"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:text="Question"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="16sp" />
+        android:layout_weight="1">
 
-    <ListView
-        android:id="@+id/test_answers"
+        <TextView
+            android:id="@+id/test_number"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@color/colorPrimaryLight"
+            android:gravity="center"
+            android:padding="10dp"
+            android:textColor="@color/colorPrimaryDark" />
+
+        <TextView
+            android:id="@+id/test_question"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/white"
+            android:gravity="center_vertical"
+            android:padding="10dp"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/answer_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="6"
-        android:choiceMode="singleChoice"
-        android:listSelector="@color/colorPrimaryLight" />
+        android:dividerPadding="10dp"
+        android:orientation="vertical" />
 
 </LinearLayout>

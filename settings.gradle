@@ -1,1 +1,2 @@
 include ':app', ':rangebar'
+project(':rangebar').projectDir = new File('app/libs/rangebar')

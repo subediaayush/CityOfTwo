@@ -23,7 +23,12 @@
     <!- -->
     <string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/1033173712</string>
     <string name="string_test_intro">Before you begin, you\'ll need to take a 3 question personality test that will help us find you a better match</string>
-    <string name="about_reveal">Something long, about 2-3 lines about revealing profile</string>
-    <string name="about_referral">Something long, about 2-3 lines about referring coyrudy</string>
-    <string name="about_filter">Some long text explaining filters</string>
+    <string name="about_reveal">Share a link to your facebook profile with the stranger.\nReveal yourself!</string>
+    <string name="about_referral">You can receive free credits by helping spread the word about CoyRudy on Facebook, Twitter etc.
+        Share the following link and receive free credits for all visitors who follow the link.</string>
+    <string name="about_filter">You can match with people of your preferences.</string>
+    <string name="string_welcome">Welocme to CoyRudy</string>
+    <string name="string_dummy_question">This is a dummy question. What will you do about it?</string>
+    <string name="string_dummy_option">dummy option</string>
+    <string name="string_test">Test</string>
 </resources>

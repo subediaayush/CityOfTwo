@@ -36,6 +36,7 @@ import android.widget.TextView;
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.login.widget.ProfilePictureView;
+import com.mopub.mobileads.MoPubView;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -55,6 +56,7 @@ import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_MALE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MAX_AGE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MIN_AGE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_USER_OFFLINE;
+import static com.messenger.cityoftwo.CityOfTwo.RESULT_EXIT_APP;
 
 public class ConversationActivity extends AppCompatActivity {
     public static final String HOST = "http://192.168.100.1:5000";
@@ -63,6 +65,7 @@ public class ConversationActivity extends AppCompatActivity {
     EditText mInputText;
     ImageButton mSendButton;
     RecyclerView mConversationListView;
+    LinearLayoutManager mLayoutManager;
     View mConnectionIndicatorView;
     ViewGroup mChatOptionsContainer;
     Toolbar mToolbar;
@@ -73,6 +76,8 @@ public class ConversationActivity extends AppCompatActivity {
     private ImageView mLogoShadow;
     private ImageView mLogoImage;
     private View mOptionsDismissButton;
+
+    private MoPubView adView;
 
     private int mOptionsViewHeight;
 
@@ -105,18 +110,18 @@ public class ConversationActivity extends AppCompatActivity {
 
 //        getSupportActionBar().setTitle("Conversation");
 
+        mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager.setStackFromEnd(true);
+        mConversationListView.setLayoutManager(mLayoutManager);
+
         mConversationList = new ArrayList<>();
-        mConversationAdapter = new ConversationAdapter(this, mConversationList);
+        mConversationAdapter = new ConversationAdapter(this, mConversationList, mLayoutManager);
 
         ChatItemAnimator itemAnimator = new ChatItemAnimator(0.1f, 200);
 
         mConversationListView.setItemAnimator(itemAnimator);
 
         mConversationListView.setAdapter(mConversationAdapter);
-
-        final LinearLayoutManager l = new LinearLayoutManager(this);
-        l.setStackFromEnd(true);
-        mConversationListView.setLayoutManager(l);
 
         mConversationList.add(new Conversation("CHAT_BEGIN", CityOfTwo.FLAG_START));
         mConversationList.add(new Conversation("CHAT_END", CityOfTwo.FLAG_END));
@@ -236,11 +241,11 @@ public class ConversationActivity extends AppCompatActivity {
 
                         int insertPosition = mConversationList.size() - 1;
 
-                        mConversationList.add(insertPosition, c);
+                        mConversationAdapter.insertItem(c, insertPosition);
 
-                        mConversationAdapter.notifyItemInserted(insertPosition);
                         if (!mConversationAdapter.isLastVisible())
                             mConversationListView.smoothScrollToPosition(mConversationList.size());
+
                         break;
                     }
                     case CityOfTwo.ACTION_END_CHAT: {
@@ -261,7 +266,7 @@ public class ConversationActivity extends AppCompatActivity {
                                     public void onClick(DialogInterface dialog, int which) {
                                         exitActivity(CityOfTwo.RESULT_EXIT_APP);
                                     }
-                                });
+                                }).show();
                         break;
                     }
                     case CityOfTwo.ACTION_BEGIN_CHAT: {
@@ -308,8 +313,8 @@ public class ConversationActivity extends AppCompatActivity {
         sendBeginChatSignal();
     }
 
-    private void exitActivity(int resultExitApp) {
-        setResult(resultExitApp);
+    private void exitActivity(int resultCode) {
+        setResult(resultCode);
         finish();
     }
 
@@ -358,8 +363,7 @@ public class ConversationActivity extends AppCompatActivity {
     private void startNewChat() {
         endCurrentChat();
 
-        if (!mConversationAdapter.isWaiting())
-            mConversationAdapter.showWaitingDialog();
+        exitActivity(RESULT_OK);
     }
 
     public void revealProfile(View view) {
@@ -418,7 +422,7 @@ public class ConversationActivity extends AppCompatActivity {
 
             Conversation conversation = new Conversation(revealProfile.toString());
             conversation.addFlag(CityOfTwo.FLAG_SENT);
-            conversation.addFlag(CityOfTwo.FLAG_REVEAL);
+            conversation.addFlag(CityOfTwo.FLAG_PROFILE);
 
             sendMessage(conversation);
         } catch (JSONException e) {
@@ -771,8 +775,7 @@ public class ConversationActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
 
         if (CityOfTwo.pendingMessages != null) CityOfTwo.pendingMessages.clear();
-        if (CityOfTwo.messageCounter != null) CityOfTwo.pendingMessages.clear();
-
+        if (CityOfTwo.messageCounter != null) CityOfTwo.messageCounter = 0;
 
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
@@ -817,8 +820,7 @@ public class ConversationActivity extends AppCompatActivity {
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            setResult(CityOfTwo.RESULT_EXIT_APP);
-                            finish();
+                            exitActivity(RESULT_EXIT_APP);
                         }
                     });
         } else {
@@ -836,13 +838,33 @@ public class ConversationActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        adView = new MoPubView(this);
+        adView.setLayoutParams(new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (int) CityOfTwo.dpToPixel(this, 50)
+        ));
+        adView.setAdUnitId("153e5b049d414b5d93c3fbac190a0350"); // Enter your Ad Unit ID from www.mopub.com
+        adView.loadAd();
+        mConversationAdapter.setAdView(adView);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        adView.destroy();
+    }
+
     private void sendMessage(final Conversation bufferConv) {
         final String value = bufferConv.getText().replaceFirst("\\s+$", "");
         int insertPosition = mConversationList.size() - 1;
 
-        mConversationList.add(insertPosition, bufferConv);
+        mConversationAdapter.insertItem(bufferConv, insertPosition);
 
-        mConversationAdapter.notifyItemInserted(insertPosition);
         if (!mConversationAdapter.isLastVisible())
             mConversationListView.smoothScrollToPosition(mConversationList.size());
 

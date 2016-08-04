@@ -17,6 +17,10 @@
         <item name="android:textColorPrimary">@color/Black</item>
     </style>
 
+    <style name="FullScreenTheme" parent="AppTheme">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
     <style name="Transparent" parent="AppTheme">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsTranslucent">true</item>
@@ -44,6 +48,23 @@
         <item name="android:layout_height">@dimen/toolbar_icon_size</item>
         <item name="android:padding">6dp</item>
         <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="TestQuestion">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="TestOption">
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="android:textSize">14sp</item>
+
     </style>
 
 </resources>

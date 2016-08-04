@@ -50,16 +50,22 @@ public class ChatItemAnimator extends BaseItemAnimator {
     protected void preAnimateAddImpl(RecyclerView.ViewHolder holder) {
         int viewType = holder.getItemViewType();
         View view = holder.itemView;
-        ViewCompat.setScaleX(view, .01f);
-        ViewCompat.setScaleY(view, .01f);
 
         try {
             if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
                 ViewCompat.setPivotX(view, 0);
                 ViewCompat.setPivotY(view, 0);
+
+                ViewCompat.setScaleX(view, .01f);
+                ViewCompat.setScaleY(view, .01f);
             } else if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
                 ViewCompat.setPivotX(view, view.getWidth());
                 ViewCompat.setPivotY(view, view.getHeight());
+
+                ViewCompat.setScaleX(view, .01f);
+                ViewCompat.setScaleY(view, .01f);
+            } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+                ViewCompat.setTranslationY(view, view.getHeight());
             }
         } catch (Exception e) {
             Log.e(e.toString(), "Cannot determine the view type of the view");
@@ -89,6 +95,8 @@ public class ChatItemAnimator extends BaseItemAnimator {
                 .scaleX(1)
                 .scaleY(1)
                 .alpha(1)
+                .translationX(0)
+                .translationY(0)
                 .setDuration(mAddDuration)
                 .setInterpolator(new OvershootInterpolator(mTension))
                 .setListener(new DefaultAddVpaListener(holder))

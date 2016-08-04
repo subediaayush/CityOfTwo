@@ -51,4 +51,8 @@ public class IndicatorViewFlipper extends ViewFlipper {
         canvas.restore();
     }
 
+    public void showPageIndicator(boolean showIndicator) {
+        drawIndicators = showIndicator;
+    }
+
 }

@@ -1,29 +1,35 @@
 package com.messenger.cityoftwo;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
+import com.github.paolorotolo.appintro.ScrollerCustomDuration;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
 //import com.squareup.picasso.Picasso;
 
@@ -32,21 +38,24 @@ import java.util.HashMap;
  */
 public class TestFragment extends Fragment {
 
-    ArrayList<Integer> SelectedAnswer = new ArrayList<>();
     TestAdapter testAdapter;
     Context context;
-    BroadcastReceiver broadcastReceiver;
-    private NonSwipeableViewPager TestPager;
-    private View Introduction;
+    ArrayList<Test> questionList;
+    RelativeLayout questionContainer;
+    LinearLayout answerContainer;
+    TextView testQuestion;
+    int currentItem = 0;
+    private NonSwipeableViewPager testPager;
+    private ScrollerCustomDuration scroller = null;
+
+    private TestEventListener testEventListener;
+    private boolean testFinished;
 
     public TestFragment() {
     }
 
-    public static TestFragment newInstance(Bundle args) {
-
+    public static TestFragment newInstance() {
         TestFragment fragment = new TestFragment();
-        fragment.setArguments(args);
-
         return fragment;
     }
 
@@ -54,81 +63,169 @@ public class TestFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        final View rootView = inflater.inflate(R.layout.activity_test, container, false);
+        final View rootView = inflater.inflate(R.layout.fragment_test, container, false);
 
         context = getContext();
 
-        TestPager = (NonSwipeableViewPager) rootView.findViewById(R.id.test_viewpager);
-
-        ArrayList<Test> questionList = new ArrayList<>();
+//        testPager = (NonSwipeableViewPager) rootView.findViewById(R.id.test_viewpager);
+        questionContainer = (RelativeLayout) rootView.findViewById(R.id.question_container);
+        answerContainer = (LinearLayout) rootView.findViewById(R.id.answer_container);
+        testQuestion = (TextView) rootView.findViewById(R.id.test_question);
 
         Bundle data = getArguments();
 
         try {
             JSONArray Questions = new JSONArray(data.getString(CityOfTwo.KEY_TEST));
-
             questionList = GetQuestionList(Questions);
+            Log.i("TestFragment", "Test Received");
         } catch (JSONException e) {
             e.printStackTrace();
             Log.i("TestFragment", "Test Not Received");
         }
-        Log.i("TestFragment", "Test Received");
 
-        testAdapter = new TestAdapter(context, questionList);
+        return rootView;
+    }
 
-        CityOfTwo.answerBitmapList = new HashMap<>();
+    public void showItem(final int position) {
+        if (position != 0)
+            exitAnimation(position);
+        else
+            enterAnimation(position);
+    }
 
-        for (int i = 0; i < questionList.size(); i++) {
-            ArrayList<AnswerPair> answerPairs = questionList.get(i).getAnswers();
-            for (int j = 0; j < answerPairs.size(); j++) {
-                final String key = String.valueOf(i) + String.valueOf(j);
-                Picasso.with(context)
-                        .load(answerPairs.get(j).second)
-                        .into(new Target() {
-                            @Override
-                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                                CityOfTwo.answerBitmapList.put(key, bitmap);
-                            }
+    private void exitAnimation(final int position) {
 
-                            @Override
-                            public void onBitmapFailed(Drawable errorDrawable) {
-                            }
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
 
-                            @Override
-                            public void onPrepareLoad(Drawable placeHolderDrawable) {
-                            }
-                        });
-            }
+        Point size = new Point();
+        display.getSize(size);
+        final int width = size.x;
+
+        final android.view.animation.Interpolator interpolator = new AccelerateInterpolator();
+
+        final List<View> animationViews = new ArrayList<>();
+
+        animationViews.add(questionContainer);
+
+        for (int i = 0; i < answerContainer.getChildCount(); i++)
+            animationViews.add(answerContainer.getChildAt(i));
+
+        for (int i = 0; i < animationViews.size(); i++) {
+            final View view = animationViews.get(i);
+            final int viewCounter = i;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    view.animate().setInterpolator(interpolator)
+                            .setDuration(300).translationX(-width)
+                            .withEndAction(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (viewCounter == animationViews.size() - 1)
+                                        if (testFinished && testEventListener != null) {
+                                            new Handler().postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    testEventListener.OnAllQuestionsAnswered();
+                                                }
+                                            }, 100);
+                                        } else {
+                                            enterAnimation(position);
+                                        }
+                                }
+                            });
+                }
+            }, i * 100);
         }
 
-        TestPager.setAdapter(testAdapter);
+    }
 
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Bundle extras = intent.getExtras();
-                try {
-                    String answers = extras.getString(CityOfTwo.KEY_SELECTED_ANSWER, "");
-                    if (!answers.isEmpty()) {
-                        LocalBroadcastManager b = LocalBroadcastManager.getInstance(context);
+    private void enterAnimation(int position) {
+        setupItem(position);
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
 
-                        Intent i = new Intent();
-                        i.setAction(CityOfTwo.KEY_TEST_RESULT);
-                        i.putExtra(CityOfTwo.KEY_SELECTED_ANSWER, answers);
-                        b.sendBroadcast(i);
-                        return;
-                    }
-                    Integer position = extras.getInt(CityOfTwo.KEY_CURRENT_ANSWER, -1);
-                    if (position != -1) {
-                        TestPager.setCurrentItem(++position);
-                        return;
-                    }
-                } catch (NullPointerException e) {
-                    TestPager.setCurrentItem(TestPager.getCurrentItem() + 1);
+        Point size = new Point();
+        display.getSize(size);
+        final int width = size.x;
+
+        final android.view.animation.Interpolator interpolator = new DecelerateInterpolator();
+
+        final List<View> animationViews = new ArrayList<>();
+
+        animationViews.add(questionContainer);
+
+        for (int i = 0; i < answerContainer.getChildCount(); i++)
+            animationViews.add(answerContainer.getChildAt(i));
+
+        for (int i = 0; i < animationViews.size(); i++) {
+            final View view = animationViews.get(i);
+            view.setTranslationX(width);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    view.animate().setInterpolator(interpolator)
+                            .setDuration(300).translationX(0);
                 }
-            }
-        };
-        return rootView;
+            }, i * 100);
+        }
+    }
+
+    private void setupItem(final int position) {
+        Test test = questionList.get(position);
+
+        testQuestion.setText(test.getQuestion());
+        answerContainer.removeAllViews();
+
+        List<AnswerPair> answers = test.getAnswers();
+        for (int i = 0; i < answers.size(); i++) {
+            AnswerPair answer = answers.get(i);
+
+            final View answerView = LayoutInflater.from(context)
+                    .inflate(R.layout.layout_test_option, null);
+            answerView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+
+            String key = String.valueOf(position) + String.valueOf(i);
+            Bitmap optionBitmap = CityOfTwo.answerBitmapList.get(key);
+            ImageView optionImage = (ImageView) answerView.findViewById(R.id.option_image);
+            TextView optionDesc = (TextView) answerView.findViewById(R.id.option_description);
+
+            if (optionBitmap != null)
+                optionImage.setImageBitmap(optionBitmap);
+            else
+                Picasso.with(context)
+                        .load(answer.second)
+                        .into(optionImage);
+
+            optionDesc.setText(answer.first);
+
+            final int answerPosition = i;
+            answerView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (testEventListener != null)
+                        testEventListener.OnQuestionAnswered(position, answerPosition);
+                    for (int i = 0; i < answerContainer.getChildCount(); i++) {
+                        View view = answerContainer.getChildAt(i).findViewById(R.id.answer_background);
+                        if (i == answerPosition)
+                            view.setBackgroundColor(ContextCompat.getColor(
+                                    context,
+                                    R.color.colorPrimaryLight
+                            ));
+                        else
+                            view.setBackgroundColor(ContextCompat.getColor(
+                                    context,
+                                    android.R.color.white
+                            ));
+                    }
+                }
+            });
+            answerContainer.addView(answerView);
+        }
     }
 
     private ArrayList<Test> GetQuestionList(JSONArray questions) throws JSONException {
@@ -154,37 +251,24 @@ public class TestFragment extends Fragment {
         return Tests;
     }
 
-    protected void setAnswer(int answer, int position) {
-        if (position == 0) SelectedAnswer.clear();
-        SelectedAnswer.add(answer);
-        if (position == testAdapter.getCount() - 1)
-            showStartScreen();
-        else
-            TestPager.setCurrentItem(++position);
+    public void setTestEventListener(TestEventListener testEventListener) {
+        this.testEventListener = testEventListener;
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
+    public void nextQuestion() {
+        int totalItems = questionList.size();
 
-        LocalBroadcastManager.getInstance(context).unregisterReceiver(broadcastReceiver);
+        if (currentItem + 1 == totalItems) {
+            testFinished = true;
+            exitAnimation(currentItem);
+        } else {
+            showItem(++currentItem);
+        }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    protected interface TestEventListener {
+        void OnQuestionAnswered(int question, int answer);
 
-        LocalBroadcastManager.getInstance(context).registerReceiver(
-                broadcastReceiver,
-                new IntentFilter(CityOfTwo.KEY_TEST)
-        );
-    }
-
-    private void showStartScreen() {
-        Intent i = new Intent();
-        i.putIntegerArrayListExtra(CityOfTwo.KEY_SELECTED_ANSWER, SelectedAnswer);
-
-//        setResult(RESULT_OK, i);
-//        finish();
+        void OnAllQuestionsAnswered();
     }
 }

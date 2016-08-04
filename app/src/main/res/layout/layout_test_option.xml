@@ -1,25 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingBottom="10dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp">
 
-    <ImageView
-        android:id="@+id/option_image"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter" />
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/option_description"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_margin="10dp"
-        android:layout_weight="1"
-        android:text="Option"
-        android:textSize="12sp" />
+        <LinearLayout
+            android:id="@+id/answer_background"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
+            <ImageView
+                android:id="@+id/option_image"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/option_description"
+                style="@style/TestOption"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/string_dummy_option" />
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
 </LinearLayout>

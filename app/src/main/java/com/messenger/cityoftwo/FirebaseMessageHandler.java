@@ -69,7 +69,7 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                         // If not current conversation then let BEGIN_CHAT handle it
                         if (!chatroomId.equals(oldChatroomId)) return;
 
-                        if ((flags & CityOfTwo.FLAG_REVEAL) == CityOfTwo.FLAG_REVEAL)
+                        if ((flags & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE)
                             text = "Stranger shared their profile with you";
 
                         Intent notificationIntent = new Intent(this, ConversationActivity.class);
@@ -122,6 +122,7 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 
                         mBroadcaster.sendBroadcast(intent);
                     }
+                    Log.i("GCM", messageType + " handled");
                     break;
                 }
                 case CityOfTwo.KEY_CHAT_BEGIN: {
@@ -142,8 +143,9 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                         intent = new Intent(CityOfTwo.ACTION_BEGIN_CHAT);
                         mBroadcaster.sendBroadcast(intent);
                     }
+                    Log.i("GCM", messageType + " handled");
+                    break;
                 }
-                break;
                 case CityOfTwo.KEY_CHAT_END: {
                     messageCounter = 0;
                     if (pendingMessages != null) pendingMessages.clear();
@@ -158,6 +160,8 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                             .remove(CityOfTwo.KEY_CHAT_PENDING)
                             .remove(CityOfTwo.KEY_CHATROOM_ID)
                             .apply();
+
+                    Log.i("GCM", messageType + " handled");
                     break;
                 }
                 case CityOfTwo.KEY_USER_OFFLINE: {
@@ -176,6 +180,7 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
                             .remove(CityOfTwo.KEY_CHATROOM_ID)
                             .apply();
 
+                    Log.i("GCM", messageType + " handled");
                     break;
                 }
                 default:

@@ -756,15 +756,24 @@ public class LobbyActivity extends AppCompatActivity {
 
             // Code for debug version
             if (BuildConfig.DEBUG) {
-                Intent conversationActivity = new Intent(
-                        this,
-                        ConversationActivity.class
-                );
-                startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
-                overridePendingTransition(
-                        R.anim.slide_in_right,
-                        R.anim.slide_out_left
-                );
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        SharedPreferences.Editor editor = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit();
+                        editor.putString(CityOfTwo.KEY_COMMON_LIKES, "chari, pari, mari")
+                                .putInt(CityOfTwo.KEY_CHATROOM_ID, 1)
+                                .apply();
+                        Intent conversationActivity = new Intent(
+                                LobbyActivity.this,
+                                ConversationActivity.class
+                        );
+                        startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
+                        overridePendingTransition(
+                                R.anim.slide_in_right,
+                                R.anim.slide_out_left
+                        );
+                    }
+                }, 2000);
             }
             mLobbyProgressBar.setVisibility(View.INVISIBLE);
 
@@ -799,6 +808,7 @@ public class LobbyActivity extends AppCompatActivity {
         if (resultCode == CityOfTwo.RESULT_EXIT_APP) {
             setResult(resultCode);
             finish();
+            return;
         }
 
         switch (requestCode) {

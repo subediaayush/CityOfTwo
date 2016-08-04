@@ -63,12 +63,12 @@ public class CityOfTwo extends Application {
     public static final int ACTIVITY_CONVERSATION = 3;
     public static final int ACTIVITY_INTRODUCTION = 4;
 
-    public static final int FLAG_SENT = 0b0000001;
-    public static final int FLAG_RECEIVED = 0b0000010;
-    public static final int FLAG_TEXT = 0b0000100;
-    public static final int FLAG_REVEAL = 0b0001000;
-    public static final int FLAG_CHAT_END = 0b0010000;
-    public static final int FLAG_START = 0b0100000;
+    public static final int FLAG_SENT = 0b1;
+    public static final int FLAG_RECEIVED = 0b10;
+    public static final int FLAG_TEXT = 0b100;
+    public static final int FLAG_PROFILE = 0b1000;
+    public static final int FLAG_AD = 0b10000;
+    public static final int FLAG_START = 0b100000;
     public static final int FLAG_END = 0b1000000;
 
     public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
@@ -119,7 +119,7 @@ public class CityOfTwo extends Application {
     public static final String ACTION_END_CHAT = "end_chat";
     public static final String ACTION_NEW_MESSAGE = "new_message";
     public static final String NOTIFICATION_NEW_MESSAGE = "notification_new_message";
-    public static final int RESULT_EXIT_APP = -1;
+    public static final int RESULT_EXIT_APP = 10010;
     public static final String KEY_SHOW_REVEAL_DIALOG = "show_reveal_dialog";
     public static final String SECURED_PREFERENCE = "com.messenger.cityoftwo.secured";
     public static final String ACTION_FCM_ID = "fcm_id";

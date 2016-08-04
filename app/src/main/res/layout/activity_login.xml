@@ -58,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/login_button_background"
-                android:drawableLeft="@drawable/com_facebook_button_icon"
+                android:drawableLeft="@drawable/chat_end_background"
                 android:drawablePadding="10dp"
                 android:text="Login"
                 android:textColor="@color/appTextColor"

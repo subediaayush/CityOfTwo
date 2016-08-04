@@ -8,13 +8,6 @@
     android:background="@color/WhiteSmoke"
     tools:context=".ConversationActivity">
 
-    <View
-        android:id="@+id/snackbar_container"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_above="@+id/bottom_layout"
-        android:background="@color/colorPrimaryLight" />
-
     <android.support.v7.widget.RecyclerView
         android:id="@+id/conversation_listview"
         android:layout_width="match_parent"
@@ -95,7 +88,7 @@
     <LinearLayout
         android:id="@+id/bottom_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:layout_alignParentBottom="true"
         android:background="@color/WhiteSmoke"
         android:orientation="horizontal">
@@ -103,8 +96,10 @@
         <EditText
             android:id="@+id/input_text"
             android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_margin="5dp"
+            android:layout_height="46dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
             android:layout_weight="1"
             android:background="@color/colorPrimaryLight"
             android:gravity="center_vertical"
@@ -116,8 +111,8 @@
 
         <ImageButton
             android:id="@+id/send_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
             android:layout_gravity="center_vertical"
             android:layout_margin="5dp"
             android:adjustViewBounds="true"
@@ -125,4 +120,12 @@
             android:src="@drawable/ic_send" />
 
     </LinearLayout>
+
+    <View
+        android:id="@+id/snackbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignTop="@+id/bottom_layout"
+        android:background="@color/colorPrimaryLight" />
+
 </RelativeLayout>
