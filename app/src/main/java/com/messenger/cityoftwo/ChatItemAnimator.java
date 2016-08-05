@@ -16,9 +16,11 @@ package com.messenger.cityoftwo; /**
 
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
-import android.view.animation.OvershootInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+
+import com.messenger.cityoftwo.ConversationAdapter.ContentHolder;
 
 import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
 
@@ -49,58 +51,63 @@ public class ChatItemAnimator extends BaseItemAnimator {
     @Override
     protected void preAnimateAddImpl(RecyclerView.ViewHolder holder) {
         int viewType = holder.getItemViewType();
-        View view = holder.itemView;
+        if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
+                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
+            ContentHolder contentHolder = (ContentHolder) holder;
 
-        try {
-            if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-                ViewCompat.setPivotX(view, 0);
-                ViewCompat.setPivotY(view, 0);
+            View contentView = contentHolder.contentContainer;
+            View dateView = contentHolder.dateContainer;
+            View lineView = contentHolder.lineContainer;
 
-                ViewCompat.setScaleX(view, .01f);
-                ViewCompat.setScaleY(view, .01f);
-            } else if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
-                ViewCompat.setPivotX(view, view.getWidth());
-                ViewCompat.setPivotY(view, view.getHeight());
-
-                ViewCompat.setScaleX(view, .01f);
-                ViewCompat.setScaleY(view, .01f);
-            } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
-                ViewCompat.setTranslationY(view, view.getHeight());
-            }
-        } catch (Exception e) {
-            Log.e(e.toString(), "Cannot determine the view type of the view");
-        }
-    }
-
-    @Override
-    protected void preAnimateRemoveImpl(RecyclerView.ViewHolder holder) {
-        int viewType = holder.getItemViewType();
-        View view = holder.itemView;
-        try {
-            if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-                ViewCompat.setPivotX(view, 0);
-                ViewCompat.setPivotY(view, 0);
-            } else if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
-                ViewCompat.setPivotX(view, view.getWidth());
-                ViewCompat.setPivotY(view, view.getHeight());
-            }
-        } catch (Exception e) {
-            Log.e(e.toString(), "Cannot determine the view type of the view");
+            ViewCompat.setAlpha(dateView, 0);
+            ViewCompat.setPivotY(lineView, lineView.getY());
+            ViewCompat.setScaleY(lineView, 0.1f);
+            ViewCompat.setTranslationY(contentView, contentHolder.itemView.getHeight());
+        } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+            View view = holder.itemView;
+            ViewCompat.setTranslationY(view, view.getHeight());
         }
     }
 
     @Override
     protected void animateAddImpl(final RecyclerView.ViewHolder holder) {
-        ViewCompat.animate(holder.itemView)
-                .scaleX(1)
-                .scaleY(1)
-                .alpha(1)
-                .translationX(0)
-                .translationY(0)
-                .setDuration(mAddDuration)
-                .setInterpolator(new OvershootInterpolator(mTension))
-                .setListener(new DefaultAddVpaListener(holder))
-                .start();
+        int viewType = holder.getItemViewType();
+        if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
+                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
+            ContentHolder contentHolder = (ContentHolder) holder;
+
+            View contentView = contentHolder.contentContainer;
+            View dateView = contentHolder.dateContainer;
+            View lineView = contentHolder.lineContainer;
+
+            ViewCompat.animate(contentView)
+                    .translationY(0)
+                    .setDuration(mAddDuration)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .setListener(new DefaultAddVpaListener(holder))
+                    .start();
+
+            ViewCompat.animate(dateView)
+                    .alpha(1)
+                    .setDuration(mAddDuration)
+                    .setListener(new DefaultAddVpaListener(holder))
+                    .start();
+
+            ViewCompat.animate(lineView)
+                    .scaleY(1)
+                    .setDuration(mAddDuration)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new DefaultAddVpaListener(holder))
+                    .start();
+        } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+            View view = holder.itemView;
+            ViewCompat.animate(view)
+                    .translationY(0)
+                    .setDuration(mAddDuration)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new DefaultAddVpaListener(holder))
+                    .start();
+        }
     }
 
     @Override

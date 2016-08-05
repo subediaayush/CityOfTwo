@@ -28,6 +28,7 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Aayush on 1/15/2016.
@@ -49,6 +50,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private MoPubView adView;
     private boolean isLastVisible;
     private int maximumDisplayableChild;
+    private int currentAdLocation;
 
     public ConversationAdapter(final Context context, List<Conversation> conversationList, LinearLayoutManager l) {
         ConversationList = conversationList;
@@ -62,6 +64,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         isWaiting = false;
         isLastVisible = false;
         selectedItem = -1;
+        currentAdLocation = -1;
         adLocations = new ArrayList<>();
         LayoutManager = l;
         maximumDisplayableChild = -1;
@@ -166,7 +169,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             final String messageText = currentConv.getText();
 
-            String messageTime = new SimpleDateFormat("hh:mm a").format(currentConv.getTime());
+            String messageTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentConv.getTime());
 
 
             TextView messageTextView = (TextView) holder.contentContainer.findViewById(R.id.message_text);
@@ -174,17 +177,17 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             holder.dateContainer.setText(messageTime);
 
-            if (selectedItem != position)
-                holder.dateContainer.setVisibility(View.GONE);
-
+            if (selectedItem == position)
+                holder.dateContainer.setVisibility(View.VISIBLE);
 
             holder.contentContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int oldSelected = selectedItem;
-                    selectedItem = position;
+                    if (oldSelected == position) selectedItem = -1;
+                    else selectedItem = position;
                     toggleVisibility(holder.dateContainer);
-                    ConversationAdapter.this.notifyItemChanged(position);
+//                    ConversationAdapter.this.notifyItemChanged(position);
                     if (oldSelected != -1) ConversationAdapter.this.notifyItemChanged(oldSelected);
                 }
             });
@@ -230,13 +233,32 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 ViewGroup parent = (ViewGroup) adView.getParent();
                 if (parent != null) parent.removeAllViews();
                 holder.adContainer.addView(adView);
+                currentAdLocation = position;
             }
-//                if (adView.getParent() != null) {
-//                    ViewGroup parent = (ViewGroup) adView.getParent();
-//                    parent.removeAllViews();
-//                }
-//            }
         }
+
+        if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT ||
+                (flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
+            Conversation previousItem = ConversationList.get(position - 1);
+            int previousItemFlag = previousItem.getFlags();
+
+            boolean previousAdType = (previousItemFlag & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD;
+            if (previousAdType) {
+                previousItem = ConversationList.get(position - 2);
+                previousItemFlag = previousItem.getFlags();
+            }
+
+            boolean sameType = (flags & CityOfTwo.FLAG_SENT) == (previousItemFlag & CityOfTwo.FLAG_SENT) &&
+                    (flags & CityOfTwo.FLAG_RECEIVED) == (previousItemFlag & CityOfTwo.FLAG_RECEIVED);
+
+            final ContentHolder holder = (ContentHolder) viewHolder;
+            if (sameType) {
+                if (position != selectedItem) holder.dateContainer.setVisibility(View.GONE);
+            } else {
+                holder.dateContainer.setVisibility(View.VISIBLE);
+            }
+        }
+
     }
 
     private boolean canBindAd(int position) {
@@ -358,18 +380,20 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         Log.i("Conversation Adapter", "Adapter detached from list");
     }
 
-    private class ContentHolder extends RecyclerView.ViewHolder {
+    protected class ContentHolder extends RecyclerView.ViewHolder {
         TextView dateContainer;
         FrameLayout contentContainer;
+        View lineContainer;
 
         public ContentHolder(View itemView) {
             super(itemView);
             contentContainer = (FrameLayout) itemView.findViewById(R.id.content_container);
             dateContainer = (TextView) itemView.findViewById(R.id.time);
+            lineContainer = itemView.findViewById(R.id.line);
         }
     }
 
-    private class GenericHolder extends RecyclerView.ViewHolder {
+    protected class GenericHolder extends RecyclerView.ViewHolder {
         TextView likeList;
 
         public GenericHolder(View itemView) {
@@ -379,7 +403,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    private class AdHolder extends RecyclerView.ViewHolder {
+    protected class AdHolder extends RecyclerView.ViewHolder {
         ViewGroup adContainer;
 
         public AdHolder(View itemView) {

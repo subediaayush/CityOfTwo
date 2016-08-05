@@ -449,8 +449,8 @@ public class LobbyActivity extends AppCompatActivity {
                         if (pool != 0) {
                             waitForServer();
                         } else {
-                            String testResult = String.valueOf(getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                                    .getInt(CityOfTwo.KEY_TEST_RESULT, -1));
+                            String testResult = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+                                    .getString(CityOfTwo.KEY_TEST_RESULT, "");
                             submitTest(testResult);
                         }
 

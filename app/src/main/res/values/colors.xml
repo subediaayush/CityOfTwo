@@ -5,9 +5,9 @@
     <color name="colorPrimaryLight">#CFD8DC</color>
     <color name="colorAccent">#33434a</color>
 
-    <color name="colorSentBackground">#455A64</color>
-    <color name="colorReceivedBackground">#688896</color>
-    <color name="colorMessagePressed">#12171a</color>
+    <color name="colorSentBackground">@color/colorPrimaryDark</color>
+    <color name="colorReceivedBackground">@color/colorPrimary</color>
+    <color name="colorMessagePressed">#212c30</color>
 
     <color name="colorSnackBarError">@color/maroon</color>
     <color name="colorSnackBarDefault">@color/colorPrimaryDark</color>

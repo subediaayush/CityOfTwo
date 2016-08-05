@@ -17,7 +17,7 @@
             android:maxLines="1"
             android:text="You both like"
             android:textColor="@color/colorPrimary"
-            android:textSize="10sp" />
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/likes_list"
@@ -29,7 +29,8 @@
             android:gravity="center"
             android:text="Micheal Jackson, Manchester United, Singapore and Spaghetti"
             android:textColor="@color/colorPrimaryDark"
-            android:textSize="10sp" />
+            android:textSize="14sp"
+            android:textStyle="bold" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -48,7 +49,8 @@
             android:layout_height="wrap_content"
             android:background="@drawable/intro_background"
             android:text="Say Hi!"
-            android:textColor="@color/White" />
+            android:textColor="@color/White"
+            android:textSize="16sp" />
 
         <View
             android:layout_width="0dp"

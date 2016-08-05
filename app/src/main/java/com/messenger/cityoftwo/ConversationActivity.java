@@ -646,7 +646,7 @@ public class ConversationActivity extends AppCompatActivity {
         final int viewHeight = mChatOptionsContainer.getHeight();
 //
 //
-        mChatOptionsContainer.animate().setInterpolator(new DecelerateInterpolator()).setDuration(100)
+        mChatOptionsContainer.animate().setInterpolator(new DecelerateInterpolator(.9f)).setDuration(100)
                 .translationY(0)
                 .withStartAction(new Runnable() {
                     @Override
@@ -674,7 +674,7 @@ public class ConversationActivity extends AppCompatActivity {
         mOptionsDismissButton.setVisibility(View.GONE);
         final int viewHeight = mChatOptionsContainer.getHeight();
 
-        mChatOptionsContainer.animate().setInterpolator(new AccelerateInterpolator()).setDuration(100)
+        mChatOptionsContainer.animate().setInterpolator(new AccelerateInterpolator(.9f)).setDuration(100)
                 .translationY(-viewHeight)
                 .withStartAction(new Runnable() {
                     @Override
@@ -694,7 +694,6 @@ public class ConversationActivity extends AppCompatActivity {
                     }
                 });
     }
-
 
     private void sendBeginChatSignal() {
 
