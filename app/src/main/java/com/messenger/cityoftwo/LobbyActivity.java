@@ -11,7 +11,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,13 +28,15 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ViewFlipper;
 
 import com.facebook.AccessToken;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Locale;
+import java.util.Random;
 
 //import com.squareup.picasso.Callback;
 //import com.squareup.picasso.Picasso;
@@ -47,10 +51,19 @@ public class LobbyActivity extends AppCompatActivity {
             SIGNED_UP = 1,
             LOGGED_IN = 2;
 
+    private final static String[] TIPS = new String[]{
+            "",
+            "Earn credits by sharing CoyRudy",
+            "If you want you can share your facebook profile with stranger",
+            "Apply filters to constrict matching to your preference"
+    };
+
     //    TestHttpHandler, SignUpHttpHandler, TestSubmitHttpHandler;
     BroadcastReceiver mBroadcastReceiver;
     ProgressBar mLobbyProgressBar;
     TextView mLobbyDescription;
+    CardView mLobbyTipsContainer;
+    TextView mLobbyTips;
     AccessToken mAccessToken;
     Boolean mCanPutText = true;
     String mDescriptionBuffer = "";
@@ -70,6 +83,7 @@ public class LobbyActivity extends AppCompatActivity {
     private BackgroundAnimationFragment mBackgroundAnimationFragment;
     private TextView mWelcomeLabel;
     private boolean tokenNotGenerated = false;
+    private Integer currentTip = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +95,8 @@ public class LobbyActivity extends AppCompatActivity {
 
         mWelcomeLabel = (TextView) findViewById(R.id.welcome_label);
 
+        mLobbyTipsContainer = (CardView) findViewById(R.id.lobby_tips_container);
+        mLobbyTips = (TextView) findViewById(R.id.lobby_tips);
 
         mImageFlipper = (FrameLayout) findViewById(R.id.lobby_image_flipper);
 
@@ -89,19 +105,18 @@ public class LobbyActivity extends AppCompatActivity {
         fm.beginTransaction()
                 .replace(R.id.lobby_image_flipper, mImageFlipperFragment)
                 .commit();
+
         fm.executePendingTransactions();
 //        mBackgroundAnimationFragment = BackgroundAnimationFragment.newInstance();
 //        getSupportFragmentManager().beginTransaction()
 //                .replace(R.id.lobby_background, mBackgroundAnimationFragment)
 //                .commit();
 
+        mAccessToken = AccessToken.getCurrentAccessToken();
         if (savedInstanceState != null) {
-            mAccessToken = savedInstanceState.getParcelable("LOBBY_ACCESS_TOKEN");
             setStatus(savedInstanceState.getInt("LOBBY_STATUS"));
         } else {
-
             final Bundle args = getIntent().getExtras();
-            mAccessToken = args.getParcelable(CityOfTwo.KEY_ACCESS_TOKEN);
 
             final int initialX = args.getInt(CityOfTwo.KEY_LOCATION_X, -1),
                     initialY = args.getInt(CityOfTwo.KEY_LOCATION_Y, -1),
@@ -132,7 +147,6 @@ public class LobbyActivity extends AppCompatActivity {
                     } else {
                         setStatus(BEGIN);
 //                        CityOfTwo.RegisterGCM(LobbyActivity.this);
-
                         startAppLogic();
                     }
                     return true;
@@ -552,6 +566,8 @@ public class LobbyActivity extends AppCompatActivity {
     private void waitForServer() {
         final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
+        showTips();
+
         String broadcast_gcm = getString(R.string.url_broadcast_gcm),
                 header = CityOfTwo.HEADER_GCM_ID,
                 value = sharedPreferences.getString(CityOfTwo.KEY_REG_ID, "");
@@ -597,6 +613,29 @@ public class LobbyActivity extends AppCompatActivity {
 
         BroadcastGCMHttpHandler.addHeader("Authorization", token);
         BroadcastGCMHttpHandler.execute();
+    }
+
+    private void showTips() {
+        if (!isShowingTips()) {
+            int translatioFactor = mLobbyTipsContainer.getHeight() + mLobbyTipsContainer.getBottom();
+            mLobbyTipsContainer.setTranslationY(translatioFactor);
+            mLobbyTipsContainer.setVisibility(View.VISIBLE);
+            mLobbyTipsContainer.animate().setDuration(300).setInterpolator(new DecelerateInterpolator())
+                    .translationY(0);
+        }
+        Pair tip = getNewTip(currentTip);
+        currentTip = (Integer) tip.second;
+        mLobbyTips.setText((CharSequence) tip.first);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                showTips();
+            }
+        }, 6000);
+    }
+
+    private boolean isShowingTips() {
+        return mLobbyTipsContainer.getVisibility() == View.VISIBLE;
     }
 
     private void submitTest(String answers) {
@@ -740,6 +779,30 @@ public class LobbyActivity extends AppCompatActivity {
 
     }
 
+    private Pair getNewTip(int currentTip) {
+        Random rng = new Random();
+        int tipIndex = currentTip;
+        while (tipIndex == currentTip) tipIndex = rng.nextInt(TIPS.length);
+
+        String tip;
+
+        if (tipIndex == 0) {
+            int credits = new SecurePreferences(this, CityOfTwo.SECURED_PREFERENCE)
+                    .getInt(CityOfTwo.KEY_CREDITS, 0);
+
+            if (credits < 1) tip = "You have no credit right now. Earn credits by sharing CoyRudy.";
+            else if (credits == 1) tip = "You have 1 credit.";
+            else tip = String.format(Locale.getDefault(), "You have %d credits.", credits);
+        } else {
+            tip = TIPS[tipIndex];
+        }
+        return new Pair<>(tip, tipIndex);
+    }
+
+    private Pair getNewTip() {
+        return getNewTip(-1);
+    }
+
     private int getStatus() {
         return lobbyState;
     }
@@ -749,7 +812,7 @@ public class LobbyActivity extends AppCompatActivity {
 
         lobbyState = state;
         if (mImageFlipper == null)
-            mImageFlipper = (ViewFlipper) findViewById(R.id.lobby_image_flipper);
+            mImageFlipper = (FrameLayout) findViewById(R.id.lobby_image_flipper);
 
         // Run code after changing state
         if (lobbyState == ERROR) {
@@ -775,16 +838,15 @@ public class LobbyActivity extends AppCompatActivity {
                     }
                 }, 2000);
             }
-            mLobbyProgressBar.setVisibility(View.INVISIBLE);
 
+            mLobbyProgressBar.setVisibility(View.INVISIBLE);
             mImageFlipperFragment.stopFlipping();
 
             setLobbyDescription("There was an error. Please try again later.");
         } else {
-            mLobbyProgressBar.setVisibility(View.VISIBLE);
 
-            if (!mImageFlipperFragment.isFlipping())
-                mImageFlipperFragment.startFlipping();
+            mLobbyProgressBar.setVisibility(View.VISIBLE);
+            mImageFlipperFragment.startFlipping();
         }
 
         if (lobbyState == BEGIN) {
@@ -811,22 +873,7 @@ public class LobbyActivity extends AppCompatActivity {
             return;
         }
 
-        switch (requestCode) {
-            case CityOfTwo.ACTIVITY_INTRODUCTION: {
-                if (resultCode == RESULT_OK) {
-                    restoreActivity();
-                    String answers = data.getExtras().getString(CityOfTwo.KEY_TEST_RESULT);
-                    submitTest(answers);
-                } else {
-                    restoreActivity();
-                }
-                break;
-            }
-            case CityOfTwo.ACTIVITY_CONVERSATION: {
-                restoreActivity();
-                break;
-            }
-        }
+        restoreActivity();
     }
 
     private void restoreActivity() {

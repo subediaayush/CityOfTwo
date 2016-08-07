@@ -31,4 +31,5 @@
     <string name="string_dummy_question">This is a dummy question. What will you do about it?</string>
     <string name="string_dummy_option">dummy option</string>
     <string name="string_test">Test</string>
+    <string name="string_dummy_tip">So this is a dummy tip. Will you comply?</string>
 </resources>

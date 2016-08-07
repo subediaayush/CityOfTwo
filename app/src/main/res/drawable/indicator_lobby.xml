@@ -25,9 +25,6 @@
         android:top="1.5dp">
         <shape android:shape="oval">
             <solid android:color="#ffff" />
-            <stroke
-                android:width="0.5dp"
-                android:color="@android:color/darker_gray" />
             <size
                 android:width="8dp"
                 android:height="8dp" />

@@ -18,6 +18,10 @@ public class LogoFadeFragment extends Fragment {
 
     Queue<View> mViewQueue;
     private boolean mFlipping = false;
+    private ImageView mProfileImageOne;
+    private ImageView mProfileImageTwo;
+    private ImageView mProfileImageThree;
+    private ImageView mProfileImageFour;
 
     public LogoFadeFragment() {
     }
@@ -36,21 +40,15 @@ public class LogoFadeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_logo, container, false);
 
-        ImageView mProfileImageOne = (ImageView) view.findViewById(R.id.lobby_progress_one);
-        ImageView mProfileImageTwo = (ImageView) view.findViewById(R.id.lobby_progress_two);
-        ImageView mProfileImageThree = (ImageView) view.findViewById(R.id.lobby_progress_three);
-        ImageView mProfileImageFour = (ImageView) view.findViewById(R.id.lobby_progress_four);
+        mProfileImageOne = (ImageView) view.findViewById(R.id.lobby_progress_one);
+        mProfileImageTwo = (ImageView) view.findViewById(R.id.lobby_progress_two);
+        mProfileImageThree = (ImageView) view.findViewById(R.id.lobby_progress_three);
+        mProfileImageFour = (ImageView) view.findViewById(R.id.lobby_progress_four);
 
         mProfileImageOne.setImageBitmap(CityOfTwo.logoBitmap);
         mProfileImageTwo.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 90));
         mProfileImageThree.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 180));
         mProfileImageFour.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 270));
-
-        mViewQueue = new Queue<>();
-        mViewQueue.enqueue(mProfileImageOne);
-        mViewQueue.enqueue(mProfileImageTwo);
-        mViewQueue.enqueue(mProfileImageThree);
-        mViewQueue.enqueue(mProfileImageFour);
 
         return view;
     }
@@ -62,12 +60,19 @@ public class LogoFadeFragment extends Fragment {
     }
 
     public void startFlipping() {
+        if (mFlipping) return;
+        flip();
+    }
+
+    private void flip() {
         mFlipping = true;
+
+        setupFlipper();
 
         final View currentView = mViewQueue.dequeue();
 
         currentView.animate().setDuration(500)
-                .alpha(0.f)
+                .alpha(0)
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
@@ -75,12 +80,22 @@ public class LogoFadeFragment extends Fragment {
                         parent.removeView(currentView);
                         parent.addView(currentView, 0);
 
-                        currentView.setAlpha(1.f);
+                        currentView.setAlpha(1);
                         mViewQueue.enqueue(currentView);
 
-                        if (mFlipping) startFlipping();
+                        if (mFlipping) flip();
                     }
                 });
+    }
+
+    private void setupFlipper() {
+        if (mViewQueue == null) {
+            mViewQueue = new Queue<>();
+            mViewQueue.enqueue(mProfileImageOne);
+            mViewQueue.enqueue(mProfileImageTwo);
+            mViewQueue.enqueue(mProfileImageThree);
+            mViewQueue.enqueue(mProfileImageFour);
+        }
     }
 
     public void stopFlipping() {

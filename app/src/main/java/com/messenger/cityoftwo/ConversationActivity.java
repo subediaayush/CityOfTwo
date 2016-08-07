@@ -446,13 +446,6 @@ public class ConversationActivity extends AppCompatActivity {
             }
         });
         filtersFragment.show(getSupportFragmentManager(), "Filter");
-
-
-//        AlertDialog.Builder adb = new AlertDialog.Builder(this);
-//        adb.setTitle("Filters");
-//        adb.setView(R.layout.layout_apply_filter);
-//        adb.show();
-
     }
 
     public void sendFilters(final JSONObject filters) {
@@ -526,11 +519,6 @@ public class ConversationActivity extends AppCompatActivity {
                         R.color.colorSnackBarText
                 ));
 
-//                View view = s.getView();
-//                FrameLayout.LayoutParams params =(FrameLayout.LayoutParams)view.getLayoutParams();
-//                params.gravity = Gravity.TOP;
-//                view.setLayoutParams(params);
-//
                 s.show();
 
             }
@@ -574,6 +562,7 @@ public class ConversationActivity extends AppCompatActivity {
     private void onShareCoyRudy(String uniqueUrl) {
 
         List<String> targetedApps = new ArrayList<>();
+
         targetedApps.add("com.facebook.katana");
         targetedApps.add("com.facebook.orca");
         targetedApps.add("com.twitter.android");
@@ -633,6 +622,7 @@ public class ConversationActivity extends AppCompatActivity {
             s.show();
             return;
         }
+
         // convert shareIntentList to array
         LabeledIntent[] extraIntents = shareIntentList.toArray(new LabeledIntent[shareIntentList.size()]);
 
@@ -646,7 +636,7 @@ public class ConversationActivity extends AppCompatActivity {
         final int viewHeight = mChatOptionsContainer.getHeight();
 //
 //
-        mChatOptionsContainer.animate().setInterpolator(new DecelerateInterpolator(.9f)).setDuration(100)
+        mChatOptionsContainer.animate().setInterpolator(new DecelerateInterpolator(.9f)).setDuration(200)
                 .translationY(0)
                 .withStartAction(new Runnable() {
                     @Override
@@ -654,18 +644,12 @@ public class ConversationActivity extends AppCompatActivity {
                         if (mChatOptionsContainer.getTranslationY() >= 0)
                             mChatOptionsContainer.setTranslationY(-viewHeight);
                         mChatOptionsContainer.setVisibility(View.VISIBLE);
-                        Log.i("Show Options", "Initial View Height: " + viewHeight);
-                        Log.i("Show Options", "Initial View Translation: " + mChatOptionsContainer.getTranslationY());
                     }
                 })
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
                         isOptionsVisible = true;
-
-                        Log.i("Show Options", "Final View Height: " + viewHeight);
-                        Log.i("Show Options", "Final View Translation: " + mChatOptionsContainer.getTranslationY());
-
                     }
                 });
     }
@@ -674,23 +658,13 @@ public class ConversationActivity extends AppCompatActivity {
         mOptionsDismissButton.setVisibility(View.GONE);
         final int viewHeight = mChatOptionsContainer.getHeight();
 
-        mChatOptionsContainer.animate().setInterpolator(new AccelerateInterpolator(.9f)).setDuration(100)
+        mChatOptionsContainer.animate().setInterpolator(new AccelerateInterpolator(.9f)).setDuration(200)
                 .translationY(-viewHeight)
-                .withStartAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.i("Remove Options", "Initial View Height: " + viewHeight);
-                        Log.i("Remove Options", "Initial View Translation: " + mChatOptionsContainer.getTranslationY());
-                    }
-                })
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
                         isOptionsVisible = false;
                         mChatOptionsContainer.setVisibility(View.INVISIBLE);
-
-                        Log.i("Remove Options", "Final View Height: " + viewHeight);
-                        Log.i("Remove Options", "Final View Translation: " + mChatOptionsContainer.getTranslationY());
                     }
                 });
     }
@@ -860,7 +834,7 @@ public class ConversationActivity extends AppCompatActivity {
 
     private void sendMessage(final Conversation bufferConv) {
         final String value = bufferConv.getText().replaceFirst("\\s+$", "");
-        int insertPosition = mConversationList.size() - 1;
+        final int insertPosition = mConversationList.size() - 1;
 
         mConversationAdapter.insertItem(bufferConv, insertPosition);
 
@@ -882,10 +856,6 @@ public class ConversationActivity extends AppCompatActivity {
         String[] Path = {CityOfTwo.API, send_message};
 
         mHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, params) {
-            @Override
-            protected void onPreRun() {
-            }
-
             @Override
             protected void onSuccess(String response) {
                 try {
@@ -922,6 +892,7 @@ public class ConversationActivity extends AppCompatActivity {
                         sendMessage(newConversation);
                     }
                 });
+
                 View view = s.getView();
                 view.setBackgroundColor(ContextCompat.getColor(
                         ConversationActivity.this,
@@ -943,8 +914,8 @@ public class ConversationActivity extends AppCompatActivity {
                 s.show();
 
                 if (!BuildConfig.DEBUG) {
-                    mConversationList.remove(bufferConv);
-                    mConversationAdapter.notifyDataSetChanged();
+                    mConversationList.remove(insertPosition);
+                    mConversationAdapter.notifyItemRemoved(insertPosition);
                 }
             }
         };
@@ -988,9 +959,7 @@ public class ConversationActivity extends AppCompatActivity {
         HttpHandler dumpHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, j) {
             @Override
             protected void onPostExecute() {
-                sp.edit()
-                        .remove(CityOfTwo.KEY_CHATROOM_ID)
-                        .apply();
+                sp.edit().remove(CityOfTwo.KEY_CHATROOM_ID).apply();
             }
         };
 
@@ -1000,7 +969,7 @@ public class ConversationActivity extends AppCompatActivity {
         dumpHttpHandler.execute();
     }
 
-    public void facebookLogin(final DialogInterface.OnClickListener clickListener) {
+    public void facebookLogin(final DialogInterface.OnClickListener failureClickListener) {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
 
         final FacebookLogin facebookLogin = new FacebookLogin(this, accessToken) {
@@ -1025,10 +994,10 @@ public class ConversationActivity extends AppCompatActivity {
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                facebookLogin(clickListener);
+                                facebookLogin(failureClickListener);
                             }
                         })
-                        .setNegativeButton("No", clickListener)
+                        .setNegativeButton("No", failureClickListener)
                         .show();
             }
         };
