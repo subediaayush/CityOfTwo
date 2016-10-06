@@ -11,7 +11,10 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/conversation_listview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_below="@+id/conversation_toolbar"
+        android:overScrollMode="never"
+        />
 
     <View
         android:id="@+id/option_dismiss_button"
@@ -34,6 +37,7 @@
             android:id="@+id/new_chat"
             style="@style/ChatOptionButtonLayout"
             android:onClick="newChat"
+            app:bg="@drawable/labelled_button_background"
             app:image="@drawable/ic_new_chat"
             app:text="New Chat" />
 
@@ -41,6 +45,7 @@
             android:id="@+id/share_facebook"
             style="@style/ChatOptionButtonLayout"
             android:onClick="revealProfile"
+            app:bg="@drawable/labelled_button_background"
             app:image="@drawable/ic_reveal"
             app:text="Reveal" />
 
@@ -48,6 +53,7 @@
             android:id="@+id/apply_filter"
             style="@style/ChatOptionButtonLayout"
             android:onClick="applyFilter"
+            app:bg="@drawable/labelled_button_background"
             app:image="@drawable/ic_filters"
             app:text="Apply Filters" />
 
@@ -55,6 +61,7 @@
             android:id="@+id/refer_button"
             style="@style/ChatOptionButtonLayout"
             android:onClick="referCoyRudy"
+            app:bg="@drawable/labelled_button_background"
             app:image="@drawable/ic_refer"
             app:text="Share CoyRudy" />
     </LinearLayout>
@@ -72,7 +79,9 @@
             android:layout_width="@dimen/toolbar_icon_size"
             android:layout_height="@dimen/toolbar_icon_size"
             android:adjustViewBounds="true"
-            android:src="@drawable/ic_normal" />
+            android:padding="5dp"
+            app:srcCompat="@drawable/drawable_coyrudy"
+            />
 
     </RelativeLayout>
 
@@ -117,7 +126,9 @@
             android:layout_margin="5dp"
             android:adjustViewBounds="true"
             android:background="@drawable/send_button_bg"
-            android:src="@drawable/ic_send" />
+            android:padding="2dp"
+            app:srcCompat="@drawable/ic_send"
+            />
 
     </LinearLayout>
 

@@ -11,8 +11,10 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
         android:text="@string/about_reveal"
-        android:textColor="@color/Black" />
+        android:textColor="@color/Black"
+        />
 
     <android.support.v4.widget.Space
         android:layout_width="match_parent"

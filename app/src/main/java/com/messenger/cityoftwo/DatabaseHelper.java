@@ -10,7 +10,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -90,7 +89,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             cv.put(CityOfTwo.COLUMN_CHATROOM_ID, chatroomId);
             cv.put(CityOfTwo.COLUMN_MESSAGE, c.getText());
             cv.put(CityOfTwo.COLUMN_FLAGS, c.getFlags());
-            cv.put(CityOfTwo.COLUMN_TIME, c.getTime().getTime());
+            cv.put(CityOfTwo.COLUMN_TIME, c.getTime());
 
             try {
                 db.insertOrThrow(CityOfTwo.TABLE_MESSAGES, null, cv);
@@ -109,7 +108,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(CityOfTwo.COLUMN_CHATROOM_ID, chatroomId);
         cv.put(CityOfTwo.COLUMN_MESSAGE, conversation.getText());
         cv.put(CityOfTwo.COLUMN_FLAGS, conversation.getFlags());
-        cv.put(CityOfTwo.COLUMN_TIME, conversation.getTime().getTime());
+        cv.put(CityOfTwo.COLUMN_TIME, conversation.getTime());
 
         try {
             db.insertOrThrow(CityOfTwo.TABLE_MESSAGES, null, cv);
@@ -137,10 +136,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         c.moveToFirst();
         while (!c.isAfterLast())
             try {
-                Integer cId = c.getInt(c.getColumnIndex(CityOfTwo.COLUMN_CHATROOM_ID));
+                int cId = c.getInt(c.getColumnIndex(CityOfTwo.COLUMN_CHATROOM_ID));
                 String text = c.getString(c.getColumnIndex(CityOfTwo.COLUMN_MESSAGE));
-                Integer flags = c.getInt(c.getColumnIndex(CityOfTwo.COLUMN_FLAGS));
-                Date time = new Date(c.getInt(c.getColumnIndex(CityOfTwo.COLUMN_TIME)));
+                int flags = c.getInt(c.getColumnIndex(CityOfTwo.COLUMN_FLAGS));
+                long time = c.getInt(c.getColumnIndex(CityOfTwo.COLUMN_TIME));
 
                 if (cId == chatroomId) conversations.add(new Conversation(text, flags, time));
                 c.moveToNext();

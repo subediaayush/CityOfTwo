@@ -193,5 +193,5 @@
     <color name="separator">#FFEEEEEE</color>
     <color name="appBackground">@color/colorPrimary</color>
     <color name="appTextColor">#ffffffff</color>
-    <color name="lobbyTextColor">#ff000000</color>
+    <color name="lobbyTextColor">@color/colorPrimary</color>
 </resources>

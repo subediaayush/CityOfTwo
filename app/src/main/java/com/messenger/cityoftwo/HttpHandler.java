@@ -173,6 +173,7 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
             Log.i("Http Connection", "Call to " + URL.toString() + " completed");
             Log.i("Http Response", response.message());
             Log.i("Http Response", Response);
+            Log.i("Http Response", String.valueOf(Status));
             return true;
         } catch (IOException e) {
             Log.i("Http Connection", "Call to " + URL.toString() + " failed with an exception: " + e.toString());
@@ -184,16 +185,9 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
         }
     }
 
-    public HttpUrl getURL() {
-        return URL;
-    }
-
-    public void setURL(HttpUrl URL) {
-        this.URL = URL;
-    }
-
-    public void addHeader(String header, String value) {
-        RequestBuilder.addHeader(header, value);
+    @Override
+    protected void onPreExecute() {
+        onPreRun();
     }
 
     @Override
@@ -210,9 +204,16 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
         }
     }
 
-    @Override
-    protected void onPreExecute() {
-        onPreRun();
+    public HttpUrl getURL() {
+        return URL;
+    }
+
+    public void setURL(HttpUrl URL) {
+        this.URL = URL;
+    }
+
+    public void addHeader(String header, String value) {
+        RequestBuilder.addHeader(header, value);
     }
 
     protected void onPreRun() {

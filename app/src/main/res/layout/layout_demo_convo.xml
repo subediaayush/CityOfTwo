@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	>
+
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:animateLayoutChanges="true"
+		android:orientation="horizontal"
+		android:padding="5dp"
+		>
+
+		<RelativeLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="3"
+			android:gravity="start"
+			android:paddingLeft="5dp"
+			android:paddingRight="5dp"
+			>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:background="@drawable/received_text_bg"
+				android:drawableEnd="@drawable/emoji_grin"
+				android:drawablePadding="5dp"
+				android:fontFamily="sans-serif-light"
+				android:gravity="center_vertical"
+				android:text="@string/demo_text_one"
+				android:textColor="@color/White"
+				android:textSize="18sp"
+				/>
+		</RelativeLayout>
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:animateLayoutChanges="true"
+			android:gravity="end"
+			android:orientation="vertical"
+			>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_margin="5dp"
+				android:text="12:12 pm"
+				android:textSize="12sp"
+				/>
+
+			<FrameLayout
+				android:layout_width="5dp"
+				android:layout_height="match_parent"
+				android:layout_marginEnd="10dp"
+				android:background="@color/colorPrimaryLight"
+				/>
+		</LinearLayout>
+	</LinearLayout>
+
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:animateLayoutChanges="true"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:paddingLeft="5dp"
+		android:paddingRight="5dp"
+		>
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:animateLayoutChanges="true"
+			android:gravity="start"
+			android:orientation="vertical"
+			>
+
+
+			<FrameLayout
+				android:layout_width="5dp"
+				android:layout_height="match_parent"
+				android:layout_marginStart="10dp"
+				android:background="@color/colorPrimaryLight"
+				/>
+		</LinearLayout>
+
+		<RelativeLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="3"
+			android:gravity="end"
+			android:padding="5dp"
+			>
+
+			<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+				android:id="@+id/message_text"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:background="@drawable/sent_text_bg"
+				android:drawableEnd="@drawable/emoji_smile"
+				android:drawablePadding="7dp"
+				android:fontFamily="sans-serif-light"
+				android:gravity="center_vertical"
+				android:text="@string/demo_text_two"
+				android:textColor="@color/White"
+				android:textSize="18sp"
+				/>
+		</RelativeLayout>
+
+	</LinearLayout>
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:animateLayoutChanges="true"
+		android:orientation="horizontal"
+		android:padding="5dp"
+		>
+
+		<RelativeLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="3"
+			android:gravity="start"
+			android:paddingLeft="5dp"
+			android:paddingRight="5dp"
+			>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:background="@drawable/received_text_bg"
+				android:drawableEnd="@drawable/emoji_neutral"
+				android:drawablePadding="5dp"
+				android:fontFamily="sans-serif-light"
+				android:gravity="center_vertical"
+				android:text="@string/demo_text_three"
+				android:textColor="@color/White"
+				android:textSize="18sp"
+				/>
+		</RelativeLayout>
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:animateLayoutChanges="true"
+			android:gravity="end"
+			android:orientation="vertical"
+			>
+
+
+			<FrameLayout
+				android:layout_width="5dp"
+				android:layout_height="match_parent"
+				android:layout_marginEnd="10dp"
+				android:background="@color/colorPrimaryLight"
+				/>
+		</LinearLayout>
+	</LinearLayout>
+
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:animateLayoutChanges="true"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		android:paddingLeft="5dp"
+		android:paddingRight="5dp"
+		>
+
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:animateLayoutChanges="true"
+			android:gravity="start"
+			android:orientation="vertical"
+			>
+
+
+			<FrameLayout
+				android:layout_width="5dp"
+				android:layout_height="match_parent"
+				android:layout_marginStart="10dp"
+				android:background="@color/colorPrimaryLight"
+				/>
+		</LinearLayout>
+
+		<RelativeLayout
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_weight="3"
+			android:gravity="end"
+			android:padding="5dp"
+			>
+
+			<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:background="@drawable/sent_text_bg"
+				android:drawableEnd="@drawable/emoji_tongue"
+				android:drawablePadding="7dp"
+				android:fontFamily="sans-serif-light"
+				android:gravity="center_vertical"
+				android:text="@string/demo_text_four"
+				android:textColor="@color/White"
+				android:textSize="18sp"
+				/>
+		</RelativeLayout>
+
+	</LinearLayout>
+
+</LinearLayout>

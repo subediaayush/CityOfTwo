@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 
 import java.lang.reflect.Field;
@@ -25,8 +26,8 @@ public abstract class IntroductionActivityBase extends AppCompatActivity {
     private NonSwipeableViewPager viewPager;
     private ViewGroup indicatorContainer;
 
-    private View nextButton;
-    private View doneButton;
+    private Button nextButton;
+    private Button doneButton;
     private int currentPage;
 
     @Override
@@ -44,20 +45,20 @@ public abstract class IntroductionActivityBase extends AppCompatActivity {
 
         indicatorContainer = (ViewGroup) findViewById(R.id.indicator_container);
 
-        nextButton = findViewById(R.id.next);
-        doneButton = findViewById(R.id.done);
+        nextButton = (Button) findViewById(R.id.next);
+        doneButton = (Button) findViewById(R.id.done);
 
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                nextButtonClicked(v, viewPager.getCurrentItem());
+                nextButtonClicked((Button) v, viewPager.getCurrentItem());
             }
         });
 
         doneButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                doneButtonClicked(v);
+                doneButtonClicked((Button) v);
             }
         });
 
@@ -167,7 +168,7 @@ public abstract class IntroductionActivityBase extends AppCompatActivity {
         newView.animate().setDuration(200).scaleX(1).scaleY(1).alpha(1);
     }
 
-    protected View getNextButton() {
+    protected Button getNextButton() {
         return nextButton;
     }
 
@@ -187,9 +188,9 @@ public abstract class IntroductionActivityBase extends AppCompatActivity {
         return fragments.size();
     }
 
-    protected abstract void nextButtonClicked(View v, int position);
+    protected abstract void nextButtonClicked(Button v, int position);
 
-    protected abstract void doneButtonClicked(View v);
+    protected abstract void doneButtonClicked(Button v);
 
     protected abstract void pageChanged(int position);
 }

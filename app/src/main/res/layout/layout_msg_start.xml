@@ -7,7 +7,7 @@
     <LinearLayout
         android:id="@+id/chat_introduction_view"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <TextView
@@ -15,6 +15,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:maxLines="1"
+            android:paddingTop="5dp"
             android:text="You both like"
             android:textColor="@color/colorPrimary"
             android:textSize="14sp" />

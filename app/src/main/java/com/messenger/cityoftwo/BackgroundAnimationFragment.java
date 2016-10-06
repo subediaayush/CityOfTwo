@@ -180,7 +180,7 @@ public class BackgroundAnimationFragment extends Fragment {
 
         int y = radius * 2,
                 x = (position + 1) * (screenWidth) / (maxShape + 2),
-                translation = (int) (screenHeight + radius * 2);
+                translation = screenHeight + radius * 2;
 
         imageView.setImageBitmap(bitmap);
         imageView.setY(0);

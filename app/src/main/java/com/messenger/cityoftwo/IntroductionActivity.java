@@ -11,7 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.View;
+import android.widget.Button;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -19,7 +19,6 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.github.paolorotolo.appintro.AppIntro2Fragment;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -47,37 +46,90 @@ public class IntroductionActivity extends IntroductionActivityBase {
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
-        addFragment(IntroductionFragment.newInstance());
+        Picasso.with(this)
+                .load(R.drawable.logo_bitmap)
+                .into(new Target() {
+                    @Override
+                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        CityOfTwo.logoBitmap = bitmap;
+                    }
+
+                    @Override
+                    public void onBitmapFailed(Drawable errorDrawable) {
+
+                    }
+
+                    @Override
+                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                    }
+                });
+
+//        addFragment(IntroductionFragment.newInstance());
+
+        addFragment(IntroFragment.newInstance(
+                R.layout.layout_intro_coyrudy,
+                "Welcome to CoyRudy"
+        ));
+
+        addFragment(IntroFragment.newInstance(
+                "CoyRudy",
+                "Chat anonymously with like minded strangers",
+                R.drawable.demo_convo,
+                ContextCompat.getColor(this, android.R.color.transparent),
+                ContextCompat.getColor(this, R.color.colorPrimary),
+                ContextCompat.getColor(this, R.color.colorPrimary)
+        ));
+
+        addFragment(IntroFragment.newInstance(
+                "CoyRudy",
+                "You can also reveal yourself or filter future matches",
+                R.drawable.demo_reveal,
+                ContextCompat.getColor(this, android.R.color.transparent),
+                ContextCompat.getColor(this, R.color.colorPrimary),
+                ContextCompat.getColor(this, R.color.colorPrimary)
+        ));
 
         facebookCallbackManager = CallbackManager.Factory.create();
         facebookLoginManager = LoginManager.getInstance();
 
         FRAGMENT_LOGIN_FACEBOOK = getTotalItems();
-        addFragment(AppIntro2Fragment.newInstance(
-                "Facebook Login",
-                "Login into facebook to use CoyRudy",
-                R.drawable.mipmap_1,
-                ContextCompat.getColor(this, android.R.color.transparent)
+        addFragment(IntroFragment.newInstance(
+                "Sign up",
+                "We use Facebook likes to match two strangers with similar intersts.",
+                R.drawable.demo_likes,
+                ContextCompat.getColor(this, android.R.color.transparent),
+                ContextCompat.getColor(this, R.color.colorPrimary),
+                ContextCompat.getColor(this, R.color.colorPrimary)
         ));
 
         FRAGMENT_TEST_BEGIN = getTotalItems();
-        addFragment(AppIntro2Fragment.newInstance(
-                "Test",
-                "We will take a test and blah blah blah",
-                R.drawable.mipmap_1,
-                ContextCompat.getColor(this, android.R.color.transparent)
+        addFragment(IntroFragment.newInstance(
+                "Almost There",
+                "Just a 3-question personality test and we're done!",
+                R.drawable.demo_test,
+                ContextCompat.getColor(this, android.R.color.transparent),
+                ContextCompat.getColor(this, R.color.colorPrimary),
+                ContextCompat.getColor(this, R.color.colorPrimary)
         ));
 
         FRAGMENT_TEST = getTotalItems();
         testFragment = TestFragment.newInstance();
         addFragment(testFragment);
 
-        addFragment(AppIntro2Fragment.newInstance(
-                "Good",
-                "Now continue to app mutha fucka",
-                R.drawable.mipmap_1,
-                ContextCompat.getColor(this, android.R.color.transparent)
+        addFragment(IntroFragment.newInstance(
+                R.layout.layout_intro_coyrudy,
+                "You're all set. Enjoy!"
         ));
+
+//        addFragment(IntroFragment.newInstance(
+//                "Enjoy",
+//                "Sign Up successful! You can now start chating.",
+//                R.drawable.logo_bitmap,
+//                ContextCompat.getColor(this, android.R.color.transparent),
+//                ContextCompat.getColor(this, R.color.colorPrimary),
+//                ContextCompat.getColor(this, R.color.colorPrimary)
+//        ));
 
         facebookLoginManager.registerCallback(facebookCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -134,27 +186,27 @@ public class IntroductionActivity extends IntroductionActivityBase {
     }
 
     @Override
-    protected void nextButtonClicked(View v, int position) {
+    protected void nextButtonClicked(Button button, int position) {
         Log.i("Introduction", "Next button clicked");
         if (position == FRAGMENT_LOGIN_FACEBOOK) {
             facebookLoginManager.logInWithReadPermissions(
                     this,
                     CityOfTwo.FACEBOOK_PERMISSION_LIST
             );
-            v.setEnabled(false);
+            button.setEnabled(false);
         } else if (position == FRAGMENT_TEST_BEGIN) {
             showNextPage();
-            v.setEnabled(false);
+            button.setEnabled(false);
         } else if (position == FRAGMENT_TEST) {
             testFragment.nextQuestion();
-            v.setEnabled(false);
+            button.setEnabled(false);
         } else {
             showNextPage();
         }
     }
 
     @Override
-    protected void doneButtonClicked(View v) {
+    protected void doneButtonClicked(Button button) {
         Log.i("Introduction", "Done button clicked");
 
         Intent lobbyIntent = new Intent(this, LobbyActivity.class);
@@ -162,18 +214,28 @@ public class IntroductionActivity extends IntroductionActivityBase {
         lobbyIntent.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, AccessToken.getCurrentAccessToken());
         lobbyIntent.putExtra(CityOfTwo.KEY_FROM_INTRO, true);
         startActivityForResult(lobbyIntent, CityOfTwo.ACTIVITY_LOBBY);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        finish();
     }
 
     @Override
     protected void pageChanged(int position) {
+        Button nextButton = getNextButton();
+
         Log.i("Introduction", "Page Changed");
         if (position == FRAGMENT_TEST) testFragment.showItem(0);
+
+        if (position == FRAGMENT_TEST_BEGIN) nextButton.setText("begin");
+
+        else if (position == FRAGMENT_LOGIN_FACEBOOK) nextButton.setText("sign up");
+
+        else nextButton.setText("next");
     }
 
     private void showLoginSuccess(final AccessToken accessToken) {
         final ProgressDialog p;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            p = new ProgressDialog(this, android.R.style.Theme_Material_Light_Dialog);
+            p = new ProgressDialog(this, R.style.AppTheme_Dialog);
         } else {
             p = new ProgressDialog(this);
         }
@@ -281,7 +343,7 @@ public class IntroductionActivity extends IntroductionActivityBase {
     }
 
     private void showLoginErrorDialog(DialogInterface.OnClickListener clickListener) {
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                 .setTitle("Error")
                 .setMessage("Could login to your Facebook")
                 .setPositiveButton("Try again", clickListener)
@@ -291,6 +353,7 @@ public class IntroductionActivity extends IntroductionActivityBase {
                         getNextButton().setEnabled(true);
                     }
                 })
+                .setCancelable(false)
                 .show();
     }
 

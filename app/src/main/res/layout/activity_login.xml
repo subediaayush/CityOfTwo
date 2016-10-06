@@ -1,68 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    >
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:scaleType="centerCrop"
-        android:src="@drawable/girl_with_phone" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:gravity="center_vertical|center_horizontal"
-        android:orientation="vertical"
-        android:padding="10dp">
-
-        <android.support.v4.widget.Space
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
 
         <LinearLayout
+            android:id="@+id/upper_container"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
             android:gravity="center"
             android:orientation="vertical">
 
-            <com.messenger.cityoftwo.FontTextView
-                android:id="@+id/coyrudy_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="CoyRudy"
-                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
-                android:textColor="@color/appTextColor"
-                android:textSize="28sp" />
-
             <ImageView
                 android:id="@+id/coyrudy_logo"
-                android:layout_width="100dp"
+                android:layout_width="wrap_content"
                 android:layout_height="100dp"
-                android:src="@drawable/mipmap_1" />
+                android:layout_margin="40dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/label_coyrudy"
+                android:src="@drawable/coyrudo_intro_background"
+                />
+
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center">
+            android:layout_height="match_parent"
+            android:layout_below="@+id/upper_container"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            >
 
             <Button
                 android:id="@+id/get_started_button"
+                style="@style/Widget.AppCompat.Button.Colored"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/login_button_background"
-                android:drawableLeft="@drawable/chat_end_background"
                 android:drawablePadding="10dp"
-                android:text="Login"
+                android:drawableStart="@drawable/com_facebook_button_icon"
+                android:paddingEnd="60dp"
+                android:paddingStart="60dp"
+                android:text="@string/label_login"
                 android:textColor="@color/appTextColor"
+                android:textSize="14sp"
                 android:typeface="sans" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                >
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/drawable_coyrudy"
+                    />
+
+                <TextView
+                    android:id="@+id/coyrudy_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:padding="7dp"
+                    android:text="@string/label_coyrudy"
+                    android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="22sp"
+                    />
+            </LinearLayout>
+
         </LinearLayout>
-    </LinearLayout>
 </RelativeLayout>

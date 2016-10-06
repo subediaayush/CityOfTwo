@@ -1,7 +1,6 @@
 package com.messenger.cityoftwo;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -59,7 +58,10 @@ public class LoginActivity extends AppCompatActivity {
             }
         })) return;
 
-        if (testAnswers.isEmpty()) {
+        if (
+                testAnswers.isEmpty()
+//                || BuildConfig.DEBUG
+                ) {
             Intent introIntent = new Intent(this, IntroductionActivity.class);
             startActivity(introIntent);
             finish();
@@ -111,12 +113,33 @@ public class LoginActivity extends AppCompatActivity {
         mGetStartedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                if (BuildConfig.DEBUG) {
+//                    SharedPreferences.Editor editor = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit();
+//                    editor.putString(CityOfTwo.KEY_COMMON_LIKES, "chari, pari, mari")
+//                            .putInt(CityOfTwo.KEY_CHATROOM_ID, 1)
+//                            .apply();
+//                    Intent conversationActivity = new Intent(
+//                            LoginActivity.this,
+//                            ConversationActivity.class
+//                    );
+//
+//                    Log.i("Lobby", "Opeing chat in offline");
+//                    startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
+//                    overridePendingTransition(
+//                            android.R.anim.fade_in,
+//                            android.R.anim.fade_out
+//                    );
+//
+//                    return;
+//                }
+
                 if (!isGooglePlayServicesAvailable(LoginActivity.this, new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialog) {
                         finish();
                     }
                 })) return;
+
                 updateAccessToken(AccessToken.getCurrentAccessToken());
             }
         });
@@ -165,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
                 height = mLogoImage.getHeight();
 
         Picasso.with(this)
-                .load(R.drawable.mipmap_1)
+                .load(R.drawable.logo_bitmap)
                 .resize(width, height)
                 .into(new Target() {
                     @Override
@@ -200,7 +223,7 @@ public class LoginActivity extends AppCompatActivity {
 
             final ProgressDialog loginDialog;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                loginDialog = new ProgressDialog(this, android.R.style.Theme_Material_Light_Dialog);
+                loginDialog = new ProgressDialog(this, R.style.AppTheme_Dialog);
             } else {
                 loginDialog = new ProgressDialog(this);
             }
@@ -238,7 +261,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showLoginError() {
-        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+        AlertDialog.Builder adb = new AlertDialog.Builder(this, R.style.AppTheme_Dialog);
 
         adb.setTitle("Oops");
         adb.setMessage("Something went wrong!");
@@ -258,48 +281,22 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             }
         });
-        Dialog warningDialog = adb.create();
+        AlertDialog warningDialog = adb.create();
         warningDialog.show();
     }
 
     private void openLobby(final AccessToken accessToken, final Profile profile) {
-        final long duration = 80;
-//        launchLobbyActivity(accessToken, profile);
-        mGetStartedButton.animate()
-                .setDuration(duration)
-                .alpha(0);
-
-        findViewById(R.id.coyrudy_label).animate()
-                .setDuration(duration)
-                .alpha(0)
-                .withEndAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        launchLobbyActivity(accessToken, profile);
-                    }
-                });
-    }
-
-    private void launchLobbyActivity(AccessToken accessToken, Profile profile) {
         Intent i = new Intent(this, LobbyActivity.class);
 
-        mLogoImage = (ImageView) findViewById(R.id.coyrudy_logo);
-
-        int[] location = new int[2];
-        mLogoImage.getLocationOnScreen(location);
 
 
         i.putExtra(CityOfTwo.KEY_ACCESS_TOKEN, accessToken);
         i.putExtra(CityOfTwo.KEY_PROFILE, profile);
-        i.putExtra(CityOfTwo.KEY_LOCATION_X, location[0]);
-        i.putExtra(CityOfTwo.KEY_LOCATION_Y, location[1]);
-        i.putExtra(CityOfTwo.KEY_WIDTH, mLogoImage.getWidth());
-        i.putExtra(CityOfTwo.KEY_HEIGHT, mLogoImage.getHeight());
-
 
         Log.i("Lobby Actiity", "Opening Lobby Activity");
         startActivityForResult(i, CityOfTwo.ACTIVITY_LOBBY);
-        overridePendingTransition(0, 0);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        finish();
     }
 
     private void openLobby() {

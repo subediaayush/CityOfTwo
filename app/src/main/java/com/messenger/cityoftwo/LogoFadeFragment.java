@@ -11,17 +11,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Aayush on 4/20/2016.
  */
 public class LogoFadeFragment extends Fragment {
 
-    Queue<View> mViewQueue;
+    private static final float FADE_ALPHA_VALUE = 0;
+
+    List<View> mViewQueue;
     private boolean mFlipping = false;
     private ImageView mProfileImageOne;
     private ImageView mProfileImageTwo;
     private ImageView mProfileImageThree;
     private ImageView mProfileImageFour;
+
+    private boolean isViewReady = false;
+    private boolean isParentReady = false;
 
     public LogoFadeFragment() {
     }
@@ -45,12 +53,31 @@ public class LogoFadeFragment extends Fragment {
         mProfileImageThree = (ImageView) view.findViewById(R.id.lobby_progress_three);
         mProfileImageFour = (ImageView) view.findViewById(R.id.lobby_progress_four);
 
-        mProfileImageOne.setImageBitmap(CityOfTwo.logoBitmap);
-        mProfileImageTwo.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 90));
-        mProfileImageThree.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 180));
-        mProfileImageFour.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 270));
+//        CityOfTwo.logoBitmap = ((BitmapDrawable) ContextCompat
+//                .getDrawable(getContext(), R.drawable.drawable_coyrudy)).getBitmap();
+//
+//        mProfileImageOne.setImageBitmap(CityOfTwo.logoBitmap);
+//        mProfileImageTwo.setImageBitmap(CityOfTwo.logoBitmap);
+//        mProfileImageTwo.setRotation(90);
+//        mProfileImageThree.setImageBitmap(CityOfTwo.logoBitmap);
+//        mProfileImageThree.setRotation(180);
+//        mProfileImageFour.setImageBitmap(CityOfTwo.logoBitmap);
+//        mProfileImageFour.setRotation(270);
+
+//        mProfileImageTwo.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 90));
+//        mProfileImageThree.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 180));
+//        mProfileImageFour.setImageBitmap(rotateBitmap(CityOfTwo.logoBitmap, 270));
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        isViewReady = true;
+
+        if (isParentReady) startFlipping();
     }
 
     private Bitmap rotateBitmap(Bitmap source, int angle) {
@@ -60,8 +87,12 @@ public class LogoFadeFragment extends Fragment {
     }
 
     public void startFlipping() {
-        if (mFlipping) return;
-        flip();
+        if (isViewReady) {
+            if (mFlipping) return;
+            flip();
+        } else {
+            isParentReady = true;
+        }
     }
 
     private void flip() {
@@ -69,10 +100,10 @@ public class LogoFadeFragment extends Fragment {
 
         setupFlipper();
 
-        final View currentView = mViewQueue.dequeue();
+        final View currentView = mViewQueue.remove(0);
 
         currentView.animate().setDuration(500)
-                .alpha(0)
+                .alpha(FADE_ALPHA_VALUE)
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
@@ -81,7 +112,7 @@ public class LogoFadeFragment extends Fragment {
                         parent.addView(currentView, 0);
 
                         currentView.setAlpha(1);
-                        mViewQueue.enqueue(currentView);
+                        mViewQueue.add(currentView);
 
                         if (mFlipping) flip();
                     }
@@ -90,11 +121,11 @@ public class LogoFadeFragment extends Fragment {
 
     private void setupFlipper() {
         if (mViewQueue == null) {
-            mViewQueue = new Queue<>();
-            mViewQueue.enqueue(mProfileImageOne);
-            mViewQueue.enqueue(mProfileImageTwo);
-            mViewQueue.enqueue(mProfileImageThree);
-            mViewQueue.enqueue(mProfileImageFour);
+            mViewQueue = new ArrayList<>();
+            mViewQueue.add(mProfileImageFour);
+            mViewQueue.add(mProfileImageThree);
+            mViewQueue.add(mProfileImageTwo);
+            mViewQueue.add(mProfileImageOne);
         }
     }
 
@@ -114,5 +145,8 @@ public class LogoFadeFragment extends Fragment {
             currentView = (ImageView) mViewQueue.get(1);
 
         return ((BitmapDrawable) currentView.getDrawable()).getBitmap();
+    }
+
+    public void onViewCreated() {
     }
 }

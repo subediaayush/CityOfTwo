@@ -12,11 +12,9 @@ import android.util.Log;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Map;
 
-import static com.messenger.cityoftwo.CityOfTwo.APPLICATION_FOREGROUND;
-import static com.messenger.cityoftwo.CityOfTwo.KEY_MESSAGE;
+import static com.messenger.cityoftwo.CityOfTwo.APPLICATION_BACKGROUND;
 import static com.messenger.cityoftwo.CityOfTwo.getApplicationState;
 import static com.messenger.cityoftwo.CityOfTwo.getCurrentActivity;
 import static com.messenger.cityoftwo.CityOfTwo.messageCounter;
@@ -26,168 +24,246 @@ import static com.messenger.cityoftwo.CityOfTwo.pendingMessages;
  * Created by Aayush on 7/16/2016.
  */
 public class FirebaseMessageHandler extends com.google.firebase.messaging.FirebaseMessagingService {
-    private LocalBroadcastManager mBroadcaster;
+	private LocalBroadcastManager mBroadcaster;
 
-    @Override
-    public void onMessageReceived(RemoteMessage remoteMessage) {
-        Map<String, String> data = remoteMessage.getData();
-        if (mBroadcaster == null) mBroadcaster = LocalBroadcastManager.getInstance(this);
+	@Override
+	public void onMessageReceived(RemoteMessage remoteMessage) {
+		Map<String, String> data = remoteMessage.getData();
+		if (mBroadcaster == null) mBroadcaster = LocalBroadcastManager.getInstance(this);
 
-        try {
-            Log.i("GCM", "GCM Message received " + data);
+		try {
+			Log.i("GCM", "GCM Message received " + data);
 
-            final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+			final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
-            String messageType = data.get(CityOfTwo.KEY_TYPE);
-            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            Intent intent = new Intent();
-            Integer chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID)),
-                    oldChatroomId = sharedPreferences.getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
+			String messageType = data.get(CityOfTwo.KEY_TYPE);
+			NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+			Intent intent = new Intent();
+			int oldChatroomId = sharedPreferences.getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
 
-            DatabaseHelper db = new DatabaseHelper(this);
+			DatabaseHelper db = new DatabaseHelper(this);
 
-            switch (messageType) {
-                case KEY_MESSAGE: {
-                    String text = data.get(CityOfTwo.KEY_TEXT);
-                    Integer flags = Integer.parseInt(data.get(CityOfTwo.KEY_MESSAGE_FLAGS));
-                    Date time = new Date(Long.parseLong(data.get(CityOfTwo.KEY_TIME)));
+			int currentActivity = getCurrentActivity(), applicationState = getApplicationState();
 
-                    // Current activity is not Conversation Activity
-                    // Current activity is Conversation Activty but is in background
-                    int currentActivity = getCurrentActivity(),
-                            applicationState = getApplicationState();
-                    if ((currentActivity == CityOfTwo.ACTIVITY_CONVERSATION &&
-                            applicationState == CityOfTwo.APPLICATION_BACKGROUND) ||
-                            currentActivity != CityOfTwo.ACTIVITY_CONVERSATION) {
+			switch (messageType) {
+				case CityOfTwo.KEY_MESSAGE: {
+					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
+					String text = data.get(CityOfTwo.KEY_TEXT);
+					Integer flags = Integer.parseInt(data.get(CityOfTwo.KEY_MESSAGE_FLAGS));
+					long time = System.currentTimeMillis();
+//					long time = Long.parseLong(data.get(CityOfTwo.KEY_TIME));
 
-                        Conversation c = new Conversation(text, flags, time);
-                        c.removeFlag(CityOfTwo.FLAG_SENT);
-                        c.addFlag(CityOfTwo.FLAG_RECEIVED);
+					Conversation c = new Conversation(text, flags, time);
+					c.removeFlag(CityOfTwo.FLAG_SENT);
+					c.addFlag(CityOfTwo.FLAG_RECEIVED);
 
-                        db.insertMessage(chatroomId, c);
+					// Current activity is not Conversation Activity
+					// Current activity is Conversation Activty but is in background
+					if ((currentActivity == CityOfTwo.ACTIVITY_CONVERSATION &&
+							applicationState == CityOfTwo.APPLICATION_BACKGROUND) ||
+							currentActivity != CityOfTwo.ACTIVITY_CONVERSATION) {
 
-                        // If not current conversation then let BEGIN_CHAT handle it
-                        if (!chatroomId.equals(oldChatroomId)) return;
+						db.insertMessage(chatroomId, c);
 
-                        if ((flags & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE)
-                            text = "Stranger shared their profile with you";
+						// If not current conversation then let BEGIN_CHAT handle it
+						if (chatroomId != oldChatroomId) return;
 
-                        Intent notificationIntent = new Intent(this, ConversationActivity.class);
+						if ((flags & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE)
+							text = "Stranger shared their profile with you";
 
-                        PendingIntent p = PendingIntent.getActivity(
-                                this,
-                                (int) System.currentTimeMillis(),
-                                notificationIntent,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                        );
+						Intent notificationIntent = new Intent(this, ConversationActivity.class);
 
-                        if (messageCounter == null) messageCounter = 0;
-                        if (pendingMessages == null) pendingMessages = new ArrayList<>();
-                        pendingMessages.add(text);
+						PendingIntent p = PendingIntent.getActivity(
+								this,
+								(int) System.currentTimeMillis(),
+								notificationIntent,
+								PendingIntent.FLAG_UPDATE_CURRENT
+						);
+
+						if (messageCounter == null) messageCounter = 0;
+						if (pendingMessages == null) pendingMessages = new ArrayList<>();
+						pendingMessages.add(text);
 
                         /* Add Big View Specific Configuration */
-                        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-                        // Sets a title for the Inbox style big view
-                        inboxStyle.setBigContentTitle("New messages");
-                        for (String message : pendingMessages) inboxStyle.addLine(message);
+						NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+						// Sets a title for the Inbox style big view
+						inboxStyle.setBigContentTitle("New messages");
+						for (String message : pendingMessages) inboxStyle.addLine(message);
 
-                        Notification n = new NotificationCompat.Builder(this)
-                                .setContentTitle("You have new message")
-                                .setStyle(inboxStyle)
-                                .setContentText(text)
-                                .setNumber(++messageCounter)
-                                .setSmallIcon(R.drawable.ic_small)
-                                .setContentIntent(p)
-                                .setPriority(Notification.PRIORITY_HIGH)
-                                .setAutoCancel(true)
-                                .build();
+						Notification n = new NotificationCompat.Builder(this)
+								.setContentTitle("You have new message")
+								.setStyle(inboxStyle)
+								.setContentText(text)
+								.setNumber(++messageCounter)
+								.setSmallIcon(R.drawable.ic_small)
+								.setContentIntent(p)
+								.setPriority(Notification.PRIORITY_HIGH)
+								.setAutoCancel(true)
+								.build();
 
-                        Log.i("Message Counter", String.valueOf(messageCounter));
+						Log.i("Message Counter", String.valueOf(messageCounter));
 
-                        n.defaults |= Notification.DEFAULT_SOUND;
-                        n.defaults |= Notification.DEFAULT_VIBRATE;
+						n.defaults |= Notification.DEFAULT_SOUND;
+						n.defaults |= Notification.DEFAULT_VIBRATE;
 
-                        nm.notify(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0, n);
-                    } else {
-                        // If not current conversation then let BEGIN_CHAT handle it
-                        if (!chatroomId.equals(oldChatroomId)) return;
+						nm.notify(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044, n);
+					} else {
+						// If not current conversation then let BEGIN_CHAT handle it
+						if (chatroomId != oldChatroomId) return;
 
-                        messageCounter = 0;
-                        intent.setAction(CityOfTwo.ACTION_NEW_MESSAGE);
+						messageCounter = 0;
+						intent.setAction(CityOfTwo.ACTION_NEW_MESSAGE);
 
-                        intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
-                        intent.putExtra(CityOfTwo.KEY_TEXT, text);
-                        intent.putExtra(CityOfTwo.KEY_MESSAGE_FLAGS, flags);
-                        intent.putExtra(CityOfTwo.KEY_TIME, time.getTime());
+						intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
+						intent.putExtra(CityOfTwo.KEY_TEXT, text);
+						intent.putExtra(CityOfTwo.KEY_MESSAGE_FLAGS, flags);
+						intent.putExtra(CityOfTwo.KEY_TIME, time);
 
-                        mBroadcaster.sendBroadcast(intent);
-                    }
-                    Log.i("GCM", messageType + " handled");
-                    break;
-                }
-                case CityOfTwo.KEY_CHAT_BEGIN: {
-                    if (chatroomId == oldChatroomId) break;
-                    String commonLikes = data.get(CityOfTwo.KEY_COMMON_LIKES);
-                    messageCounter = 0;
-                    if (pendingMessages != null) pendingMessages.clear();
+						mBroadcaster.sendBroadcast(intent);
+					}
+					Log.i("GCM", messageType + " handled");
+					break;
+				}
+				case CityOfTwo.KEY_CHAT_BEGIN: {
+					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
 
-                    nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
+					if (chatroomId == oldChatroomId) break;
 
-                    sharedPreferences.edit()
-                            .putBoolean(CityOfTwo.KEY_CHAT_PENDING, true)
-                            .putString(CityOfTwo.KEY_COMMON_LIKES, commonLikes)
-                            .putInt(CityOfTwo.KEY_CHATROOM_ID, chatroomId)
-                            .apply();
+					String commonLikes = data.get(CityOfTwo.KEY_COMMON_LIKES);
+					messageCounter = 0;
+					if (pendingMessages != null) pendingMessages.clear();
 
-                    if (getApplicationState() == APPLICATION_FOREGROUND) {
-                        intent = new Intent(CityOfTwo.ACTION_BEGIN_CHAT);
-                        mBroadcaster.sendBroadcast(intent);
-                    }
-                    Log.i("GCM", messageType + " handled");
-                    break;
-                }
-                case CityOfTwo.KEY_CHAT_END: {
-                    messageCounter = 0;
-                    if (pendingMessages != null) pendingMessages.clear();
+					nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
 
-                    if (getApplicationState() == APPLICATION_FOREGROUND) {
-                        mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_END_CHAT));
-                    }
+					sharedPreferences.edit()
+							.putBoolean(CityOfTwo.KEY_CHAT_PENDING, true)
+							.putString(CityOfTwo.KEY_COMMON_LIKES, commonLikes)
+							.putInt(CityOfTwo.KEY_CHATROOM_ID, chatroomId)
+							.apply();
 
-                    nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
+					if (applicationState == CityOfTwo.APPLICATION_BACKGROUND) {
+						Intent notificationIntent = new Intent(this, ConversationActivity.class);
 
-                    sharedPreferences.edit()
-                            .remove(CityOfTwo.KEY_CHAT_PENDING)
-                            .remove(CityOfTwo.KEY_CHATROOM_ID)
-                            .apply();
+						PendingIntent p = PendingIntent.getActivity(
+								this,
+								(int) System.currentTimeMillis(),
+								notificationIntent,
+								PendingIntent.FLAG_UPDATE_CURRENT
+						);
 
-                    Log.i("GCM", messageType + " handled");
-                    break;
-                }
-                case CityOfTwo.KEY_USER_OFFLINE: {
-                    messageCounter = 0;
-                    if (pendingMessages != null) pendingMessages.clear();
+						Notification n = new NotificationCompat.Builder(this)
+								.setContentTitle("New Match")
+								.setContentText("Your match is ready! Tap here to start chatting")
+								.setSmallIcon(R.drawable.ic_small)
+								.setContentIntent(p)
+								.setPriority(Notification.PRIORITY_HIGH)
+								.setAutoCancel(true)
+								.build();
 
-                    if (getApplicationState() == APPLICATION_FOREGROUND) {
-                        mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_USER_OFFLINE));
-                    }
+						n.defaults |= Notification.DEFAULT_SOUND;
+						n.defaults |= Notification.DEFAULT_VIBRATE;
 
-                    nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
+						nm.notify(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045, n);
+					} else {
+						intent = new Intent(CityOfTwo.ACTION_BEGIN_CHAT);
+						mBroadcaster.sendBroadcast(intent);
+					}
+					Log.i("GCM", messageType + " handled");
+					break;
+				}
+				case CityOfTwo.KEY_LAST_SEEN: {
+					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
 
-                    sharedPreferences.edit()
-                            .putBoolean(CityOfTwo.KEY_USER_OFFLINE, true)
-                            .remove(CityOfTwo.KEY_CHAT_PENDING)
-                            .remove(CityOfTwo.KEY_CHATROOM_ID)
-                            .apply();
+					if (chatroomId != oldChatroomId) return;
 
-                    Log.i("GCM", messageType + " handled");
-                    break;
-                }
-                default:
-                    break;
-            }
-        } catch (Exception e) {
-            Log.e("GCM Exception", e.toString(), e);
-        }
-    }
+					sharedPreferences.edit()
+							.putLong(CityOfTwo.KEY_LAST_SEEN, Long.parseLong(data.get(CityOfTwo.KEY_LAST_SEEN)))
+							.apply();
+
+					mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_LAST_SEEN));
+					break;
+				}
+				case CityOfTwo.KEY_IS_TYPING: {
+					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
+
+					if (chatroomId != oldChatroomId) return;
+
+					sharedPreferences.edit()
+							.putBoolean(CityOfTwo.KEY_IS_TYPING, Boolean.parseBoolean(data.get(CityOfTwo.KEY_IS_TYPING)))
+							.apply();
+
+					mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_IS_TYPING));
+					break;
+
+				}
+				case CityOfTwo.KEY_CHAT_END: {
+					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
+
+					if (chatroomId != oldChatroomId) return;
+
+					messageCounter = 0;
+					if (pendingMessages != null) pendingMessages.clear();
+
+					nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
+
+					if (getApplicationState() == APPLICATION_BACKGROUND) {
+						Intent notificationIntent = new Intent(this, LobbyActivity.class);
+
+						PendingIntent p = PendingIntent.getActivity(
+								this,
+								(int) System.currentTimeMillis(),
+								notificationIntent,
+								PendingIntent.FLAG_UPDATE_CURRENT
+						);
+
+						Notification n = new NotificationCompat.Builder(this)
+								.setContentTitle("Chat ended")
+								.setContentText("Your last chat has ended. Tap here to start a new chat.")
+								.setSmallIcon(R.drawable.ic_small)
+								.setContentIntent(p)
+								.setPriority(Notification.PRIORITY_HIGH)
+								.setAutoCancel(true)
+								.build();
+
+						n.defaults |= Notification.DEFAULT_SOUND;
+						n.defaults |= Notification.DEFAULT_VIBRATE;
+
+						nm.notify(CityOfTwo.NOTIFICATION_CHAT_END, 10046, n);
+					} else {
+						mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_END_CHAT));
+					}
+
+					sharedPreferences.edit()
+							.remove(CityOfTwo.KEY_CHAT_PENDING)
+							.remove(CityOfTwo.KEY_CHATROOM_ID)
+							.apply();
+
+					Log.i("GCM", messageType + " handled");
+					break;
+				}
+				case CityOfTwo.KEY_USER_OFFLINE: {
+					messageCounter = 0;
+
+//					if (data.containsKey("POOL_ID")) return;
+					if (pendingMessages != null) pendingMessages.clear();
+
+					mBroadcaster.sendBroadcast(new Intent(CityOfTwo.ACTION_USER_OFFLINE));
+
+					nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 0);
+					nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
+
+					sharedPreferences.edit()
+							.putBoolean(CityOfTwo.KEY_SESSION_ACTIVE, false)
+							.apply();
+
+					Log.i("GCM", messageType + " handled");
+					break;
+				}
+				default:
+					break;
+			}
+		} catch (Exception e) {
+			Log.e("GCM Exception", e.toString(), e);
+		}
+	}
 }

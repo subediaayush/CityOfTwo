@@ -54,7 +54,7 @@ public class FiltersFragment extends DialogFragment {
 
         View view = createView(context);
 
-        return new AlertDialog.Builder(context)
+        return new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
                 .setTitle("Apply Filters")
                 .setView(view)
                 .setPositiveButton("Apply", new DialogInterface.OnClickListener() {
@@ -257,7 +257,7 @@ public class FiltersFragment extends DialogFragment {
     }
 
     private void showCreditsDialog() {
-        new AlertDialog.Builder(context)
+        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
                 .setTitle("Not enough credits")
                 .setMessage("You'll need credits to apply filters")
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {

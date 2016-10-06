@@ -7,15 +7,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.util.SortedList;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
@@ -30,57 +32,98 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static com.messenger.cityoftwo.R.id.line;
+
 /**
  * Created by Aayush on 1/15/2016.
  */
 public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int ID_TEXT = 0x00F00000;
-    private static final int ID_PROFILE_IMAGE = 0x00F00001;
-    private static final int ID_PROFILE_NAME = 0x00F00002;
-    protected List<Integer> adLocations;
-    //    private static final int ID_PROFILE_URL =
-    private String mHeaderText;
-    private List<Conversation> ConversationList;
-    private LinearLayoutManager LayoutManager;
-    private Context context;
-    private boolean isWaiting;
-    private ProgressDialog mWaitingDialog;
-    private int selectedItem;
-    private MoPubView adView;
-    private boolean isLastVisible;
-    private int maximumDisplayableChild;
-    private int currentAdLocation;
+	private static final int ID_TEXT = 0x00F00000;
+	private static final int ID_PROFILE_IMAGE = 0x00F00001;
+	private static final int ID_PROFILE_NAME = 0x00F00002;
+	protected List<Integer> adLocations;
+	//    private static final int ID_PROFILE_URL =
+	private String mHeaderText;
+	private SortedList<Conversation> ConversationList;
+	private LinearLayoutManager LayoutManager;
+	private Context context;
+	private boolean isWaiting;
+	private ProgressDialog mWaitingDialog;
+	private int selectedItem;
+	private MoPubView adView;
+	private boolean isLastVisible;
+	private int maximumDisplayableChild;
+	private int currentAdLocation;
 
-    public ConversationAdapter(final Context context, List<Conversation> conversationList, LinearLayoutManager l) {
-        ConversationList = conversationList;
-        this.context = context;
+	private Conversation indicatorConversation;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            mWaitingDialog = new ProgressDialog(context, android.R.style.Theme_Material_Light_Dialog);
-        else
-            mWaitingDialog = new ProgressDialog(context);
+	public ConversationAdapter(final Context context, LinearLayoutManager l) {
+		ConversationList = new SortedList<Conversation>(Conversation.class, new SortedList.Callback<Conversation>() {
+			@Override
+			public int compare(Conversation o1, Conversation o2) {
+				return Conversation.CONVERSATION_COMPARATOR.compare(o1, o2);
+			}
 
-        isWaiting = false;
-        isLastVisible = false;
-        selectedItem = -1;
-        currentAdLocation = -1;
-        adLocations = new ArrayList<>();
-        LayoutManager = l;
-        maximumDisplayableChild = -1;
+			@Override
+			public void onInserted(int position, int count) {
+				notifyItemRangeInserted(position, count);
+			}
 
-        mWaitingDialog.setTitle("Finding a match");
-        mWaitingDialog.setMessage("Finding a new match for you.");
-        mWaitingDialog.setCancelable(true);
-        mWaitingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                if (context instanceof AppCompatActivity) {
-                    ((AppCompatActivity) context).setResult(Activity.RESULT_CANCELED);
-                    ((AppCompatActivity) context).finish();
-                }
-            }
-        });
+			@Override
+			public void onRemoved(int position, int count) {
+				notifyItemRangeRemoved(position, count);
+			}
+
+			@Override
+			public void onMoved(int fromPosition, int toPosition) {
+				notifyItemMoved(fromPosition, toPosition);
+			}
+
+			@Override
+			public void onChanged(int position, int count) {
+				notifyItemRangeChanged(position, count);
+			}
+
+			@Override
+			public boolean areContentsTheSame(Conversation oldItem, Conversation newItem) {
+				return oldItem.getText().equals(newItem.getText());
+			}
+
+			@Override
+			public boolean areItemsTheSame(Conversation item1, Conversation item2) {
+				return item1.getText().equals(item2.getText()) &&
+						item1.getFlags().equals(item2.getFlags()) &&
+						item1.getTime() == item2.getTime();
+			}
+		});
+		this.context = context;
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			mWaitingDialog = new ProgressDialog(context, R.style.AppTheme_Dialog);
+		else
+			mWaitingDialog = new ProgressDialog(context);
+
+		isWaiting = false;
+		isLastVisible = false;
+		selectedItem = -1;
+		currentAdLocation = -1;
+		adLocations = new ArrayList<>();
+		LayoutManager = l;
+		maximumDisplayableChild = -1;
+
+		mWaitingDialog.setTitle("Finding a match");
+		mWaitingDialog.setMessage("Finding a new match for you.");
+		mWaitingDialog.setCancelable(true);
+		mWaitingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				if (context instanceof AppCompatActivity) {
+					((AppCompatActivity) context).setResult(Activity.RESULT_CANCELED);
+					((AppCompatActivity) context).finish();
+				}
+			}
+		});
 
 
 //        String placement_id = "1727194620850368_1802484046654758";
@@ -88,327 +131,397 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //        if (BuildConfig.DEBUG) AdSettings.addTestDevice("1d08b53d5b715d2ee573ea4c5f88f5df");
 //        adView.loadAd();
 
-        mHeaderText = "";
+		mHeaderText = "";
 
-    }
+		indicatorConversation = new Conversation(
+				"CHAT_LAST_SEEN",
+				CityOfTwo.FLAG_INDICATOR,
+				System.currentTimeMillis()
+		);
+	}
 
+	@Override
+	public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+		LayoutInflater li = LayoutInflater.from(context);
 
-    @Override
-    public int getItemViewType(int position) {
-        return ConversationList.get(position).getFlags();
-    }
+		View view;
 
+		if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
+			view = li.inflate(R.layout.layout_msg_sent, parent, false);
+		} else if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
+			view = li.inflate(R.layout.layout_msg_received, parent, false);
+		} else if ((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
+			view = li.inflate(R.layout.layout_msg_start, parent, false);
+		} else if ((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
+			view = li.inflate(R.layout.layout_msg_end, parent, false);
+		} else if ((viewType & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
+			view = li.inflate(R.layout.layout_msg_indicators, parent, false);
+		} else {
+			view = li.inflate(R.layout.layout_msg_end, parent, false);
+		}
 
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater li = LayoutInflater.from(context);
+		if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
+			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
 
-        View view;
+			TextView messageTextView = (TextView) LayoutInflater.from(context)
+					.inflate(R.layout.layout_message_text, null)
+					.findViewById(R.id.message_text);
 
-        if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
-            view = li.inflate(R.layout.layout_msg_sent, parent, false);
-        } else if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-            view = li.inflate(R.layout.layout_msg_received, parent, false);
-        } else if ((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
-            view = li.inflate(R.layout.layout_msg_start, parent, false);
-        } else if ((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
-            view = li.inflate(R.layout.layout_msg_end, parent, false);
-        } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
-            view = li.inflate(R.layout.layout_msg_ad, parent, false);
-        } else {
-            view = li.inflate(R.layout.layout_msg_end, parent, false);
-        }
+			container.addView(messageTextView);
+			messageTextView.setLayoutParams(
+					new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+							ViewGroup.LayoutParams.WRAP_CONTENT)
+			);
 
-        if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
-            FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
+			return new ContentHolder(view);
+		} else if ((viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
+			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
 
-            TextView messageTextView = (TextView) LayoutInflater.from(context)
-                    .inflate(R.layout.layout_message_text, null)
-                    .findViewById(R.id.message_text);
+			View childView = LayoutInflater.from(context)
+					.inflate(R.layout.layout_message_profile, null);
 
-            container.addView(messageTextView);
-            messageTextView.setLayoutParams(
-                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT)
-            );
+			container.addView(childView);
 
-            return new ContentHolder(view);
-        } else if ((viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
-            FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
+			childView.setLayoutParams(
+					new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+							ViewGroup.LayoutParams.WRAP_CONTENT)
+			);
 
-            View childView = LayoutInflater.from(context)
-                    .inflate(R.layout.layout_message_profile, null);
+			return new ContentHolder(view);
+		} else if (((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
+				((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END)) {
+			return new GenericHolder(view);
+//		} else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+//			return new AdHolder(view);
+		} else if ((viewType & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
+			return new IndicatorHolder(view);
+		} else {
+			return new ContentHolder(view);
+		}
+	}
 
-            container.addView(childView);
+	@Override
+	public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, final int position) {
 
-            childView.setLayoutParams(
-                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT)
-            );
+		Conversation currentConv = ConversationList.get(position);
 
-            return new ContentHolder(view);
-        } else if (((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
-                ((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END)) {
-            return new GenericHolder(view);
-        } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
-            return new AdHolder(view);
-        } else {
-            return new ContentHolder(view);
-        }
-    }
+		int flags = currentConv.getFlags();
+		isLastVisible = false;
 
-    @Override
-    public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, final int position) {
-        Conversation currentConv = ConversationList.get(position);
+		if ((flags & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
+			final ContentHolder holder = (ContentHolder) viewHolder;
 
-        int flags = currentConv.getFlags();
-        isLastVisible = false;
+			final String messageText = currentConv.getText();
 
-        if ((flags & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
-            final ContentHolder holder = (ContentHolder) viewHolder;
+			String messageTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentConv.getTime());
 
-            final String messageText = currentConv.getText();
+			TextView messageTextView = (TextView) holder.contentContainer.findViewById(R.id.message_text);
+			messageTextView.setText(messageText);
 
-            String messageTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentConv.getTime());
+			holder.dateContainer.setText(messageTime);
 
+			if (selectedItem == position) {
+				holder.dateContainer.setVisibility(View.VISIBLE);
+			}
 
-            TextView messageTextView = (TextView) holder.contentContainer.findViewById(R.id.message_text);
-            messageTextView.setText(messageText);
-
-            holder.dateContainer.setText(messageTime);
-
-            if (selectedItem == position)
-                holder.dateContainer.setVisibility(View.VISIBLE);
-
-            holder.contentContainer.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    int oldSelected = selectedItem;
-                    if (oldSelected == position) selectedItem = -1;
-                    else selectedItem = position;
-                    toggleVisibility(holder.dateContainer);
+			holder.contentContainer.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View view) {
+					int oldSelected = selectedItem;
+					if (oldSelected == position) {
+						selectedItem = -1;
+					} else {
+						selectedItem = position;
+					}
+					toggleVisibility(holder.dateContainer);
 //                    ConversationAdapter.this.notifyItemChanged(position);
-                    if (oldSelected != -1) ConversationAdapter.this.notifyItemChanged(oldSelected);
-                }
-            });
-        } else if ((flags & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
-            final ContentHolder holder = (ContentHolder) viewHolder;
+					if (oldSelected != -1) ConversationAdapter.this.notifyItemChanged(oldSelected);
+				}
+			});
+		} else if ((flags & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
+			final ContentHolder holder = (ContentHolder) viewHolder;
 
-            try {
-                JSONObject facebookObject = new JSONObject(currentConv.getText());
-                String profileName = facebookObject.getString(CityOfTwo.KEY_PROFILE_NAME),
-                        profileId = facebookObject.getString(CityOfTwo.KEY_PROFILE_ID);
-
-
-                final Uri profileUri = CityOfTwo.getFacebookPageURI(context, profileId);
+			try {
+				JSONObject facebookObject = new JSONObject(currentConv.getText());
+				String profileName = facebookObject.getString(CityOfTwo.KEY_PROFILE_NAME),
+						profileId = facebookObject.getString(CityOfTwo.KEY_PROFILE_ID);
 
 
-                final ProfilePictureView profileImageView = (ProfilePictureView) holder.contentContainer.findViewById(R.id.message_profile_image);
+				final Uri profileUri = CityOfTwo.getFacebookPageURI(context, profileId);
 
-                profileImageView.setProfileId(profileId);
+				String messageTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentConv.getTime());
+				holder.dateContainer.setText(messageTime);
 
-                TextView profileTextView = (TextView) holder.contentContainer.findViewById(R.id.message_profile_name);
-                profileTextView.setText(profileName);
+				final ProfilePictureView profileImageView = (ProfilePictureView) holder.contentContainer.findViewById(R.id.message_profile_image);
 
-                holder.contentContainer.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, profileUri);
-                        context.startActivity(intent);
-                    }
-                });
+				profileImageView.setProfileId(profileId);
 
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        } else if ((flags & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
-            GenericHolder holder = (GenericHolder) viewHolder;
-            holder.likeList.setText(mHeaderText);
-        } else if ((flags & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
-            GenericHolder holder = (GenericHolder) viewHolder;
-            isLastVisible = true;
-        } else if ((flags & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
-            if (canBindAd(position)) {
-                AdHolder holder = (AdHolder) viewHolder;
-                ViewGroup parent = (ViewGroup) adView.getParent();
-                if (parent != null) parent.removeAllViews();
-                holder.adContainer.addView(adView);
-                currentAdLocation = position;
-            }
-        }
+				TextView profileTextView = (TextView) holder.contentContainer.findViewById(R.id.message_profile_name);
+				profileTextView.setText(profileName);
 
-        if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT ||
-                (flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-            Conversation previousItem = ConversationList.get(position - 1);
-            int previousItemFlag = previousItem.getFlags();
+				holder.contentContainer.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						Intent intent = new Intent(Intent.ACTION_VIEW, profileUri);
+						context.startActivity(intent);
+					}
+				});
 
-            boolean previousAdType = (previousItemFlag & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD;
-            if (previousAdType) {
-                previousItem = ConversationList.get(position - 2);
-                previousItemFlag = previousItem.getFlags();
-            }
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		} else if ((flags & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
+			GenericHolder holder = (GenericHolder) viewHolder;
+			if (mHeaderText.isEmpty()) holder.introContainer.setVisibility(View.INVISIBLE);
+			else holder.introContainer.setVisibility(View.VISIBLE);
+			holder.likeList.setText(mHeaderText);
+		} else if ((flags & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
+			isLastVisible = true;
+		} else if ((flags & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
+			IndicatorHolder holder = (IndicatorHolder) viewHolder;
 
-            boolean sameType = (flags & CityOfTwo.FLAG_SENT) == (previousItemFlag & CityOfTwo.FLAG_SENT) &&
-                    (flags & CityOfTwo.FLAG_RECEIVED) == (previousItemFlag & CityOfTwo.FLAG_RECEIVED);
+			holder.typingIndicator.setVisibility(View.GONE);
+			holder.seenIndicator.setVisibility(View.GONE);
+			if ((flags & CityOfTwo.FLAG_TYPING) == CityOfTwo.FLAG_TYPING) {
+				holder.typingIndicator.setVisibility(View.VISIBLE);
+			}
+			if ((flags & CityOfTwo.FLAG_LAST_SEEN) == CityOfTwo.FLAG_LAST_SEEN) {
+				String lastSeen = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentConv.getTime());
 
-            final ContentHolder holder = (ContentHolder) viewHolder;
-            if (sameType) {
-                if (position != selectedItem) holder.dateContainer.setVisibility(View.GONE);
-            } else {
-                holder.dateContainer.setVisibility(View.VISIBLE);
-            }
-        }
+				holder.lastSeen.setText(lastSeen);
+				holder.seenIndicator.setVisibility(View.VISIBLE);
+			}
 
-    }
+		}
 
-    private boolean canBindAd(int position) {
-        int firstItem = LayoutManager.findFirstVisibleItemPosition(),
-                lastItem = LayoutManager.findLastVisibleItemPosition();
+		if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT ||
+				(flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
+			Conversation previousItem = ConversationList.get(position - 1);
+			int previousItemFlag = previousItem.getFlags();
 
-        for (int adLocation : adLocations)
-            if (adLocation >= firstItem && adLocation <= lastItem && adLocation != position)
-                return false;
+			boolean previousIndicatorType = (previousItemFlag & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR;
+			if (previousIndicatorType) {
+				previousItem = ConversationList.get(position - 2);
+				previousItemFlag = previousItem.getFlags();
+			}
 
-        return true;
-    }
+			boolean sameType = (flags & CityOfTwo.FLAG_SENT) == (previousItemFlag & CityOfTwo.FLAG_SENT) &&
+					(flags & CityOfTwo.FLAG_RECEIVED) == (previousItemFlag & CityOfTwo.FLAG_RECEIVED);
 
-    private void facebookLogin(final AccessToken accessToken) {
+			final ContentHolder holder = (ContentHolder) viewHolder;
+			if (sameType) {
+				if (position != selectedItem) holder.dateContainer.setVisibility(View.GONE);
+			} else {
+				holder.dateContainer.setVisibility(View.VISIBLE);
+			}
+		}
 
-        new FacebookLogin(context, accessToken) {
-            @Override
-            void onSuccess(String response) {
+	}
 
-            }
+	@Override
+	public int getItemViewType(int position) {
+		return ConversationList.get(position).getFlags();
+	}
 
-            @Override
-            void onFailure(Integer status) {
-                new AlertDialog.Builder(context)
-                        .setTitle("Error")
-                        .setMessage("An error occured.")
-                        .setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                facebookLogin(accessToken);
-                            }
-                        })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (isWaiting) hideWaitingDialog();
-                            }
-                        })
-                        .show();
+	@Override
+	public int getItemCount() {
+		return ConversationList.size();
+	}
 
-            }
-        }.execute();
-    }
+	private void setRecyclableLater(final RecyclerView.ViewHolder viewHolder) {
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				viewHolder.setIsRecyclable(true);
+			}
+		}, 200);
+	}
 
-    protected boolean isWaiting() {
-        return isWaiting;
-    }
+	private boolean canBindAd(int position) {
+		int firstItem = LayoutManager.findFirstVisibleItemPosition(),
+				lastItem = LayoutManager.findLastVisibleItemPosition();
 
-    protected void showWaitingDialog() {
-        if (!isWaiting) mWaitingDialog.show();
-        isWaiting = true;
-    }
+		for (int adLocation : adLocations)
+			if (adLocation >= firstItem && adLocation <= lastItem && adLocation != position)
+				return false;
 
-    protected void hideWaitingDialog() {
-        if (isWaiting) mWaitingDialog.hide();
-        isWaiting = false;
-    }
+		return true;
+	}
 
-    private void toggleVisibility(View view) {
-        if (view.getVisibility() == View.VISIBLE)
-            view.setVisibility(View.GONE);
-        else
-            view.setVisibility(View.VISIBLE);
-    }
+	private void facebookLogin(final AccessToken accessToken) {
 
-    @Override
-    public int getItemCount() {
-        return ConversationList.size();
-    }
+		new FacebookLogin(context, accessToken) {
+			@Override
+			void onSuccess(String response) {
 
-    public String getHeaderText() {
-        return this.mHeaderText;
-    }
+			}
 
-    public void setHeaderText(String headerText) {
-        this.mHeaderText = headerText;
-    }
+			@Override
+			void onFailure(Integer status) {
+				new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+						.setTitle("Error")
+						.setMessage("An error occured.")
+						.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								facebookLogin(accessToken);
+							}
+						})
+						.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								if (isWaiting) hideWaitingDialog();
+							}
+						})
+						.show();
 
-    public ProgressDialog getWaitingDialog() {
-        return mWaitingDialog;
-    }
+			}
+		}.execute();
+	}
 
-    public boolean isLastVisible() {
-        return isLastVisible;
-    }
+	protected boolean isWaiting() {
+		return isWaiting;
+	}
 
-    public void insertItem(Conversation c, int insertPosition) {
-        ConversationList.add(insertPosition, c);
-        notifyItemInserted(insertPosition);
+	protected void showWaitingDialog() {
+		if (!isWaiting) mWaitingDialog.show();
+		isWaiting = true;
+	}
 
-//        int heightSum = 0;
-//        if (maximumDisplayableChild != -1 /* && condition for keyboard not visible */) {
-//            for (int i = firstItem; i <= lastItem; i++) {
-//                heightSum += LayoutManager.findViewByPosition(i).getHeight();
-//            }
-//            if (heightSum > LayoutManager.getHeight()) {
-//                maximumDisplayableChild = lastItem - firstItem;
-//            }
-//        }
+	protected void hideWaitingDialog() {
+		if (isWaiting) mWaitingDialog.hide();
+		isWaiting = false;
+	}
 
-//        boolean canInsertAd = ++insertPosition > 6 && !isAdDisplayed;
+	private void toggleVisibility(View view) {
+		if (view.getVisibility() == View.VISIBLE)
+			view.setVisibility(View.GONE);
+		else
+			view.setVisibility(View.VISIBLE);
+	}
 
-        if (++insertPosition % 6 == 0) {
-            Conversation ad = new Conversation("CHAT_AD", CityOfTwo.FLAG_AD);
-            ConversationList.add(insertPosition, ad);
-            notifyItemInserted(insertPosition);
-            adLocations.add(insertPosition);
-        }
-    }
+	public String getHeaderText() {
+		return this.mHeaderText;
+	}
 
-    public void setAdView(MoPubView adView) {
-        this.adView = adView;
-    }
+	public void setHeaderText(String headerText) {
+		this.mHeaderText = headerText;
+	}
 
-    @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
-        if (adView != null) adView.destroy();
-        Log.i("Conversation Adapter", "Adapter detached from list");
-    }
+	public ProgressDialog getWaitingDialog() {
+		return mWaitingDialog;
+	}
 
-    protected class ContentHolder extends RecyclerView.ViewHolder {
-        TextView dateContainer;
-        FrameLayout contentContainer;
-        View lineContainer;
+	public boolean isLastVisible() {
+		return isLastVisible;
+	}
 
-        public ContentHolder(View itemView) {
-            super(itemView);
-            contentContainer = (FrameLayout) itemView.findViewById(R.id.content_container);
-            dateContainer = (TextView) itemView.findViewById(R.id.time);
-            lineContainer = itemView.findViewById(R.id.line);
-        }
-    }
+	public void insertItem(Conversation c) {
+		ConversationList.add(c);
+	}
 
-    protected class GenericHolder extends RecyclerView.ViewHolder {
-        TextView likeList;
+	public void insertItems(ArrayList<Conversation> c) {
+		ConversationList.addAll(c);
+	}
 
-        public GenericHolder(View itemView) {
-            super(itemView);
+	public void setAdView(MoPubView adView) {
+		this.adView = adView;
+	}
 
-            likeList = (TextView) itemView.findViewById(R.id.likes_list);
-        }
-    }
+	public int getItemPosition(Conversation conversation) {
+		return ConversationList.indexOf(conversation);
+	}
 
-    protected class AdHolder extends RecyclerView.ViewHolder {
-        ViewGroup adContainer;
+	public void removeItem(Conversation conversation) {
+		ConversationList.remove(conversation);
+	}
 
-        public AdHolder(View itemView) {
-            super(itemView);
-            adContainer = (ViewGroup) itemView.findViewById(R.id.ad_container);
-        }
-    }
+	public void clear() {
+		ConversationList.clear();
+	}
+
+	public ArrayList<Conversation> getDataset() {
+		ArrayList<Conversation> conversations = new ArrayList<>();
+		for (int i = 0; i < ConversationList.size(); i++) {
+			conversations.add(ConversationList.get(i));
+		}
+		return conversations;
+	}
+
+	public void setTyping(Boolean isTyping) {
+		int isTypingPosition = ConversationList.indexOf(indicatorConversation);
+
+		if (isTyping) {
+			indicatorConversation.addFlag(CityOfTwo.FLAG_TYPING);
+		} else {
+			indicatorConversation.removeFlag(CityOfTwo.FLAG_TYPING);
+		}
+
+		if (isTypingPosition == SortedList.INVALID_POSITION) {
+			if (isTyping) ConversationList.add(indicatorConversation);
+		} else {
+			ConversationList.updateItemAt(isTypingPosition, indicatorConversation);
+		}
+	}
+
+	public void setLastSeen(Long lastSeen) {
+		int lastSeenPosition = ConversationList.indexOf(indicatorConversation);
+
+		indicatorConversation.setTime(lastSeen);
+		indicatorConversation.addFlag(CityOfTwo.FLAG_LAST_SEEN);
+
+		if (lastSeenPosition == SortedList.INVALID_POSITION) {
+			ConversationList.add(indicatorConversation);
+		} else {
+			ConversationList.updateItemAt(lastSeenPosition, indicatorConversation);
+		}
+	}
+
+	protected class ContentHolder extends RecyclerView.ViewHolder {
+		TextView dateContainer;
+		FrameLayout contentContainer;
+		View lineContainer;
+
+		public ContentHolder(View itemView) {
+			super(itemView);
+			contentContainer = (FrameLayout) itemView.findViewById(R.id.content_container);
+			dateContainer = (TextView) itemView.findViewById(R.id.time);
+			lineContainer = itemView.findViewById(line);
+		}
+	}
+
+	protected class GenericHolder extends RecyclerView.ViewHolder {
+		TextView likeList;
+		View introContainer;
+
+		public GenericHolder(View itemView) {
+			super(itemView);
+
+			likeList = (TextView) itemView.findViewById(R.id.likes_list);
+			introContainer = itemView.findViewById(R.id.chat_introduction_view);
+		}
+	}
+
+	protected class IndicatorHolder extends RecyclerView.ViewHolder {
+		ImageView typingIndicator;
+		View seenIndicator;
+		TextView lastSeen;
+
+		public IndicatorHolder(View itemView) {
+			super(itemView);
+
+			typingIndicator = (ImageView) itemView.findViewById(R.id.type_indicator);
+			seenIndicator = itemView.findViewById(R.id.seen_indicator);
+			lastSeen = (TextView) itemView.findViewById(R.id.seen_time);
+		}
+	}
+
+	protected class AdHolder extends RecyclerView.ViewHolder {
+		ViewGroup adContainer;
+
+		public AdHolder(View itemView) {
+			super(itemView);
+			adContainer = (ViewGroup) itemView.findViewById(R.id.ad_container);
+		}
+	}
 }

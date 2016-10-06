@@ -1,19 +1,26 @@
 package com.messenger.cityoftwo;
 
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.transition.Fade;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -85,6 +92,8 @@ public class LobbyActivity extends AppCompatActivity {
     private boolean tokenNotGenerated = false;
     private Integer currentTip = -1;
 
+    private Handler tipHandler = new Handler();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,9 +103,6 @@ public class LobbyActivity extends AppCompatActivity {
         mLobbyDescription = (TextView) findViewById(R.id.lobby_progress_description);
 
         mWelcomeLabel = (TextView) findViewById(R.id.welcome_label);
-
-        mLobbyTipsContainer = (CardView) findViewById(R.id.lobby_tips_container);
-        mLobbyTips = (TextView) findViewById(R.id.lobby_tips);
 
         mImageFlipper = (FrameLayout) findViewById(R.id.lobby_image_flipper);
 
@@ -129,33 +135,14 @@ public class LobbyActivity extends AppCompatActivity {
                 public boolean onPreDraw() {
                     mImageFlipper.getViewTreeObserver().removeOnPreDrawListener(this);
 
-                    if (!args.getBoolean(CityOfTwo.KEY_FROM_INTRO, false)) {
-                        int[] location = new int[2];
-                        mImageFlipper.getLocationOnScreen(location);
-
-                        xDelta = initialX - location[0];
-                        yDelta = initialY - location[1];
-
-                        xScaleFactor = (float) initialWidth / mImageFlipper.getWidth();
-                        yScaleFactor = (float) initialHeight / mImageFlipper.getHeight();
-
-                        Log.i("xScaleFactor", String.valueOf(xScaleFactor));
-                        Log.i("yScaleFactor", String.valueOf(yScaleFactor));
-
-                        startEnterAnimation();
-
-                    } else {
-                        setStatus(BEGIN);
-//                        CityOfTwo.RegisterGCM(LobbyActivity.this);
-                        startAppLogic();
-                    }
                     return true;
-
                 }
             });
         }
 
         mReloadButton = (ImageButton) findViewById(R.id.refresh_button);
+
+        if (!BuildConfig.DEBUG) mReloadButton.setVisibility(View.GONE);
 
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -167,30 +154,43 @@ public class LobbyActivity extends AppCompatActivity {
 
                 switch (action) {
                     case CityOfTwo.ACTION_BEGIN_CHAT: {
+                        Log.i("Lobby", "Starting new chat");
                         Intent conversationIntent = new Intent(LobbyActivity.this, ConversationActivity.class);
-                        startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
 
-                        overridePendingTransition(
-                                R.anim.slide_in_right,
-                                R.anim.slide_out_left
-                        );
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                            getWindow().setExitTransition(new Fade());
+
+                            startActivityForResult(
+                                    conversationIntent,
+                                    CityOfTwo.ACTIVITY_CONVERSATION);
+                        } else {
+
+                            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
+
+                            overridePendingTransition(
+                                    android.R.anim.fade_in,
+                                    android.R.anim.fade_out
+                            );
+                        }
                         break;
                     }
                     case CityOfTwo.ACTION_NEW_MESSAGE: {
                         break;
                     }
                     case CityOfTwo.ACTION_FCM_ID: {
-                        if (tokenNotGenerated) {
                             waitForServer();
                             tokenNotGenerated = false;
-                        }
                         break;
                     }
                     case CityOfTwo.ACTION_USER_OFFLINE: {
                         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                                 .remove(CityOfTwo.KEY_CHAT_PENDING)
+                                .remove(CityOfTwo.KEY_COMMON_LIKES)
                                 .remove(CityOfTwo.KEY_CHATROOM_ID)
+                                .remove(CityOfTwo.KEY_SESSION_ACTIVE)
                                 .apply();
+
+                        Log.i("LobbyActivity", "User Timeout received");
 
                         setStatus(BEGIN);
                         facebookLogin();
@@ -283,6 +283,11 @@ public class LobbyActivity extends AppCompatActivity {
             }
         });
 
+        setStatus(BEGIN);
+//                        CityOfTwo.RegisterGCM(LobbyActivity.this);
+        startLobby();
+
+
     }
 
     private void facebookLogin() {
@@ -323,13 +328,13 @@ public class LobbyActivity extends AppCompatActivity {
                         setStatus(BEGIN);
 //                        CityOfTwo.RegisterGCM(LobbyActivity.this);
 
-                        startAppLogic();
+                        startLobby();
 
                     }
                 });
     }
 
-    private void startAppLogic() {
+    private void startLobby() {
         switch (getStatus()) {
             case BEGIN:
                 facebookLogin(mAccessToken);
@@ -374,6 +379,7 @@ public class LobbyActivity extends AppCompatActivity {
 
         filter.addAction(CityOfTwo.ACTION_BEGIN_CHAT);
         filter.addAction(CityOfTwo.ACTION_NEW_MESSAGE);
+        filter.addAction(CityOfTwo.ACTION_USER_OFFLINE);
         filter.addAction(CityOfTwo.ACTION_FCM_ID);
         LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, filter);
 
@@ -381,12 +387,20 @@ public class LobbyActivity extends AppCompatActivity {
         CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
         CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOBBY);
 
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
+        nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
+        nm.cancel(CityOfTwo.NOTIFICATION_CHAT_END, 10046);
+
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
-        Boolean userOffline = sp.getBoolean(CityOfTwo.KEY_USER_OFFLINE, false);
+        Boolean userOnline = sp.getBoolean(CityOfTwo.KEY_SESSION_ACTIVE, true);
+        Editor editor = sp.edit();
 
-        if (userOffline) {
-            sp.edit().remove(CityOfTwo.KEY_CHATROOM_ID)
+        editor.remove(CityOfTwo.KEY_SESSION_ACTIVE);
+
+        if (!userOnline) {
+            editor.remove(CityOfTwo.KEY_CHATROOM_ID)
                     .remove(CityOfTwo.KEY_CHAT_PENDING)
                     .apply();
 
@@ -395,9 +409,12 @@ public class LobbyActivity extends AppCompatActivity {
             return;
         }
 
+        editor.apply();
+
         Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
 
         if (chatPending) {
+            Log.i("Lobby", "Chat pending, opening pending chat");
             Intent conversationIntent = new Intent(this, ConversationActivity.class);
             startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
         }
@@ -429,7 +446,7 @@ public class LobbyActivity extends AppCompatActivity {
                         Integer credits = Response.getInt(CityOfTwo.KEY_CREDITS);
                         Boolean filters_applied = Response.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED);
 
-                        SharedPreferences.Editor securedEditor = new SecurePreferences(
+                        Editor securedEditor = new SecurePreferences(
                                 LobbyActivity.this,
                                 CityOfTwo.SECURED_PREFERENCE
                         ).edit();
@@ -523,6 +540,7 @@ public class LobbyActivity extends AppCompatActivity {
                         introductionActivity.putExtra(CityOfTwo.KEY_HEIGHT, mImageFlipper.getHeight());
                         introductionActivity.putExtra(CityOfTwo.KEY_TEST, test);
 
+                        tipHandler.removeCallbacksAndMessages(null);
                         startActivityForResult(introductionActivity, CityOfTwo.ACTIVITY_INTRODUCTION);
 
                         new Handler().postDelayed(new Runnable() {
@@ -565,8 +583,6 @@ public class LobbyActivity extends AppCompatActivity {
 
     private void waitForServer() {
         final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-
-        showTips();
 
         String broadcast_gcm = getString(R.string.url_broadcast_gcm),
                 header = CityOfTwo.HEADER_GCM_ID,
@@ -615,28 +631,6 @@ public class LobbyActivity extends AppCompatActivity {
         BroadcastGCMHttpHandler.execute();
     }
 
-    private void showTips() {
-        if (!isShowingTips()) {
-            int translatioFactor = mLobbyTipsContainer.getHeight() + mLobbyTipsContainer.getBottom();
-            mLobbyTipsContainer.setTranslationY(translatioFactor);
-            mLobbyTipsContainer.setVisibility(View.VISIBLE);
-            mLobbyTipsContainer.animate().setDuration(300).setInterpolator(new DecelerateInterpolator())
-                    .translationY(0);
-        }
-        Pair tip = getNewTip(currentTip);
-        currentTip = (Integer) tip.second;
-        mLobbyTips.setText((CharSequence) tip.first);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                showTips();
-            }
-        }, 6000);
-    }
-
-    private boolean isShowingTips() {
-        return mLobbyTipsContainer.getVisibility() == View.VISIBLE;
-    }
 
     private void submitTest(String answers) {
         String submit_test = getString(R.string.url_test),
@@ -697,43 +691,47 @@ public class LobbyActivity extends AppCompatActivity {
         if (!mCanPutText)
             return;
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            mLobbyDescription.animate().setDuration(500)
+                    .alpha(0)
+                    .translationX(-250)
+                    .setInterpolator(new OvershootInterpolator())
+                    .withStartAction(new Runnable() {
+                        @Override
+                        public void run() {
+                            mCanPutText = false;
+                        }
+                    })
+                    .withEndAction(new Runnable() {
+                        @Override
+                        public void run() {
+                            mLobbyDescription.setTranslationX(250);
 
-        mLobbyDescription.animate().setDuration(500)
-                .alpha(0)
-                .translationX(-250)
-                .setInterpolator(new OvershootInterpolator())
-                .withStartAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        mCanPutText = false;
-                    }
-                })
-                .withEndAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        mLobbyDescription.setTranslationX(250);
+                            mCanPutText = true;
+                            mLobbyDescription.setText(mDescriptionBuffer);
 
-                        mCanPutText = true;
-                        mLobbyDescription.setText(mDescriptionBuffer);
-
-                        mLobbyDescription.animate().setDuration(500)
-                                .alpha(1)
-                                .translationX(0)
-                                .setInterpolator(new OvershootInterpolator())
-                                .withStartAction(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mCanPutText = false;
-                                    }
-                                })
-                                .withEndAction(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mCanPutText = true;
-                                    }
-                                });
-                    }
-                });
+                            mLobbyDescription.animate().setDuration(500)
+                                    .alpha(1)
+                                    .translationX(0)
+                                    .setInterpolator(new OvershootInterpolator())
+                                    .withStartAction(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mCanPutText = false;
+                                        }
+                                    })
+                                    .withEndAction(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mCanPutText = true;
+                                        }
+                                    });
+                        }
+                    });
+        } else {
+            mLobbyDescription.setText(mDescriptionBuffer);
+            mCanPutText = true;
+        }
 
 
 //        final Animation slideFromRight = AnimationUtils.loadAnimation(this, R.anim.slide_in_right);
@@ -822,7 +820,7 @@ public class LobbyActivity extends AppCompatActivity {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        SharedPreferences.Editor editor = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit();
+                        Editor editor = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit();
                         editor.putString(CityOfTwo.KEY_COMMON_LIKES, "chari, pari, mari")
                                 .putInt(CityOfTwo.KEY_CHATROOM_ID, 1)
                                 .apply();
@@ -830,10 +828,11 @@ public class LobbyActivity extends AppCompatActivity {
                                 LobbyActivity.this,
                                 ConversationActivity.class
                         );
+                        Log.i("Lobby", "Opeing chat in offline");
                         startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
                         overridePendingTransition(
-                                R.anim.slide_in_right,
-                                R.anim.slide_out_left
+                                android.R.anim.fade_in,
+                                android.R.anim.fade_out
                         );
                     }
                 }, 2000);
@@ -892,5 +891,44 @@ public class LobbyActivity extends AppCompatActivity {
 
         setStatus(BEGIN);
         facebookLogin(mAccessToken);
+    }
+
+    /**
+     * @return the last know best location
+     */
+    private Location getLastBestLocation() {
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // requestPermissions();
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+//            return TODO;
+        }
+
+        Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location locationNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        long GPSLocationTime = 0;
+        if (null != locationGPS) {
+            GPSLocationTime = locationGPS.getTime();
+        }
+
+        long NetLocationTime = 0;
+
+        if (null != locationNet) {
+            NetLocationTime = locationNet.getTime();
+        }
+
+        if (0 < GPSLocationTime - NetLocationTime) {
+            return locationGPS;
+        } else {
+            return locationNet;
+        }
     }
 }

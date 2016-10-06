@@ -14,13 +14,11 @@ package com.messenger.cityoftwo; /**
  * limitations under the License.
  */
 
+import android.os.Handler;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.DecelerateInterpolator;
-
-import com.messenger.cityoftwo.ConversationAdapter.ContentHolder;
 
 import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
 
@@ -30,40 +28,29 @@ public class ChatItemAnimator extends BaseItemAnimator {
     private final int mAddDuration;
     private final int mRemoveDuration;
 
+    private final Handler holderRestoreHandler;
+
     public ChatItemAnimator() {
-        mTension = 2.0f;
-        mAddDuration = 200;
-        mRemoveDuration = 200;
+        this(2f, 200);
     }
 
     public ChatItemAnimator(float mTension, int mDuration) {
-        this.mTension = mTension;
-        this.mAddDuration = mDuration;
-        this.mRemoveDuration = mDuration;
+        this(mTension, mDuration, mDuration);
     }
 
     public ChatItemAnimator(float mTension, int mAddDuration, int mRemoveDuration) {
         this.mTension = mTension;
-        this.mAddDuration = mAddDuration / 2;
+        this.mAddDuration = mAddDuration;
         this.mRemoveDuration = mRemoveDuration;
+        holderRestoreHandler = new Handler();
     }
 
     @Override
     protected void preAnimateAddImpl(RecyclerView.ViewHolder holder) {
         int viewType = holder.getItemViewType();
         if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
-                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
-            ContentHolder contentHolder = (ContentHolder) holder;
-
-            View contentView = contentHolder.contentContainer;
-            View dateView = contentHolder.dateContainer;
-            View lineView = contentHolder.lineContainer;
-
-            ViewCompat.setAlpha(dateView, 0);
-            ViewCompat.setPivotY(lineView, lineView.getY());
-            ViewCompat.setScaleY(lineView, 0.1f);
-            ViewCompat.setTranslationY(contentView, contentHolder.itemView.getHeight());
-        } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE ||
+                (viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
             View view = holder.itemView;
             ViewCompat.setTranslationY(view, view.getHeight());
         }
@@ -73,34 +60,9 @@ public class ChatItemAnimator extends BaseItemAnimator {
     protected void animateAddImpl(final RecyclerView.ViewHolder holder) {
         int viewType = holder.getItemViewType();
         if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
-                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
-            ContentHolder contentHolder = (ContentHolder) holder;
-
-            View contentView = contentHolder.contentContainer;
-            View dateView = contentHolder.dateContainer;
-            View lineView = contentHolder.lineContainer;
-
-            ViewCompat.animate(contentView)
-                    .translationY(0)
-                    .setDuration(mAddDuration)
-                    .setInterpolator(new DecelerateInterpolator())
-                    .setListener(new DefaultAddVpaListener(holder))
-                    .start();
-
-            ViewCompat.animate(dateView)
-                    .alpha(1)
-                    .setDuration(mAddDuration)
-                    .setListener(new DefaultAddVpaListener(holder))
-                    .start();
-
-            ViewCompat.animate(lineView)
-                    .scaleY(1)
-                    .setDuration(mAddDuration)
-                    .setInterpolator(new AccelerateInterpolator())
-                    .setListener(new DefaultAddVpaListener(holder))
-                    .start();
-        } else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
-            View view = holder.itemView;
+                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE ||
+                (viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+            final View view = holder.itemView;
             ViewCompat.animate(view)
                     .translationY(0)
                     .setDuration(mAddDuration)

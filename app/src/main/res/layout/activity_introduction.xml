@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimary">
+    android:orientation="vertical"
+    >
 
     <com.messenger.cityoftwo.NonSwipeableViewPager
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        />
+    <!--<com.messenger.cityoftwo.NonSwipeableViewPager-->
+    <!--android:id="@+id/view_pager"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="0dp"-->
+    <!--android:layout_weight="1"/>-->
 
     <RelativeLayout
         android:id="@+id/bottom"
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:layout_alignParentBottom="true">
+        >
 
         <LinearLayout
             android:id="@+id/indicator_container"
@@ -25,15 +33,18 @@
             android:gravity="center"
             android:orientation="horizontal" />
 
-        <ImageButton
+        <Button
             android:id="@+id/next"
             style="@style/AppIntroButtonStyleCompat"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="16dp"
-            android:src="@drawable/ic_navigate_next_white_24dp" />
-
+            android:fontFamily="sans-serif-condensed"
+            android:text="@string/next_button"
+            android:textColor="@color/colorPrimary"
+            android:visibility="gone"
+            />
         <Button
             android:id="@+id/done"
             style="@style/AppIntroButtonStyleCompat"
@@ -41,8 +52,9 @@
             android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="16dp"
+            android:fontFamily="sans-serif-condensed"
             android:text="@string/done_button"
-            android:textColor="@android:color/white"
+            android:textColor="@color/colorPrimary"
             android:visibility="gone" />
     </RelativeLayout>
-</RelativeLayout>
+</LinearLayout>

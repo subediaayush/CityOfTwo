@@ -210,7 +210,9 @@ public class TestFragment extends Fragment {
                     if (testEventListener != null)
                         testEventListener.OnQuestionAnswered(position, answerPosition);
                     for (int i = 0; i < answerContainer.getChildCount(); i++) {
-                        View view = answerContainer.getChildAt(i).findViewById(R.id.answer_background);
+                        View view = answerContainer.getChildAt(i)
+                                .findViewById(R.id.answer_background);
+
                         if (i == answerPosition)
                             view.setBackgroundColor(ContextCompat.getColor(
                                     context,

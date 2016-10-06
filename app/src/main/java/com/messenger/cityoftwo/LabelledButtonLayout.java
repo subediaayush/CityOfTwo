@@ -30,6 +30,7 @@ public class LabelledButtonLayout extends LinearLayout {
 
         String buttonText = a.getString(R.styleable.LabelledButtonLayout_text);
         Drawable buttonImage = a.getDrawable(R.styleable.LabelledButtonLayout_image);
+        Drawable buttonBackground = a.getDrawable(R.styleable.LabelledButtonLayout_bg);
 
         a.recycle();
 
@@ -44,6 +45,7 @@ public class LabelledButtonLayout extends LinearLayout {
 
         mImageView = (ImageView) getChildAt(0);
         mTextView = (TextView) getChildAt(1);
+        setBackground(buttonBackground);
 
         if (buttonImage != null) mImageView.setImageDrawable(buttonImage);
         mTextView.setText(buttonText);

@@ -7,6 +7,7 @@
     </declare-styleable>
 
     <declare-styleable name="LabelledButtonLayout">
+        <attr name="bg" format="integer"/>
         <attr name="text" format="string" />
         <attr name="image" format="integer" />
     </declare-styleable>

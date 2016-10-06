@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <ImageView
-        style="@style/ChatOptionButton"
-        android:src="@drawable/com_facebook_button_icon" />
+    <ImageView style="@style/ChatOptionButton"/>
 
     <TextView
+        style="@style/ChatOptionsLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="5dp"
         android:text="Apply Filters"
-        android:theme="@style/ChatOptionsLabel" />
+        />
 </merge>

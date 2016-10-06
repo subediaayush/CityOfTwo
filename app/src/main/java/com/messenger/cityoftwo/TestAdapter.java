@@ -99,6 +99,7 @@ public abstract class TestAdapter extends PagerAdapter {
                     OnAnswerSelected(position, answerPosition);
                 }
             });
+
             animationViews.add(view);
             answerContainer.addView(answerView);
         }
@@ -107,6 +108,11 @@ public abstract class TestAdapter extends PagerAdapter {
         enterAnimation(animationViews);
 
         return view;
+    }
+
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        container.removeView((View) object);
     }
 
     private void enterAnimation(List<View> views) {
@@ -159,7 +165,6 @@ public abstract class TestAdapter extends PagerAdapter {
                                             if (viewCounter == views.size() - 1) {
                                                 OnItemsRemoved(position);
                                             }
-                                            ;
                                         }
                                     });
                         }
@@ -174,11 +179,6 @@ public abstract class TestAdapter extends PagerAdapter {
             animationViews.add(currentView.getChildAt(i));
         }
         exitAnimation(position, animationViews);
-    }
-
-    @Override
-    public void destroyItem(ViewGroup container, int position, Object object) {
-        container.removeView((View) object);
     }
 
     @Override

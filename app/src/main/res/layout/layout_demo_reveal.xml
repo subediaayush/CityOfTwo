@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	>
+
+	<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="end"
+		android:layout_margin="5dp"
+		android:background="@drawable/sent_text_bg"
+		android:drawablePadding="10dp"
+		android:drawableStart="@drawable/emoji_jane"
+		android:fontFamily="sans-serif-light"
+		android:gravity="center_vertical"
+		android:text="@string/demo_reveal_one"
+		android:textColor="@color/White"
+		android:textSize="18sp"
+		/>
+
+	<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="end"
+		android:layout_margin="5dp"
+		android:background="@drawable/sent_text_bg"
+		android:fontFamily="sans-serif-light"
+		android:gravity="center_vertical"
+		android:text="@string/demo_reveal_two"
+		android:textColor="@color/White"
+		android:textSize="18sp"
+		/>
+
+	<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="start"
+		android:layout_margin="5dp"
+		android:background="@drawable/received_text_bg"
+		android:drawablePadding="10dp"
+		android:drawableStart="@drawable/emoji_john"
+		android:fontFamily="sans-serif-light"
+		android:gravity="center_vertical"
+		android:text="@string/demo_reveal_three"
+		android:textColor="@color/White"
+		android:textSize="18sp"
+		/>
+
+	<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="start"
+		android:layout_margin="5dp"
+		android:background="@drawable/received_text_bg"
+		android:fontFamily="sans-serif-light"
+		android:gravity="center_vertical"
+		android:text="@string/demo_reveal_four"
+		android:textColor="@color/White"
+		android:textSize="18sp"
+		/>
+
+</LinearLayout>
