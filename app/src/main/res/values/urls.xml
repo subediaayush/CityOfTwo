@@ -3,7 +3,7 @@
     <string name="url_login">facebook-login/</string>
     <string name="url_signup">facebook-signup/</string>
     <string name="url_submit_test">submit_test/</string>
-    <string name="url_test">test/</string>
+    <string name="url_test">save-test/</string>
     <string name="url_send_message">message/</string>
     <string name="url_chat_begin">begin_chat/</string>
     <string name="url_broadcast_gcm">broadcast_gcm/</string>
@@ -12,4 +12,12 @@
     <string name="url_is_typing">is-typing/</string>
     <string name="url_share_coyrudy">http://coyrudy.com/refer?code=</string>
     <string name="url_last_seen">last-seen/</string>
+    <string name="url_get_init">get-init/</string>
+    <string name="url_send_to_lobby">send-to-lobby/</string>
+    <string name="url_get_messages">get-offline-messages/</string>
+    <string name="url_get_contacts">get-contacts/</string>
+    <string name="url_get_requests">get-message-requests/</string>
+    <string name="url_delete_message">delete-message</string>
+    <string name="url_is_online">is-online</string>
+
 </resources>

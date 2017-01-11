@@ -80,7 +80,7 @@ public class FiltersFragment extends DialogFragment {
     }
 
     private View createView(final Context context) {
-        View view = getActivity().getLayoutInflater().inflate(R.layout.layout_apply_filter, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.layout_filters, null);
 
         SharedPreferences securePreferences = new SecurePreferences(context, CityOfTwo.SECURED_PREFERENCE);
         SharedPreferences sharedPreferences = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE);
@@ -98,8 +98,8 @@ public class FiltersFragment extends DialogFragment {
         filterToggle.setChecked(enableFilters);
         enableDisableView(filtersContainer, enableFilters);
 
-//        final TextView minAge = (TextView) rootView.findViewById(R.id.filter_age_min);
-//        final TextView maxAge = (TextView) rootView.findViewById(R.id.filter_age_max);
+//        final TextView minAge = (TextView) rootView.findViewById(R.code.filter_age_min);
+//        final TextView maxAge = (TextView) rootView.findViewById(R.code.filter_age_max);
 
         final RangeBar ageRange = (RangeBar) view.findViewById(R.id.filter_age_range);
         ageRange.setDrawTicks(false);
@@ -109,7 +109,7 @@ public class FiltersFragment extends DialogFragment {
 
         final RangeBar distanceRange = (RangeBar) view.findViewById(R.id.filter_distance_bar);
         distanceRange.setDrawTicks(false);
-//        final TextView distanceText = (TextView) rootView.findViewById(R.id.filter_distance_text);
+//        final TextView distanceText = (TextView) rootView.findViewById(R.code.filter_distance_text);
 
         RadioGroup unitChooser = (RadioGroup) view.findViewById(R.id.filter_distance_unit);
 

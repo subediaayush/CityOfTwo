@@ -8,16 +8,15 @@ import com.facebook.AccessToken;
  * Created by Aayush on 7/18/2016.
  */
 public abstract class FacebookSignUp {
-    String token;
-    HttpHandler loginHttpHandler;
+    private HttpHandler httpHandler;
 
-    public FacebookSignUp(Context context, AccessToken accessToken) {
-        this.token = accessToken.getToken();
+    FacebookSignUp(Context context, AccessToken accessToken) {
+        String token = accessToken.getToken();
 
         String[] path = {context.getString(R.string.url_signup)};
         String header = CityOfTwo.HEADER_ACCESS_TOKEN;
 
-        loginHttpHandler = new HttpHandler(
+        httpHandler = new HttpHandler(
                 CityOfTwo.HOST,
                 path,
                 HttpHandler.POST,
@@ -41,6 +40,6 @@ public abstract class FacebookSignUp {
     abstract void onFailure(Integer status);
 
     public void execute() {
-        loginHttpHandler.execute();
+        httpHandler.execute();
     }
 }

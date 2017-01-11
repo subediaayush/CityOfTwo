@@ -36,7 +36,7 @@ public abstract class IntroductionActivityBase extends AppCompatActivity {
         setContentView(R.layout.activity_introduction);
 
         fragments = new ArrayList<>();
-        viewPager = (NonSwipeableViewPager) findViewById(R.id.view_pager);
+        viewPager = (NonSwipeableViewPager) findViewById(R.id.home_pager);
         pagerAdapter = new PagerAdapter(getSupportFragmentManager(), fragments);
         viewPager.setAdapter(pagerAdapter);
 
@@ -135,6 +135,13 @@ public abstract class IntroductionActivityBase extends AppCompatActivity {
             showDoneButton();
         }
 
+    }
+
+    protected void showDonePage() {
+        int lastItem = fragments.size() - 1;
+
+        viewPager.setCurrentItem(lastItem, false);
+        showDoneButton();
     }
 
     protected void addNewIndicator() {

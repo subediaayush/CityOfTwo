@@ -59,22 +59,26 @@ dependencies {
     //    compile 'com.github.ozodrukh:CircularReveal:1.1.0'
     //    compile 'com.androidadvance:topsnackbar:1.0.0'
     compile project(':rangebar')
-    compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.android.support:design:23.2.1'
-    compile 'jp.wasabeef:recyclerview-animators:2.1.0'
-    compile 'com.facebook.android:facebook-android-sdk:4.14.0'
     compile('com.mopub:mopub-sdk:4.7.0@aar') {
         transitive = true
     }
-    compile 'com.github.paolorotolo:appintro:4.0.0'
-//    compile 'com.facebook.android:audience-network-sdk:4.13.0'
-    compile 'com.google.android.gms:play-services-gcm:9.2.1'
-    compile 'com.google.firebase:firebase-messaging:9.2.1'
-    compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+    //    compile 'com.facebook.android:audience-network-sdk:4.13.0'
     compile('com.github.worker8:tourguide:1.0.17-SNAPSHOT@aar') {
         transitive = true
     }
+
+    compile 'de.hdodenhof:circleimageview:2.1.0'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:design:23.4.0'
+    compile 'jp.wasabeef:recyclerview-animators:2.1.0'
+    compile 'com.facebook.android:facebook-android-sdk:4.14.0'
+    compile 'com.github.paolorotolo:appintro:4.0.0'
+    compile 'com.google.android.gms:play-services-gcm:9.6.1'
+    compile 'com.google.firebase:firebase-messaging:9.6.1'
+    compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+    compile 'com.android.support:support-v4:23.4.0'
+    compile 'com.android.support:recyclerview-v7:23.4.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

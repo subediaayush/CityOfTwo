@@ -3,5 +3,5 @@
     android:id="@+id/message_text"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:textColor="@color/White"
+	android:textColor="@color/colorPrimaryDark"
     android:textSize="18sp" />

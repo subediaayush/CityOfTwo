@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="76dp"
+	android:background="?android:attr/selectableItemBackground"
+	android:orientation="horizontal"
+	android:paddingEnd="16dp"
+	android:paddingStart="16dp"
+	android:paddingTop="16dp"
+	>
+
+	<ImageView
+		android:id="@+id/contact_icon"
+		style="@style/CardContactIcons"
+		android:layout_gravity="top"
+		android:src="@drawable/ic_placeholder"
+		/>
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		>
+
+		<TextView
+			android:id="@+id/contact_name"
+			style="@style/CardContent"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="20dp"
+			android:text="Harambe"
+			/>
+
+		<TextView
+			android:id="@+id/contact_detail"
+			style="@style/CardContent.Secondary"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="20dp"
+			android:minLines="2"
+			android:paddingTop="4dp"
+			android:text="Harambe"
+			android:textStyle="italic"
+			/>
+	</LinearLayout>
+
+</LinearLayout>

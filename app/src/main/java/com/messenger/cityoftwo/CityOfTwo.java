@@ -38,7 +38,7 @@ public class CityOfTwo extends Application {
 	public static final String KEY_PROFILE_NAME = "user_name";
 	public static final String KEY_PROFILE = "PROFILE";
 	public static final String KEY_SELECTED_ANSWER = "SELECTED";
-	public static final String KEY_TEST = "TEST";
+	public static final String KEY_TEST = "test";
 	public static final String KEY_MESSAGE = "MESSAGE";
 	public static final String KEY_CHAT_BEGIN = "CHAT_BEGIN";
 	public static final String KEY_TYPE = "TYPE";
@@ -62,6 +62,7 @@ public class CityOfTwo extends Application {
 	public static final int ACTIVITY_TEST = 2;
 	public static final int ACTIVITY_CONVERSATION = 3;
 	public static final int ACTIVITY_INTRODUCTION = 4;
+	public static final int ACTIVITY_HOME = 5;
 
 	public static final int FLAG_SENT = 0b1;
 	public static final int FLAG_RECEIVED = 0b10;
@@ -75,6 +76,7 @@ public class CityOfTwo extends Application {
 	public static final int FLAG_LAST_SEEN = 0b1000000000;
 
 	public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
+	//	public static final String HOST = "192.168.0.100:5000";
 	public static final String HOST = "coyrudy.com";
 	public static final String API = "api";
 
@@ -114,7 +116,7 @@ public class CityOfTwo extends Application {
 	public static final String KEY_CHAT_END = "CHAT_END";
 	public static final String KEY_FROM_INTRO = "from_intro";
 	public static final String TABLE_MESSAGES = "message";
-	public static final String COLUMN_ID = "id";
+	public static final String COLUMN_ID = "code";
 	public static final String COLUMN_CHATROOM_ID = "chatroom_id";
 	public static final String COLUMN_MESSAGE = "text";
 	public static final String COLUMN_FLAGS = "flags";
@@ -140,6 +142,9 @@ public class CityOfTwo extends Application {
 	public static final String KEY_IS_TYPING = "IS_TYPING";
 	public static final String ACTION_IS_TYPING = "is_typing";
 	public static final String NOTIFICATION_CHAT_END = "notification_chat_end";
+	public static final String HEADER_TOKEN = "token";
+	public static final String KEY_REQUESTS = "contacts";
+	public static final String KEY_IS_ONLINE = "is_online";
 	private static final String SENDER_ID = "584281533020";
 	public static ArrayList<Conversation> mBackgroundConversation;
 	public static Bitmap logoBitmap;
@@ -275,6 +280,8 @@ public class CityOfTwo extends Application {
 		printHashKey();
 		FacebookSdk.sdkInitialize(getApplicationContext());
 		AppEventsLogger.activateApp(this);
+
+		NetworkStateReceiver.checkConnectivity(this);
 	}
 
 	private void printHashKey() {

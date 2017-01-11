@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_marginBottom="8dp"
+	android:layout_marginLeft="8dp"
+	android:layout_marginRight="8dp"
+	android:background="?android:attr/selectableItemBackground"
+	>
+
+	<LinearLayout
+		android:id="@+id/background"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:orientation="horizontal"
+			android:paddingLeft="16dp"
+			android:paddingRight="16dp"
+			android:paddingTop="16dp"
+			>
+
+			<ImageView
+				android:id="@+id/contact_icon"
+				android:layout_width="40dp"
+				android:layout_height="40dp"
+				android:src="@drawable/ic_placeholder"
+				/>
+
+			<TextView
+				android:id="@+id/contact_name"
+				style="@style/CardTitle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_vertical"
+				android:layout_marginStart="16dp"
+				android:padding="0dp"
+				android:text="Contact"
+				/>
+		</LinearLayout>
+
+		<TextView
+			android:id="@+id/message"
+			style="@style/CardContent"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:paddingBottom="16dp"
+			android:paddingLeft="16dp"
+			android:paddingRight="16dp"
+			android:paddingTop="16dp"
+			android:text="Message sent by the ^^ person. Make it long just about two lines "
+			android:textSize="14sp"
+			/>
+
+		<android.support.v7.widget.ButtonBarLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="end"
+			android:padding="4dp"
+			>
+
+			<Button
+				android:id="@+id/delete"
+				style="@style/Widget.AppCompat.Button.Borderless.Colored"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Delete"
+				/>
+
+			<Button
+				android:id="@+id/reply"
+				style="@style/Widget.AppCompat.Button.Borderless.Colored"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Reply"
+				/>
+		</android.support.v7.widget.ButtonBarLayout>
+	</LinearLayout>
+
+	<ProgressBar
+		android:id="@+id/loader"
+		android:layout_width="48dp"
+		android:layout_height="48dp"
+		android:layout_gravity="center"
+		android:visibility="invisible"
+		/>
+
+</android.support.v7.widget.CardView>

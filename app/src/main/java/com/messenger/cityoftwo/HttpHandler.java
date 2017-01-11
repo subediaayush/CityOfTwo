@@ -24,209 +24,213 @@ import static java.lang.Integer.parseInt;
  */
 public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
-    public static final int GET = 0,
-            POST = 1;
+	public static final int GET = 0,
+			POST = 1;
 
-    public static final MediaType MEDIA_TYPE_MARKDOWN
-            = MediaType.parse("application/json");
+	public static final MediaType MEDIA_TYPE_MARKDOWN
+			= MediaType.parse("application/json");
 
-    private static final String[] EMPTY_STRING_ARRAY = new String[0];
-    private OkHttpClient client;
-    private String Response;
-    private Integer Status;
-    private HttpUrl URL;
-    private Boolean Success;
-    private Integer Type;
-    private JSONObject Params;
-    private Request.Builder RequestBuilder;
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
+	private OkHttpClient client;
+	private String Response;
+	private Integer Status;
+	private HttpUrl URL;
+	private Boolean Success;
+	private Integer Type;
+	private JSONObject Params;
+	private Request.Builder RequestBuilder;
 
-    public HttpHandler(int type) {
-        this.client = new OkHttpClient.Builder()
-                .addInterceptor(new CurlLoggingInterceptor())
-                .build();
+	public HttpHandler(int type) {
+		this.client = new OkHttpClient.Builder()
+				.addInterceptor(new CurlLoggingInterceptor())
+				.build();
 
-        this.RequestBuilder = new Request.Builder();
+		this.RequestBuilder = new Request.Builder();
 
-        this.Status = -1;
-        this.Response = "";
-        this.Type = type;
+		this.Status = -1;
+		this.Response = "";
+		this.Type = type;
 
-    }
+	}
 
-    public HttpHandler(String host, String[] path, Integer type, JSONObject params) {
-        this(type);
+	public HttpHandler(String host, String[] path, Integer type, JSONObject params) {
+		this(type);
 
-        HttpUrl.Builder urlBuilder = new HttpUrl.Builder();
-        try {
-            String[] h = host.split(":");
+		HttpUrl.Builder urlBuilder = new HttpUrl.Builder();
+		try {
+			String[] h = host.split(":");
 
-            urlBuilder.scheme("http")
-                    .host(h[0]);
-            if (h.length > 1)
-                urlBuilder.port(parseInt(h[1]));
+			urlBuilder.scheme("http").host(h[0]);
 
-        } catch (Exception e) {
-            Log.e("Http Connection", "Error while building valid url: " + host);
-        }
+			if (h.length > 1)
+				urlBuilder.port(parseInt(h[1]));
 
-        if (path.length > 0)
-            for (String p : path)
-                urlBuilder.addPathSegment(p);
+		} catch (Exception e) {
+			Log.e("Http Connection", "Error while building valid url: " + host);
+		}
 
-        this.Params = params;
+		if (path.length > 0)
+			for (String p : path)
+				urlBuilder.addPathSegment(p);
 
-        Iterator<?> Headers = params.keys();
+		this.Params = params;
 
-        if (Type == GET) while (Headers.hasNext()) {
-            try {
-                String header = (String) Headers.next(),
-                        value = (String) params.get(header);
-                urlBuilder.addQueryParameter(header, value);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+		Iterator<?> Headers = params.keys();
 
-        HttpUrl url = urlBuilder.build();
+		if (Type == GET) while (Headers.hasNext()) {
+			try {
+				String header = (String) Headers.next(),
+						value = (String) params.get(header);
+				urlBuilder.addQueryParameter(header, value);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		HttpUrl url = urlBuilder.build();
 
 //        Log.i("Http URL", "URL set to " + url.toString());
-        this.URL = url;
-        RequestBuilder.url(URL);
-    }
+		this.URL = url;
+		RequestBuilder.url(URL);
+	}
 
-    public HttpHandler(String host, String[] path, JSONObject params) {
-        this(host, path, GET, params);
-    }
+	public HttpHandler(String host, String[] path, JSONObject params) {
+		this(host, path, GET, params);
+	}
 
-    public HttpHandler(String host, String[] path, Integer type, String[] qHeaders, String[] qValues) {
-        this(host, path, type, createJSON(qHeaders, qValues));
-    }
+	public HttpHandler(String host, String[] path, Integer type, String[] qHeaders, String[] qValues) {
+		this(host, path, type, createJSON(qHeaders, qValues));
+	}
 
-    public HttpHandler(String host, String[] path, String[] qHeaders, String[] qValues) {
-        this(host, path, GET, qHeaders, qValues);
-    }
+	public HttpHandler(String host, String[] path, String[] qHeaders, String[] qValues) {
+		this(host, path, GET, qHeaders, qValues);
+	}
 
-    public HttpHandler(String host, String[] path, Integer type, String Header, String Value) {
-        this(host, path, type, StringToArray(Header), StringToArray(Value));
-    }
+	public HttpHandler(String host, String[] path, Integer type, String Header, String Value) {
+		this(host, path, type, StringToArray(Header), StringToArray(Value));
+	}
 
-    public HttpHandler(String host, String[] path, String header, String value) {
-        this(host, path, GET, header, value);
-    }
+	public HttpHandler(String host, String[] path, String header, String value) {
+		this(host, path, GET, header, value);
+	}
 
-    public HttpHandler(String host, String[] path) {
-        this(host, path, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY);
-    }
+	public HttpHandler(String host, String[] path) {
+		this(host, path, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY);
+	}
 
-    public HttpHandler(String host) {
-        this(host, EMPTY_STRING_ARRAY);
-    }
+	public HttpHandler(String host) {
+		this(host, EMPTY_STRING_ARRAY);
+	}
 
-    private static JSONObject createJSON(String[] headers, String[] values) {
-        JSONObject j = new JSONObject();
-        int counter = 0;
-        for (String header : headers)
-            try {
-                j.put(header, values[counter++]);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+	public HttpHandler(String host, String[] path, Integer type) {
+		this(host, path, type, EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY);
+	}
 
-        return j;
-    }
+	private static JSONObject createJSON(String[] headers, String[] values) {
+		JSONObject j = new JSONObject();
+		int counter = 0;
+		for (String header : headers)
+			try {
+				j.put(header, values[counter++]);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 
-    public String getResponse() {
-        return Response;
-    }
+		return j;
+	}
 
-    public Integer getResponseStatus() {
-        return Status;
-    }
+	public String getResponse() {
+		return Response;
+	}
 
-    public Boolean getSuccess() {
-        return Success;
-    }
+	public Integer getResponseStatus() {
+		return Status;
+	}
 
-    @Override
-    protected Boolean doInBackground(Void... params) {
-        Request.Builder b = RequestBuilder;
+	public Boolean getSuccess() {
+		return Success;
+	}
 
-        if (Type == POST) {
-            String p = "{\"access_token\":\"CAAXwkyvUUdwBAAmLAJbtBxDLZBUjnfLGefZCqXI5ji93PN2eO7QotVwzV7GKD65KlRZCUcYXZB4gfhxRDSUs13QbIXOXH0Xb8ZAM9PR0AXCYLljijtDJX05ZCMObTgv2SijLfcUp9mf76JgRbaJNrTTO1vtFoJCrPYjlov51v4QTqL1YCbyHUTZC9gOoIPFmcezS0NSQBXbsg986fgNUVLTW6Mis5IKOFxysNgum17ZADwZDZD\"}";
+	@Override
+	protected Boolean doInBackground(Void... params) {
+		Request.Builder b = RequestBuilder;
 
-            String param = Params.toString();
-            b.post(RequestBody.create(MEDIA_TYPE_MARKDOWN, param))
-                    .addHeader("content-type", "application/json")
-                    .addHeader("cache-control", "no-cache");
+		if (Type == POST) {
+			String p = "{\"access_token\":\"CAAXwkyvUUdwBAAmLAJbtBxDLZBUjnfLGefZCqXI5ji93PN2eO7QotVwzV7GKD65KlRZCUcYXZB4gfhxRDSUs13QbIXOXH0Xb8ZAM9PR0AXCYLljijtDJX05ZCMObTgv2SijLfcUp9mf76JgRbaJNrTTO1vtFoJCrPYjlov51v4QTqL1YCbyHUTZC9gOoIPFmcezS0NSQBXbsg986fgNUVLTW6Mis5IKOFxysNgum17ZADwZDZD\"}";
 
-        }
+			String param = Params.toString();
+			b.post(RequestBody.create(MEDIA_TYPE_MARKDOWN, param))
+					.addHeader("content-type", "application/json")
+					.addHeader("cache-control", "no-cache");
 
-        Request request = b.build();
+		}
 
-        try {
-            Response response = client.newCall(request).execute();
+		Request request = b.build();
 
-            this.Response = response.body().string();
-            this.Status = response.code();
-            this.Success = response.isSuccessful();
+		try {
+			Response response = client.newCall(request).execute();
 
-            Log.i("Http Connection", "Call to " + URL.toString() + " completed");
-            Log.i("Http Response", response.message());
-            Log.i("Http Response", Response);
-            Log.i("Http Response", String.valueOf(Status));
-            return true;
-        } catch (IOException e) {
-            Log.i("Http Connection", "Call to " + URL.toString() + " failed with an exception: " + e.toString());
-            return false;
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.i("Http Connection", "Call to " + URL.toString() + " failed");
-            return false;
-        }
-    }
+			this.Response = response.body().string();
+			this.Status = response.code();
+			this.Success = response.isSuccessful();
 
-    @Override
-    protected void onPreExecute() {
-        onPreRun();
-    }
+			Log.i("Http Connection", "Call to " + URL.toString() + " completed");
+			Log.i("Http Response", response.message());
+			Log.i("Http Response", Response);
+			Log.i("Http Response", String.valueOf(Status));
+			return true;
+		} catch (IOException e) {
+			Log.i("Http Connection", "Call to " + URL.toString() + " failed with an exception: " + e.toString());
+			return false;
+		} catch (Exception e) {
+			e.printStackTrace();
+			Log.i("Http Connection", "Call to " + URL.toString() + " failed");
+			return false;
+		}
+	}
 
-    @Override
-    protected void onPostExecute(Boolean aBoolean) {
-        onPostExecute();
-        if (aBoolean) {
-            onSuccess(getResponse());
-        } else {
-            try {
-                onFailure(getResponseStatus());
-            } catch (Exception e) {
-                onFailure(-1);
-            }
-        }
-    }
+	@Override
+	protected void onPreExecute() {
+		onPreRun();
+	}
 
-    public HttpUrl getURL() {
-        return URL;
-    }
+	@Override
+	protected void onPostExecute(Boolean aBoolean) {
+		if (aBoolean) {
+			onSuccess(getResponse());
+		} else {
+			try {
+				onFailure(getResponseStatus());
+			} catch (Exception e) {
+				onFailure(-1);
+			}
+		}
+		onPostExecute();
+	}
 
-    public void setURL(HttpUrl URL) {
-        this.URL = URL;
-    }
+	public HttpUrl getURL() {
+		return URL;
+	}
 
-    public void addHeader(String header, String value) {
-        RequestBuilder.addHeader(header, value);
-    }
+	public void setURL(HttpUrl URL) {
+		this.URL = URL;
+	}
 
-    protected void onPreRun() {
-    }
+	public void addHeader(String header, String value) {
+		RequestBuilder.addHeader(header, value);
+	}
 
-    protected void onSuccess(String response) {
+	protected void onPreRun() {
+	}
 
-    }
+	protected void onSuccess(String response) {
 
-    protected void onFailure(Integer status) {
+	}
 
-    }
+	protected void onFailure(Integer status) {
 
-    protected void onPostExecute() {
-    }
+	}
+
+	protected void onPostExecute() {
+	}
 }

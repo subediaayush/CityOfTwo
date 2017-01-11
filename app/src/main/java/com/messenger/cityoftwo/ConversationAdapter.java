@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +43,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 	private static final int ID_TEXT = 0x00F00000;
 	private static final int ID_PROFILE_IMAGE = 0x00F00001;
 	private static final int ID_PROFILE_NAME = 0x00F00002;
+
+	private static final String TAG = "ConversationAdapter";
+
 	protected List<Integer> adLocations;
 	//    private static final int ID_PROFILE_URL =
 	private String mHeaderText;
@@ -59,7 +63,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 	private Conversation indicatorConversation;
 
 	public ConversationAdapter(final Context context, LinearLayoutManager l) {
-		ConversationList = new SortedList<Conversation>(Conversation.class, new SortedList.Callback<Conversation>() {
+		ConversationList = new SortedList<>(Conversation.class, new SortedList.Callback<Conversation>() {
 			@Override
 			public int compare(Conversation o1, Conversation o2) {
 				return Conversation.CONVERSATION_COMPARATOR.compare(o1, o2);
@@ -142,6 +146,8 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 	@Override
 	public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+		Log.i(TAG, "onCreateViewHolder");
+
 		LayoutInflater li = LayoutInflater.from(context);
 
 		View view;
@@ -153,56 +159,56 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 		} else if ((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
 			view = li.inflate(R.layout.layout_msg_start, parent, false);
 		} else if ((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
-			view = li.inflate(R.layout.layout_msg_end, parent, false);
+			view = li.inflate(R.layout.layout_msg_empty, parent, false);
 		} else if ((viewType & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
 			view = li.inflate(R.layout.layout_msg_indicators, parent, false);
 		} else {
-			view = li.inflate(R.layout.layout_msg_end, parent, false);
+			view = li.inflate(R.layout.layout_msg_empty, parent, false);
 		}
 
-		if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
-			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
-
-			TextView messageTextView = (TextView) LayoutInflater.from(context)
-					.inflate(R.layout.layout_message_text, null)
-					.findViewById(R.id.message_text);
-
-			container.addView(messageTextView);
-			messageTextView.setLayoutParams(
-					new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-							ViewGroup.LayoutParams.WRAP_CONTENT)
-			);
-
-			return new ContentHolder(view);
-		} else if ((viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
-			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
-
-			View childView = LayoutInflater.from(context)
-					.inflate(R.layout.layout_message_profile, null);
-
-			container.addView(childView);
-
-			childView.setLayoutParams(
-					new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-							ViewGroup.LayoutParams.WRAP_CONTENT)
-			);
-
-			return new ContentHolder(view);
-		} else if (((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
-				((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END)) {
-			return new GenericHolder(view);
+//		if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
+//			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
+//
+//			TextView messageTextView = (TextView) LayoutInflater.from(context)
+//					.inflate(R.layout.layout_message_text, null)
+//					.findViewById(R.id.message_text);
+//
+//			container.addView(messageTextView);
+//			messageTextView.setLayoutParams(
+//					new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+//							ViewGroup.LayoutParams.WRAP_CONTENT)
+//			);
+//
+//			return new ContentHolder(view);
+//		} else if ((viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
+//			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
+//
+//			View childView = LayoutInflater.from(context)
+//					.inflate(R.layout.layout_profile_sent, null);
+//
+//			container.addView(childView);
+//
+//			childView.setLayoutParams(
+//					new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+//							ViewGroup.LayoutParams.WRAP_CONTENT)
+//			);
+//
+//			return new ContentHolder(view);
+//		} else if (((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
+//				((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END)) {
+//			return new GenericHolder(view);
 //		} else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
 //			return new AdHolder(view);
-		} else if ((viewType & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
-			return new IndicatorHolder(view);
-		} else {
+//		} else if ((viewType & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
+//			return new IndicatorHolder(view);
+//		} else {
 			return new ContentHolder(view);
-		}
+//		}
 	}
 
 	@Override
 	public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, final int position) {
-
+		Log.i(TAG, "onBindViewHolder for " + position);
 		Conversation currentConv = ConversationList.get(position);
 
 		int flags = currentConv.getFlags();
@@ -272,9 +278,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 			}
 		} else if ((flags & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
 			GenericHolder holder = (GenericHolder) viewHolder;
-			if (mHeaderText.isEmpty()) holder.introContainer.setVisibility(View.INVISIBLE);
-			else holder.introContainer.setVisibility(View.VISIBLE);
-			holder.likeList.setText(mHeaderText);
+
 		} else if ((flags & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END) {
 			isLastVisible = true;
 		} else if ((flags & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
@@ -294,27 +298,27 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 		}
 
-		if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT ||
-				(flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-			Conversation previousItem = ConversationList.get(position - 1);
-			int previousItemFlag = previousItem.getFlags();
-
-			boolean previousIndicatorType = (previousItemFlag & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR;
-			if (previousIndicatorType) {
-				previousItem = ConversationList.get(position - 2);
-				previousItemFlag = previousItem.getFlags();
-			}
-
-			boolean sameType = (flags & CityOfTwo.FLAG_SENT) == (previousItemFlag & CityOfTwo.FLAG_SENT) &&
-					(flags & CityOfTwo.FLAG_RECEIVED) == (previousItemFlag & CityOfTwo.FLAG_RECEIVED);
-
-			final ContentHolder holder = (ContentHolder) viewHolder;
-			if (sameType) {
-				if (position != selectedItem) holder.dateContainer.setVisibility(View.GONE);
-			} else {
-				holder.dateContainer.setVisibility(View.VISIBLE);
-			}
-		}
+//		if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT ||
+//				(flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
+//			Conversation previousItem = ConversationList.get(position - 1);
+//			int previousItemFlag = previousItem.getFlags();
+//
+//			boolean previousIndicatorType = (previousItemFlag & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR;
+//			if (previousIndicatorType) {
+//				previousItem = ConversationList.get(position - 2);
+//				previousItemFlag = previousItem.getFlags();
+//			}
+//
+//			boolean sameType = (flags & CityOfTwo.FLAG_SENT) == (previousItemFlag & CityOfTwo.FLAG_SENT) &&
+//					(flags & CityOfTwo.FLAG_RECEIVED) == (previousItemFlag & CityOfTwo.FLAG_RECEIVED);
+//
+//			final ContentHolder holder = (ContentHolder) viewHolder;
+//			if (sameType) {
+//				if (position != selectedItem) holder.dateContainer.setVisibility(View.GONE);
+//			} else {
+//				holder.dateContainer.setVisibility(View.VISIBLE);
+//			}
+//		}
 
 	}
 
@@ -484,7 +488,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 		public ContentHolder(View itemView) {
 			super(itemView);
-			contentContainer = (FrameLayout) itemView.findViewById(R.id.content_container);
+//			contentContainer = (FrameLayout) itemView.findViewById(R.id.content_container);
 			dateContainer = (TextView) itemView.findViewById(R.id.time);
 			lineContainer = itemView.findViewById(line);
 		}

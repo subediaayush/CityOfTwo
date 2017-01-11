@@ -1,62 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+	xmlns:appCompat="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/chat_introduction_view"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	>
 
-    <LinearLayout
-        android:id="@+id/chat_introduction_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+	<android.support.v7.widget.CardView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginEnd="15dp"
+		android:layout_marginStart="15dp"
+		android:layout_marginTop="15dp"
+		>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:maxLines="1"
-            android:paddingTop="5dp"
-            android:text="You both like"
-            android:textColor="@color/colorPrimary"
-            android:textSize="14sp" />
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="15dp"
+			android:gravity="center_horizontal"
+			android:orientation="vertical"
+			>
 
-        <TextView
-            android:id="@+id/likes_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="70dp"
-            android:layout_marginRight="70dp"
-            android:layout_marginTop="5dp"
-            android:gravity="center"
-            android:text="Micheal Jackson, Manchester United, Singapore and Spaghetti"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+			<View
+				android:layout_width="100dp"
+				android:layout_height="100dp"
+				android:layout_marginTop="56dp"
+				android:background="@drawable/ic_placeholder"
+				/>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@color/colorPrimary" />
+			<TextView
+				style="@style/CardContent.ListItem"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="15dp"
+				android:text="Name"
+				/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/intro_background"
-            android:text="Say Hi!"
-            android:textColor="@color/White"
-            android:textSize="16sp" />
+			<TextView
+				style="@style/CardContent.ListItem"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="7dp"
+				android:text="Nickname: nickname"
+				/>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"
-            android:background="@color/colorPrimary" />
-    </LinearLayout>
+			<TextView
+				style="@style/CardContent.ListItem"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="7dp"
+				android:text="fb.com/user.name"
+				android:textColor="@color/CadetBlue"
+				/>
+
+			<TextView
+				style="@style/CardContent.ListItem"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="7dp"
+				android:text="likes this, that, those and 20 other things including meatballs"
+				android:textAllCaps="true"
+				android:textColor="@color/gray"
+				android:textStyle="italic"
+				/>
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:visibility="gone"
+				>
+
+				<FrameLayout
+					android:layout_width="match_parent"
+					android:layout_height="24dp"
+					android:layout_marginTop="15dp"
+					>
+
+					<TextView
+						style="@style/CardContent.ListItem"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center_vertical"
+						android:text="Looking for"
+						android:textStyle="bold"
+						/>
+
+					<ImageView
+						android:layout_width="24dp"
+						android:layout_height="24dp"
+						android:layout_gravity="end"
+						appCompat:srcCompat="@drawable/ic_edit"
+						/>
+				</FrameLayout>
+
+				<include layout="@layout/layout_filter_description"/>
+			</LinearLayout>
+		</LinearLayout>
+
+	</android.support.v7.widget.CardView>
+
+	<android.support.v7.widget.CardView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="15dp"
+		android:layout_marginEnd="15dp"
+		android:layout_marginStart="15dp"
+		android:layout_marginTop="15dp"
+		>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:divider="@drawable/divider_grey"
+			android:orientation="vertical"
+			android:showDividers="middle"
+			>
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:divider="@drawable/divider_grey"
+				android:orientation="horizontal"
+				android:showDividers="middle"
+				>
+
+				<Button
+					style="@style/ProfileOptionButtons"
+					android:drawableTop="@drawable/ic_send_new_message"
+					android:text="Send Message"
+					/>
+
+				<Button
+					style="@style/ProfileOptionButtons"
+					android:drawableTop="@drawable/ic_send_request"
+					android:text="Save as Contact"
+					/>
+
+				<Button
+					style="@style/ProfileOptionButtons"
+					android:drawableTop="@drawable/ic_self_reveal"
+					android:text="Reveal"
+					/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:divider="@drawable/divider_grey"
+				android:showDividers="middle"
+				>
+
+				<Button
+					style="@style/ProfileOptionButtons"
+					android:drawableTop="@drawable/ic_facebook"
+					android:text="Facebook"
+					/>
+
+				<Button
+					style="@style/ProfileOptionButtons"
+					android:drawableTop="@drawable/ic_likes"
+					android:text="Common Likes"
+					/>
+
+				<Button
+					style="@style/ProfileOptionButtons"
+					android:drawableTop="@drawable/ic_block"
+					android:text="Block User"
+					/>
+			</LinearLayout>
+		</LinearLayout>
+	</android.support.v7.widget.CardView>
+
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		/>
+
 </LinearLayout>

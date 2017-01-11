@@ -67,23 +67,24 @@
     </LinearLayout>
 
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/conversation_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
-        android:gravity="center">
+        >
 
         <ImageView
             android:id="@+id/coyrudy_logo"
             android:layout_width="@dimen/toolbar_icon_size"
             android:layout_height="@dimen/toolbar_icon_size"
+            android:layout_gravity="center"
             android:adjustViewBounds="true"
             android:padding="5dp"
             app:srcCompat="@drawable/drawable_coyrudy"
             />
 
-    </RelativeLayout>
+    </FrameLayout>
 
     <!--<com.google.android.gms.ads.AdView-->
     <!--android:id="@+id/adView"-->

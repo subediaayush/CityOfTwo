@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="120dp"
+	android:layout_height="120dp"
+	android:layout_margin="5dp"
+	>
+
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		/>
+
+	<com.facebook.login.widget.ProfilePictureView
+		android:id="@+id/message_profile_image"
+		android:layout_width="100dp"
+		android:layout_height="100dp"
+		android:layout_gravity="center"
+		android:background="@drawable/profile_imageview"
+		android:elevation="4dp"
+		android:src="@drawable/ic_placeholder"
+		/>
+
+
+	<ImageView
+		android:layout_width="120dp"
+		android:layout_height="120dp"
+		android:layout_gravity="center"
+		android:elevation="4dp"
+		app:srcCompat="@drawable/mask_circular"
+		/>
+
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:background="@drawable/mask_ring"
+		android:elevation="4dp"
+		/>
+
+</FrameLayout>

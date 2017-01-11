@@ -115,7 +115,7 @@ public class LobbyActivity extends AppCompatActivity {
         fm.executePendingTransactions();
 //        mBackgroundAnimationFragment = BackgroundAnimationFragment.newInstance();
 //        getSupportFragmentManager().beginTransaction()
-//                .replace(R.id.lobby_background, mBackgroundAnimationFragment)
+//                .replace(R.code.lobby_background, mBackgroundAnimationFragment)
 //                .commit();
 
         mAccessToken = AccessToken.getCurrentAccessToken();
@@ -290,10 +290,17 @@ public class LobbyActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt("LOBBY_STATUS", getStatus());
+        outState.putParcelable("LOBBY_ACCESS_TOKEN", mAccessToken);
+    }
+
     private void facebookLogin() {
         facebookLogin(AccessToken.getCurrentAccessToken());
     }
-
 
     private void startEnterAnimation() {
         mImageFlipper.setPivotX(0);
@@ -321,7 +328,7 @@ public class LobbyActivity extends AppCompatActivity {
                 })
                 .withEndAction(new Runnable() {
                     public void run() {
-                        // Animate the description in after the image animation
+                        // Animate the description in after the icon animation
                         // is done. Slide and fade the text in from underneath
                         // the picture.
 
@@ -358,74 +365,6 @@ public class LobbyActivity extends AppCompatActivity {
         view.animate().setDuration(mDuration / 2)
                 .alpha(1)
                 .setInterpolator(mInterpolator);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
-        b.unregisterReceiver(mBroadcastReceiver);
-
-        Log.i("LobbyActivity", "Activity paused");
-        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        IntentFilter filter = new IntentFilter();
-
-        filter.addAction(CityOfTwo.ACTION_BEGIN_CHAT);
-        filter.addAction(CityOfTwo.ACTION_NEW_MESSAGE);
-        filter.addAction(CityOfTwo.ACTION_USER_OFFLINE);
-        filter.addAction(CityOfTwo.ACTION_FCM_ID);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, filter);
-
-        Log.i("LobbyActivity", "Activity Resumed");
-        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
-        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOBBY);
-
-        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
-        nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
-        nm.cancel(CityOfTwo.NOTIFICATION_CHAT_END, 10046);
-
-        SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-
-        Boolean userOnline = sp.getBoolean(CityOfTwo.KEY_SESSION_ACTIVE, true);
-        Editor editor = sp.edit();
-
-        editor.remove(CityOfTwo.KEY_SESSION_ACTIVE);
-
-        if (!userOnline) {
-            editor.remove(CityOfTwo.KEY_CHATROOM_ID)
-                    .remove(CityOfTwo.KEY_CHAT_PENDING)
-                    .apply();
-
-            setStatus(BEGIN);
-            facebookLogin();
-            return;
-        }
-
-        editor.apply();
-
-        Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
-
-        if (chatPending) {
-            Log.i("Lobby", "Chat pending, opening pending chat");
-            Intent conversationIntent = new Intent(this, ConversationActivity.class);
-            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
-        }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putInt("LOBBY_STATUS", getStatus());
-        outState.putParcelable("LOBBY_ACCESS_TOKEN", mAccessToken);
     }
 
     private void facebookLogin(final AccessToken accessToken) {
@@ -631,7 +570,6 @@ public class LobbyActivity extends AppCompatActivity {
         BroadcastGCMHttpHandler.execute();
     }
 
-
     private void submitTest(String answers) {
         String submit_test = getString(R.string.url_test),
                 header = CityOfTwo.HEADER_TEST_RESULT;
@@ -671,13 +609,6 @@ public class LobbyActivity extends AppCompatActivity {
 
         TestHttpHandler.execute();
     }
-
-    @Override
-    public void onBackPressed() {
-        setResult(RESULT_OK, new Intent());
-        finish();
-    }
-
 
     public void setLobbyDescription(String lobbyDescription) {
         if (mLobbyDescription == null)
@@ -873,6 +804,72 @@ public class LobbyActivity extends AppCompatActivity {
         }
 
         restoreActivity();
+    }
+
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_OK, new Intent());
+        finish();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        LocalBroadcastManager b = LocalBroadcastManager.getInstance(this);
+        b.unregisterReceiver(mBroadcastReceiver);
+
+        Log.i("LobbyActivity", "Activity paused");
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        IntentFilter filter = new IntentFilter();
+
+        filter.addAction(CityOfTwo.ACTION_BEGIN_CHAT);
+        filter.addAction(CityOfTwo.ACTION_NEW_MESSAGE);
+        filter.addAction(CityOfTwo.ACTION_USER_OFFLINE);
+        filter.addAction(CityOfTwo.ACTION_FCM_ID);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, filter);
+
+        Log.i("LobbyActivity", "Activity Resumed");
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
+        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOBBY);
+
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
+        nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
+        nm.cancel(CityOfTwo.NOTIFICATION_CHAT_END, 10046);
+
+        SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+        Boolean userOnline = sp.getBoolean(CityOfTwo.KEY_SESSION_ACTIVE, true);
+        Editor editor = sp.edit();
+
+        editor.remove(CityOfTwo.KEY_SESSION_ACTIVE);
+
+        if (!userOnline) {
+            editor.remove(CityOfTwo.KEY_CHATROOM_ID)
+                    .remove(CityOfTwo.KEY_CHAT_PENDING)
+                    .apply();
+
+            setStatus(BEGIN);
+            facebookLogin();
+            return;
+        }
+
+        editor.apply();
+
+        Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
+
+        if (chatPending) {
+            Log.i("Lobby", "Chat pending, opening pending chat");
+            Intent conversationIntent = new Intent(this, ConversationActivity.class);
+            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
+        }
     }
 
     private void restoreActivity() {

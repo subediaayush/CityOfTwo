@@ -1,50 +1,54 @@
 <resources>
-    <string name="app_name">CoyRudy</string>
+	<string name="app_name">CoyRudy</string>
 
-    <string name="facebook_app_id">1727194620850368</string>
+	<string name="facebook_app_id">1727194620850368</string>
 
-    <string name="title_activity_ad">AdActivity</string>
+	<string name="title_activity_ad">AdActivity</string>
 
-    <string name="action_settings">Settings</string>
+	<string name="action_settings">Settings</string>
 
-    <string name="hello_world">Hello world!</string>
-    <!-- -
+	<string name="hello_world">Hello world!</string>
+	<!-- -
         This is an ad unit ID for a banner test ad. Replace with your own banner ad unit id.
         For more information, see https://support.google.com/admob/answer/3052638
     <!- -->
-    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+	<string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
 
-    <string name="interstitial_ad_sample">Interstitial Ad Sample</string>
-    <string name="start_level">Level 1</string>
-    <string name="next_level">Next Level</string>
-    <!-- -
+	<string name="interstitial_ad_sample">Interstitial Ad Sample</string>
+	<string name="start_level">Level 1</string>
+	<string name="next_level">Next Level</string>
+	<!-- -
         This is an ad unit ID for an interstitial test ad. Replace with your own interstitial ad unit id.
         For more information, see https://support.google.com/admob/answer/3052638
     <!- -->
-    <string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/1033173712</string>
-    <string name="string_test_intro">Before you begin, you\'ll need to take a 3 question personality test that will help us find you a better match</string>
-    <string name="about_reveal">Share a link to your facebook profile with the stranger. Reveal yourself!</string>
+	<string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/1033173712</string>
+	<string name="string_test_intro">Before you begin, you\'ll need to take a 3 question personality test that will help us find you a better match</string>
+	<string name="about_reveal">Share a link to your facebook profile with the stranger. Reveal yourself!</string>
     <string name="about_referral">You can receive free credits by referring CoyRudy to your friends and on Social media.
         Share the following link and receive free credits based on the number of visitors who follow the link.</string>
-    <string name="about_filter">Filter future matches based on your preferences.</string>
-    <string name="string_welcome">Welcome to CoyRudy</string>
-    <string name="string_dummy_question">This is a dummy question. What will you do about it?</string>
-    <string name="string_dummy_option">dummy option</string>
-    <string name="string_test">Test</string>
-    <string name="string_dummy_tip">So this is a dummy tip. Will you comply?</string>
-    <string name="next_button">Next</string>
-    <string name="string_dummy_description">Here goes the description of the slide</string>
-    <string name="string_dummy_title">Title</string>
-    <string name="label_coyrudy">CoyRudy</string>
-    <string name="label_login">Login</string>
-    <string name="demo_text_one">Hiii fellow tame impala lover</string>
-    <string name="demo_text_two">Hey, how you doing?</string>
-    <string name="demo_text_three">I got my hopes up again, oh no…</string>
-    <string name="demo_text_four">Feels like we only go backwards darling</string>
-    <string name="demo_reveal_one">Jane Doe</string>
-    <string name="demo_reveal_two">Well, this is me…</string>
-    <string name="demo_reveal_three">John Moe</string>
-    <string name="demo_reveal_four">Hey Jane, here\'s me</string>
-    <string name="label_welcome">Welcome to CoyRudy</string>
-    <string name="transition_logo">transition_logo</string>
+	<string name="about_filter">Filter future matches based on your preferences.</string>
+	<string name="string_welcome">Welcome to CoyRudy</string>
+	<string name="string_dummy_question">This is a dummy question. What will you do about it?</string>
+	<string name="string_dummy_option">dummy option</string>
+	<string name="string_test">Test</string>
+	<string name="string_dummy_tip">So this is a dummy tip. Will you comply?</string>
+	<string name="next_button">Next</string>
+	<string name="string_dummy_description">Here goes the description of the slide</string>
+	<string name="string_dummy_title">Title</string>
+	<string name="label_coyrudy">CoyRudy</string>
+	<string name="label_login">Login</string>
+	<string name="demo_text_one">Hiii fellow tame impala lover</string>
+	<string name="demo_text_two">Hey, how you doing?</string>
+	<string name="demo_text_three">I got my hopes up again, oh no…</string>
+	<string name="demo_text_four">Feels like we only go backwards darling</string>
+	<string name="demo_reveal_one">Jane Doe</string>
+	<string name="demo_reveal_two">Well, this is me…</string>
+	<string name="demo_reveal_three">John Moe</string>
+	<string name="demo_reveal_four">Hey Jane, here\'s me</string>
+	<string name="label_welcome">Welcome to CoyRudy</string>
+	<string name="transition_logo">transition_logo</string>
+	<string name="title_activity_home">HomeActivity</string>
+
+	<!-- TODO: Remove or change this placeholder text -->
+	<string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

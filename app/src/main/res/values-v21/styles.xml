@@ -1,0 +1,12 @@
+<resources>
+
+	<style name="SplashTheme" parent="SplashThemeBase">
+		<item name="android:windowBackground">@drawable/background_splash</item>
+		<item name="android:statusBarColor">@color/colorPrimary</item>
+		<item name="android:navigationBarColor">@color/colorPrimary</item>
+	</style>
+
+	<style name="TextMessage" parent="TextMessageBase">
+		<item name="android:elevation">3dp</item>
+	</style>
+</resources>

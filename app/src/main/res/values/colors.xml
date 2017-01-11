@@ -13,6 +13,7 @@
     <color name="colorSnackBarDefault">@color/colorPrimaryDark</color>
     <color name="colorSnackBarText">@color/colorPrimaryLight</color>
 
+    <color name="fade_white">#FEEE</color>
 
     <color name="white">#FFFFFFFF</color>
     <color name="yellow">#FFFFFF00</color>

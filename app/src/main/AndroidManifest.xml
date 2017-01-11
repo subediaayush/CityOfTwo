@@ -1,116 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.messenger.cityoftwo">
+	package="com.messenger.cityoftwo">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <!--<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />-->
-    <!--<uses-permission android:name="com.messenger.cityoftwo.permission.C2D_MESSAGE" />-->
+	<uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
-    <!--<permission-->
-    <!--android:name="com.messenger.cityoftwo.permission.C2D_MESSAGE"-->
-    <!--android:protectionLevel="signature" />-->
+	<!-- <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" /> -->
+	<!-- <uses-permission android:name="com.messenger.cityoftwo.permission.C2D_MESSAGE" /> -->
+	<!-- <permission -->
+	<!-- android:name="com.messenger.cityoftwo.permission.C2D_MESSAGE" -->
+	<!-- android:protectionLevel="signature" /> -->
+	<application
+		android:name=".CityOfTwo"
+		android:allowBackup="false"
+		android:icon="@mipmap/ic_launcher"
+		android:label="@string/app_name"
+		android:supportsRtl="true"
+		android:theme="@style/AppTheme">
+		<meta-data
+			android:name="com.facebook.sdk.ApplicationId"
+			android:value="@string/facebook_app_id"/>
 
-    <application
-        android:name=".CityOfTwo"
-        android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <meta-data
-            android:name="com.facebook.sdk.ApplicationId"
-            android:value="@string/facebook_app_id" />
+		<!-- <receiver android:name=".GCMBroadcastReceiver"> -->
+		<!-- android:permission="com.google.android.c2dm.permission.SEND"> -->
+		<!-- <intent-filter> -->
 
-        <!--<receiver android:name=".GCMBroadcastReceiver">-->
-        <!--android:permission="com.google.android.c2dm.permission.SEND">-->
-        <!--<intent-filter>-->
 
-        <!--&lt;!&ndash; Receives the actual messages. &ndash;&gt;-->
-        <!--<action android:name="com.google.android.c2dm.intent.RECEIVE" />-->
+		<!-- &lt;!&ndash; Receives the actual messages. &ndash;&gt; -->
+		<!-- <action android:name="com.google.android.c2dm.intent.RECEIVE" /> -->
 
-        <!--<category android:name="com.messenger.cityoftwo" />-->
-        <!--</intent-filter>-->
-        <!--</receiver>-->
-        <receiver android:name=".NetworkStateReceiver">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
 
-        <service android:name=".FirebaseMessageHandler">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-        <service android:name=".FirebaseInstanceIDService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
+		<!-- <category android:name="com.messenger.cityoftwo" /> -->
+		<!-- </intent-filter> -->
+		<!-- </receiver> -->
+		<receiver android:name=".NetworkStateReceiver">
+			<intent-filter>
+				<action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+			</intent-filter>
+		</receiver>
 
-        <activity
-            android:name=".ConversationActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".LobbyActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"/>
+		<service android:name=".FirebaseMessageHandler">
+			<intent-filter>
+				<action android:name="com.google.firebase.MESSAGING_EVENT"/>
+			</intent-filter>
+		</service>
+		<service android:name=".FirebaseInstanceIDService">
+			<intent-filter>
+				<action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+			</intent-filter>
+		</service>
 
-        <activity
-            android:name=".IntroductionActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme"/>
-        <activity
-            android:name=".LoginActivity"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+		<activity
+			android:name=".ConversationActivity"
+			android:launchMode="singleTop"
+			android:screenOrientation="portrait"/>
+		<activity
+			android:name=".LobbyActivity"
+			android:screenOrientation="portrait"
+			android:theme="@style/AppTheme"/>
+		<activity
+			android:name=".ProfileActivity"
+			android:screenOrientation="portrait"
+			android:theme="@style/AppTheme"/>
+		<activity
+			android:name=".IntroductionActivity"
+			android:screenOrientation="portrait"
+			android:theme="@style/AppTheme"/>
+		<activity
+			android:name=".LoginActivity"
+			android:screenOrientation="portrait">
+		</activity>
+		<activity
+			android:name="com.facebook.FacebookActivity"
+			android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+			android:label="@string/app_name"
+			android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+		<activity
+			android:name="com.mopub.mobileads.MoPubActivity"
+			android:configChanges="keyboardHidden|orientation|screenSize"/>
+		<activity
+			android:name="com.mopub.mobileads.MraidActivity"
+			android:configChanges="keyboardHidden|orientation|screenSize"/>
+		<activity
+			android:name="com.mopub.common.MoPubBrowser"
+			android:configChanges="keyboardHidden|orientation|screenSize"/>
+		<activity
+			android:name="com.mopub.mobileads.MraidVideoPlayerActivity"
+			android:configChanges="keyboardHidden|orientation|screenSize"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="com.facebook.FacebookActivity"
-            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-            android:label="@string/app_name"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+		<provider
+			android:name="com.facebook.FacebookContentProvider"
+			android:authorities="com.facebook.app.FacebookContentProvider1234"
+			android:exported="true"/>
+		<!-- This meta-data tag is required to use Google Play Services. -->
+		<meta-data
+			android:name="com.google.android.gms.version"
+			android:value="@integer/google_play_services_version"/>
 
-        <activity
-            android:name="com.mopub.mobileads.MoPubActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-        <activity
-            android:name="com.mopub.mobileads.MraidActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-        <activity
-            android:name="com.mopub.common.MoPubBrowser"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-        <activity
-            android:name="com.mopub.mobileads.MraidVideoPlayerActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
+		<!-- &lt;!&ndash; Include the AdActivity configChanges and theme. &ndash;&gt; -->
+		<!-- <activity -->
+		<!-- android:name="com.google.android.gms.ads.AdActivity" -->
+		<!-- android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" -->
+		<!-- android:theme="@android:style/Theme.Translucent" /> -->
 
-        <provider
-            android:name="com.facebook.FacebookContentProvider"
-            android:authorities="com.facebook.app.FacebookContentProvider1234"
-            android:exported="true" />
-        <!-- This meta-data tag is required to use Google Play Services. -->
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+		<activity
+			android:name=".HomeActivity"
+			android:label="@string/title_activity_home"
+			android:theme="@style/AppTheme"/>
 
-        <!--&lt;!&ndash; Include the AdActivity configChanges and theme. &ndash;&gt;-->
-        <!--<activity-->
-        <!--android:name="com.google.android.gms.ads.AdActivity"-->
-        <!--android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"-->
-        <!--android:theme="@android:style/Theme.Translucent" />-->
+		<activity
+			android:name=".SplashActivity"
+			android:theme="@style/SplashTheme">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN"/>
 
-    </application>
+				<category android:name="android.intent.category.LAUNCHER"/>
+			</intent-filter>
+		</activity>
+	</application>
 
 </manifest>

@@ -1,51 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:animateLayoutChanges="true"
-    android:orientation="horizontal"
-    android:paddingLeft="5dp"
-    android:paddingRight="5dp">
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:animateLayoutChanges="true"
+	android:gravity="center_vertical|start"
+	android:orientation="horizontal"
+	android:paddingLeft="15dp"
+	android:paddingRight="15dp"
+	>
 
-    <RelativeLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="3"
-        android:gravity="start"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp">
+	<View
+		android:layout_width="32dp"
+		android:layout_height="32dp"
+		android:layout_gravity="bottom"
+		android:layout_marginBottom="4dp"
+		android:layout_marginEnd="8dp"
+		android:background="@drawable/ic_placeholder"
+		/>
 
-        <FrameLayout
-            android:id="@+id/content_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
-            android:layout_marginTop="3dp"
-            android:background="@drawable/received_text_bg" />
-    </RelativeLayout>
+	<TextView
+		android:id="@+id/message_text"
+		style="@style/TextMessage"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textColor="@color/colorPrimaryDark"
+		android:textSize="18sp"
+		/>
 
-    <LinearLayout
-        android:id="@+id/indicator_container"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:animateLayoutChanges="true"
-        android:gravity="end"
-        android:orientation="vertical">
+	<TextView
+		android:id="@+id/time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_margin="5dp"
+		android:text="12:12 pm"
+		android:textSize="12sp"
+		/>
 
-        <TextView
-            android:id="@+id/time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="12:12 pm"
-            android:textSize="12sp" />
-
-        <FrameLayout
-            android:id="@+id/line"
-            android:layout_width="5dp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="10dp"
-            android:background="@color/colorPrimaryLight" />
-    </LinearLayout>
 </LinearLayout>

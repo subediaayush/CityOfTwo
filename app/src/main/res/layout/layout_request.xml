@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_marginBottom="8dp"
+	android:layout_marginLeft="8dp"
+	android:layout_marginRight="8dp"
+	android:background="?android:attr/selectableItemBackground"
+	>
+
+	<ViewSwitcher
+		android:id="@+id/switcher"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			>
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:orientation="horizontal"
+				android:paddingLeft="16dp"
+				android:paddingRight="16dp"
+				android:paddingTop="16dp"
+				>
+
+				<ImageView
+					android:layout_width="40dp"
+					android:layout_height="40dp"
+					android:src="@drawable/ic_placeholder"
+					/>
+
+				<LinearLayout
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center_vertical"
+					android:orientation="vertical"
+					>
+
+					<TextView
+						style="@style/CardTitle"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginStart="16dp"
+						android:padding="0dp"
+						android:text="Contact"
+						/>
+
+					<TextView
+						style="@style/CardTitle.SubTitle"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center_vertical"
+						android:layout_marginStart="16dp"
+						android:padding="0dp"
+						android:text="Status of the contact sending the friend request"
+						/>
+
+				</LinearLayout>
+			</LinearLayout>
+
+			<TextView
+				style="@style/CardContent"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal"
+				android:paddingLeft="16dp"
+				android:paddingRight="16dp"
+				android:paddingTop="16dp"
+				android:text="Message sent by the ^^ person. Make it long just about two lines "
+				android:textSize="14sp"
+				/>
+
+			<TextView
+				style="@style/CardContent"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal"
+				android:paddingBottom="16dp"
+				android:paddingLeft="16dp"
+				android:paddingRight="16dp"
+				android:paddingTop="8dp"
+				android:text="likes John Cena, The Bourne Identity, Chicken Nuggets and 20 other."
+				android:textAllCaps="true"
+				android:textColor="@color/gray"
+				android:textSize="14sp"
+				android:textStyle="italic"
+				/>
+
+			<android.support.v7.widget.ButtonBarLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:gravity="end"
+				android:padding="4dp"
+				>
+
+				<Button
+					style="@style/Widget.AppCompat.Button.Borderless.Colored"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Ignore"
+					/>
+
+				<Button
+					style="@style/Widget.AppCompat.Button.Borderless.Colored"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Accept"
+					/>
+			</android.support.v7.widget.ButtonBarLayout>
+		</LinearLayout>
+
+		<ProgressBar
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:layout_gravity="center"
+			/>
+
+
+	</ViewSwitcher>
+</android.support.v7.widget.CardView>
