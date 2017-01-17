@@ -26,7 +26,7 @@
 			android:name="com.facebook.sdk.ApplicationId"
 			android:value="@string/facebook_app_id"/>
 
-		<!-- <receiver android:name=".GCMBroadcastReceiver"> -->
+		<!-- <received android:name=".GCMBroadcastReceiver"> -->
 		<!-- android:permission="com.google.android.c2dm.permission.SEND"> -->
 		<!-- <intent-filter> -->
 
@@ -37,12 +37,12 @@
 
 		<!-- <category android:name="com.messenger.cityoftwo" /> -->
 		<!-- </intent-filter> -->
-		<!-- </receiver> -->
-		<receiver android:name=".NetworkStateReceiver">
+		<!-- </received> -->
+		<received android:name=".NetworkStateReceiver">
 			<intent-filter>
 				<action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
 			</intent-filter>
-		</receiver>
+		</received>
 
 		<service android:name=".FirebaseMessageHandler">
 			<intent-filter>
@@ -112,6 +112,10 @@
 			android:name=".HomeActivity"
 			android:label="@string/title_activity_home"
 			android:theme="@style/AppTheme"/>
+		<activity
+			android:name=".FilterActivity"
+			android:label="@string/title_activity_home"
+			android:theme="@style/ToolbarTheme"/>
 
 		<activity
 			android:name=".SplashActivity"
