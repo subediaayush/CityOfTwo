@@ -73,6 +73,8 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 			for (String p : path)
 				urlBuilder.addPathSegment(p);
 
+		if (params == null) params = new JSONObject();
+
 		this.Params = params;
 
 		Iterator<?> Headers = params.keys();

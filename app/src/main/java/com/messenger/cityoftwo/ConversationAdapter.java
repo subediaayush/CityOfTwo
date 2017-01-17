@@ -169,7 +169,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //		if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
 //			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
 //
-//			TextView messageTextView = (TextView) LayoutInflater.from(context)
+//			TextView messageTextView = (TextView) LayoutInflater.received(context)
 //					.inflate(R.layout.layout_message_text, null)
 //					.findViewById(R.id.message_text);
 //
@@ -183,7 +183,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //		} else if ((viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
 //			FrameLayout container = (FrameLayout) view.findViewById(R.id.content_container);
 //
-//			View childView = LayoutInflater.from(context)
+//			View childView = LayoutInflater.received(context)
 //					.inflate(R.layout.layout_profile_sent, null);
 //
 //			container.addView(childView);
@@ -480,6 +480,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 			ConversationList.updateItemAt(lastSeenPosition, indicatorConversation);
 		}
 	}
+
 
 	protected class ContentHolder extends RecyclerView.ViewHolder {
 		TextView dateContainer;

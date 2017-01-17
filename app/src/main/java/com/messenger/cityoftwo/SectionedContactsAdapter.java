@@ -8,35 +8,37 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.messenger.cityoftwo.dummy.DummyContent.DummyItem;
+import com.truizlop.sectionedrecyclerview.SimpleSectionedAdapter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+
+import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListener;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
- * specified {@link ContactAdapterWrapper.ContactsEventListener}.
+ * specified {@link ContactsEventListener}.
  * TODO: Replace the implementation with code for your data type.
  */
-public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
+public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHolder> {
 
 	public static final int GUEST_MATCH = 0;
 	public static final int GUEST_CONTACT = 1;
 
 	private SortedList<Contact> mDataset;
-	private HashMap<Integer, Message> mMessages;
 
 	private Context mContext;
 
-	private ContactAdapterWrapper.ContactsEventListener mEventListener;
+	private ContactsEventListener mEventListener;
 
-	public ContactsAdapter(Context context) {
+	public SectionedContactsAdapter(Context context) {
 
 		mDataset = new SortedList<>(Contact.class, new SortedList.Callback<Contact>() {
 			@Override
 			public int compare(Contact o1, Contact o2) {
 				int comparison;
-				comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
+				comparison = Contact.FRIEND_COMPARATOR.compare(o1, o2);
 
+				if (comparison == 0) comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
 				if (comparison == 0) comparison = Contact.NAME_COMPARATOR.compare(o1, o2);
 
 				return comparison;
@@ -85,7 +87,32 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 //	}
 
 	@Override
-	public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+	protected String getSectionHeaderTitle(int section) {
+//		if (!isSectioned) return "";
+		return section == GUEST_CONTACT ? "Contacts" : "Matches";
+	}
+
+	@Override
+	public int getItemCount() {
+		return mDataset.size();
+	}
+
+	@Override
+	protected int getSectionCount() {
+		return 2;
+	}
+
+	@Override
+	protected int getItemCountForSection(int section) {
+		int counter = 0;
+		boolean contactSection = section == GUEST_CONTACT;
+		for (int i = 0; i < mDataset.size(); i++)
+			if (mDataset.get(i).isFriend == contactSection) counter++;
+		return counter;
+	}
+
+	@Override
+	protected ContactHolder onCreateItemViewHolder(ViewGroup parent, int viewType) {
 		View view = LayoutInflater.from(mContext).inflate(
 				R.layout.layout_contact,
 				parent,
@@ -95,7 +122,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 	}
 
 	@Override
-	public void onBindViewHolder(ContactHolder holder, final int position) {
+	protected void onBindItemViewHolder(ContactHolder holder, int section, final int position) {
 		Contact contact = mDataset.get(position);
 		if (contact.nickName.isEmpty()) {
 			holder.name.setText(contact.name);
@@ -130,11 +157,6 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 //		});
 	}
 
-	@Override
-	public int getItemCount() {
-		return mDataset.size();
-	}
-
 	public void setDataset(ArrayList<Contact> contacts) {
 		for (int i = mDataset.size() - 1; i >= 0; i--) {
 			if (!contacts.contains(mDataset.get(i)))
@@ -150,15 +172,20 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 
 	public void insertAll(ArrayList<Contact> c) {
 		mDataset.addAll(c);
-
 	}
 
 	public void clear() {
 		mDataset.clear();
-		mMessages.clear();
 	}
 
-	public void setEventListener(ContactAdapterWrapper.ContactsEventListener mEventListener) {
+	public void clearSection(int section) {
+		boolean contactSection = section == GUEST_CONTACT;
+		for (int i = mDataset.size() - 1; i >= 0; i++) {
+			if (mDataset.get(i).isFriend == contactSection) mDataset.removeItemAt(i);
+		}
+	}
+
+	public void setEventListener(ContactsEventListener mEventListener) {
 		this.mEventListener = mEventListener;
 	}
 

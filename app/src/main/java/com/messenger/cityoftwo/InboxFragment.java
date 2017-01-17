@@ -195,7 +195,7 @@ public class InboxFragment extends Fragment implements InboxAdapter.InboxEventLi
 
 		mInboxAdapter.setLoading(position);
 
-		final Contact guest = mInboxAdapter.get(position).from;
+		final Contact guest = new Contact("");
 
 		String code = guest.code;
 
@@ -232,9 +232,9 @@ public class InboxFragment extends Fragment implements InboxAdapter.InboxEventLi
 
 	@Override
 	public void onProfileViewed(int position, View rootView) {
-		final Contact guest = mInboxAdapter.get(position).from;
+//		final Contact guest = mInboxAdapter.get(position).received;
 
-		showProfile(guest);
+//		showProfile(guest);
 	}
 
 	private void showProfile(Contact guest) {

@@ -311,7 +311,7 @@ public class LobbyActivity extends AppCompatActivity {
         mImageFlipper.setTranslationY(yDelta);
         mImageFlipper.setAlpha(1f);
 
-        // Animate scale and translation to go from thumbnail to full size
+        // Animate scale and translation to go received thumbnail to full size
         mImageFlipper.animate().setDuration(mDuration)
                 .scaleX(1).scaleY(1)
                 .translationX(0).translationY(0)
@@ -329,7 +329,7 @@ public class LobbyActivity extends AppCompatActivity {
                 .withEndAction(new Runnable() {
                     public void run() {
                         // Animate the description in after the icon animation
-                        // is done. Slide and fade the text in from underneath
+                        // is done. Slide and fade the name in received underneath
                         // the picture.
 
                         setStatus(BEGIN);

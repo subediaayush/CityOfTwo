@@ -8,14 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.messenger.cityoftwo.dummy.DummyContent.DummyItem;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
- * specified {@link com.messenger.cityoftwo.ContactsAdapter.ContactsEventListener}.
+ * specified {@link com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListener}.
  * TODO: Replace the implementation with code for your data type.
  */
 public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
@@ -81,11 +80,11 @@ public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> 
 	@Override
 	void onBindHolder(final InboxAdapter.MessageHolder holder, int position) {
 		Message message = mDataset.get(position);
-		if (message.from.nickName.isEmpty()) {
-			holder.name.setText(message.from.name);
-		} else {
-			holder.name.setText(message.from.nickName);
-		}
+//		if (message.received.nickName.isEmpty()) {
+//			holder.name.setText(message.received.name);
+//		} else {
+//			holder.name.setText(message.received.nickName);
+//		}
 
 		if (loadingViews.contains(position)) {
 			holder.background.setVisibility(View.INVISIBLE);
@@ -95,9 +94,9 @@ public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> 
 			holder.loader.setVisibility(View.INVISIBLE);
 		}
 
-		Picasso.with(mContext)
-				.load(message.from.icon)
-				.into(holder.icon);
+//		Picasso.with(mContext)
+//				.load(message.received.icon)
+//				.into(holder.icon);
 
 		holder.message.setText(message.text);
 

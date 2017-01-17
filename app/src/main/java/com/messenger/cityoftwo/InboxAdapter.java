@@ -10,8 +10,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -85,11 +83,11 @@ public class InboxAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
 	@Override
 	void onBindHolder(final MessageHolder holder, int position) {
 		Message message = mDataset.get(position);
-		if (message.from.nickName.isEmpty()) {
-			holder.name.setText(message.from.name);
-		} else {
-			holder.name.setText(message.from.nickName);
-		}
+//		if (message.received.nickName.isEmpty()) {
+//			holder.name.setText(message.received.name);
+//		} else {
+//			holder.name.setText(message.received.nickName);
+//		}
 
 		if (loadingViews.contains(position)) {
 			holder.background.setVisibility(View.INVISIBLE);
@@ -99,9 +97,9 @@ public class InboxAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
 			holder.loader.setVisibility(View.INVISIBLE);
 		}
 
-		Picasso.with(mContext)
-				.load(message.from.icon)
-				.into(holder.icon);
+//		Picasso.with(mContext)
+//				.load(message.received.icon)
+//				.into(holder.icon);
 
 		holder.message.setText(message.text);
 

@@ -281,7 +281,7 @@ public class ProfilePictureView extends FrameLayout {
 
 		if (customMeasure) {
 			// Since we are providing custom dimensions, we need to handle the measure
-			// phase from here
+			// phase received here
 			setMeasuredDimension(newWidth, newHeight);
 			measureChildren(widthMeasureSpec, heightMeasureSpec);
 		} else {
@@ -325,7 +325,7 @@ public class ProfilePictureView extends FrameLayout {
 	}
 
 	/**
-	 * If the passed in state is a Bundle, an attempt is made to restore from it.
+	 * If the passed in state is a Bundle, an attempt is made to restore received it.
 	 *
 	 * @param state a Parcelable containing the current state
 	 */

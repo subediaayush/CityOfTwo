@@ -38,7 +38,6 @@
             style="@style/ChatOptionButtonLayout"
             android:onClick="newChat"
             app:bg="@drawable/labelled_button_background"
-            app:image="@drawable/ic_new_chat"
             app:text="New Chat" />
 
         <com.messenger.cityoftwo.LabelledButtonLayout
@@ -46,7 +45,6 @@
             style="@style/ChatOptionButtonLayout"
             android:onClick="revealProfile"
             app:bg="@drawable/labelled_button_background"
-            app:image="@drawable/ic_reveal"
             app:text="Reveal" />
 
         <com.messenger.cityoftwo.LabelledButtonLayout
@@ -54,7 +52,6 @@
             style="@style/ChatOptionButtonLayout"
             android:onClick="applyFilter"
             app:bg="@drawable/labelled_button_background"
-            app:image="@drawable/ic_filters"
             app:text="Apply Filters" />
 
         <com.messenger.cityoftwo.LabelledButtonLayout
@@ -62,7 +59,6 @@
             style="@style/ChatOptionButtonLayout"
             android:onClick="referCoyRudy"
             app:bg="@drawable/labelled_button_background"
-            app:image="@drawable/ic_refer"
             app:text="Share CoyRudy" />
     </LinearLayout>
 

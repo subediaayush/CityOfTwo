@@ -1,8 +1,9 @@
 package com.messenger.cityoftwo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -20,25 +21,27 @@ import java.util.ArrayList;
 /**
  * A fragment representing a list of Items.
  * <p/>
- * Activities containing this fragment MUST implement the {@link ContactsAdapter.ContactsEventListener}
+ * Activities containing this fragment MUST implement the {@link ContactAdapterWrapper.ContactsEventListener}
  * interface.
  */
-public class ContactsFragment extends Fragment implements ContactsAdapter.ContactsEventListener {
+public class ContactsFragment extends DialogFragment implements ContactAdapterWrapper.ContactsEventListener {
 
 	private static final String ARG_TOKEN = "token";
-
+	private static final String ARG_MODE = "mode";
+	private static final String KEY_MODE = "mode";
 	private static final String KEY_CONTACTS = "contacts";
 	private static final String KEY_TOKEN = "token";
-
+	private final String ARG_CURRENT_GUEST = "current_guest";
 	private String mToken;
 
 	private ArrayList<Contact> mContacts;
-
 	private RecyclerView mContactList;
 	private TextView mEmptyView;
-	private ProgressBar mLoadingView;
 
-	private ContactsAdapter mContactAdapter;
+	private ProgressBar mLoadingView;
+	private ContactAdapterWrapper mContactAdapter;
+
+	private boolean isSectioned;
 
 	/**
 	 * Mandatory empty constructor for the fragment manager to instantiate the
@@ -47,13 +50,8 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 	public ContactsFragment() {
 	}
 
-	public static ContactsFragment newInstance(String token) {
-		ContactsFragment fragment = new ContactsFragment();
-		Bundle args = new Bundle();
-
-		args.putString(ARG_TOKEN, token);
-		fragment.setArguments(args);
-		return fragment;
+	public static ContactsFragment newInstance() {
+		return new ContactsFragment();
 	}
 
 //	@Override
@@ -66,15 +64,6 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 //					+ " must implement RequestsEventListener");
 //		}
 //	}
-
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-		if (getArguments() != null) {
-			mToken = getArguments().getString(ARG_TOKEN);
-		}
-	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -100,6 +89,7 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 		if (savedInstanceState != null) {
 			mContacts = savedInstanceState.getParcelableArrayList(KEY_CONTACTS);
 			mToken = savedInstanceState.getString(KEY_TOKEN);
+			isSectioned = savedInstanceState.getBoolean(KEY_MODE);
 
 			mLoadingView.setVisibility(View.INVISIBLE);
 			if (mContacts.isEmpty()) {
@@ -118,13 +108,26 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 		}
 
 		Context context = view.getContext();
-		mContactAdapter = new ContactsAdapter(context);
 		mContactList.setLayoutManager(new LinearLayoutManager(context));
-		mContactList.setAdapter(mContactAdapter);
-
-		mContactAdapter.setEventListener(this);
+		mContactAdapter = new ContactAdapterWrapper(context, isSectioned);
+		mContactList.setAdapter(mContactAdapter.getAdapter());
 
 		return view;
+	}
+
+	@Override
+	public void onDetach() {
+		super.onDetach();
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		if (getArguments() != null) {
+			mToken = getArguments().getString(ARG_TOKEN, "");
+			isSectioned = getArguments().getBoolean(ARG_MODE, false);
+		}
 	}
 
 	@Override
@@ -133,11 +136,7 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 
 		outState.putParcelableArrayList(KEY_CONTACTS, mContacts);
 		outState.putString(KEY_TOKEN, mToken);
-	}
-
-	@Override
-	public void onDetach() {
-		super.onDetach();
+		outState.putBoolean(KEY_MODE, isSectioned);
 	}
 
 	private void reloadInfo() {
@@ -146,7 +145,14 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 
 	@Override
 	public void onProfileViewed(int position) {
+		Contact contact = mContactAdapter.get(position);
 
+		Intent contactIntent = new Intent(getActivity(), ProfileActivity.class);
+		contactIntent.putExtra(ARG_CURRENT_GUEST, contact);
+	}
+
+	public int getTotalContacts() {
+		return mContactAdapter.getItemCount();
 	}
 
 	/**
@@ -182,9 +188,12 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 						JSONArray j = (new JSONObject(response)).getJSONArray(KEY_CONTACTS);
 //						JSONArray j = new JSONArray((new JSONObject(response)).getString(KEY_CONTACTS));
 						for (int i = 0; i < j.length(); i++) {
-							contacts.add(new Contact(j.getString(i)));
+							JSONObject j1 = new JSONObject(j.getString(i));
+							j1.put(CityOfTwo.KEY_IS_FRIEND, true);
+							contacts.add(new Contact(j1.toString()));
 						}
-						mContactAdapter.setDataset(contacts);
+
+						mContacts = contacts;
 					} catch (JSONException e) {
 						e.printStackTrace();
 					}
@@ -198,7 +207,7 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 				@Override
 				protected void onPostExecute() {
 					mLoadingView.setVisibility(View.INVISIBLE);
-					if (mContactAdapter.getItemCount() == 0) {
+					if (getTotalContacts() == 0) {
 						mContactList.setVisibility(View.INVISIBLE);
 						mEmptyView.setVisibility(View.VISIBLE);
 					} else {
@@ -208,7 +217,7 @@ public class ContactsFragment extends Fragment implements ContactsAdapter.Contac
 				}
 			};
 
-			httpHandler.addHeader("Authorization", "Token " + token);
+			httpHandler.addHeader("Authorization", "Token " + this.token);
 		}
 
 		public void execute() {

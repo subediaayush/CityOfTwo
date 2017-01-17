@@ -23,7 +23,8 @@
 			android:orientation="vertical"
 			>
 
-			<View
+			<de.hdodenhof.circleimageview.CircleImageView
+				android:id="@+id/icon"
 				android:layout_width="100dp"
 				android:layout_height="100dp"
 				android:layout_marginTop="56dp"
@@ -31,6 +32,7 @@
 				/>
 
 			<TextView
+				android:id="@+id/profile_name"
 				style="@style/CardContent.ListItem"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
@@ -39,6 +41,7 @@
 				/>
 
 			<TextView
+				android:id="@+id/profile_nickname"
 				style="@style/CardContent.ListItem"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
@@ -47,6 +50,7 @@
 				/>
 
 			<TextView
+				android:id="@+id/profile_url"
 				style="@style/CardContent.ListItem"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
@@ -56,6 +60,7 @@
 				/>
 
 			<TextView
+				android:id="@+id/profile_commonlikes"
 				style="@style/CardContent.ListItem"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
@@ -103,6 +108,7 @@
 	</android.support.v7.widget.CardView>
 
 	<android.support.v7.widget.CardView
+		android:id="@+id/profile_options_container"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_marginBottom="15dp"
@@ -128,18 +134,21 @@
 				>
 
 				<Button
+					android:id="@+id/message"
 					style="@style/ProfileOptionButtons"
 					android:drawableTop="@drawable/ic_send_new_message"
 					android:text="Send Message"
 					/>
 
 				<Button
+					android:id="@+id/save"
 					style="@style/ProfileOptionButtons"
 					android:drawableTop="@drawable/ic_send_request"
 					android:text="Save as Contact"
 					/>
 
 				<Button
+					android:id="@+id/reveal"
 					style="@style/ProfileOptionButtons"
 					android:drawableTop="@drawable/ic_self_reveal"
 					android:text="Reveal"
@@ -155,18 +164,21 @@
 				>
 
 				<Button
+					android:id="@+id/profile"
 					style="@style/ProfileOptionButtons"
 					android:drawableTop="@drawable/ic_facebook"
 					android:text="Facebook"
 					/>
 
 				<Button
+					android:id="@+id/likes"
 					style="@style/ProfileOptionButtons"
 					android:drawableTop="@drawable/ic_likes"
 					android:text="Common Likes"
 					/>
 
 				<Button
+					android:id="@+id/block"
 					style="@style/ProfileOptionButtons"
 					android:drawableTop="@drawable/ic_block"
 					android:text="Block User"

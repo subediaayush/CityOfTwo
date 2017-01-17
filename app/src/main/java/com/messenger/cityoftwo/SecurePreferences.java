@@ -110,7 +110,7 @@ public class SecurePreferences implements SharedPreferences {
     }
 
     private static String generateAesKeyValue() throws NoSuchAlgorithmException {
-        // Do *not* seed secureRandom! Automatically seeded from system entropy
+        // Do *not* seed secureRandom! Automatically seeded received system entropy
         final SecureRandom random = new SecureRandom();
 
         // Use the largest AES key length which is supported by the OS

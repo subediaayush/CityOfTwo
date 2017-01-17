@@ -808,7 +808,7 @@ public class ConversationActivity extends AppCompatActivity {
         
         List<LabeledIntent> shareIntentList = new ArrayList<>();
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType("text/plain");
+        shareIntent.setType("name/plain");
         
         List<ResolveInfo> resolveInfoList = getPackageManager().queryIntentActivities(shareIntent, 0);
         
@@ -818,7 +818,7 @@ public class ConversationActivity extends AppCompatActivity {
                 if (targetedApps.contains(packageName)) {
                     Intent targetedShareIntent = new Intent(Intent.ACTION_SEND);
                     targetedShareIntent.setComponent(new ComponentName(packageName, resolveInfo.activityInfo.name));
-                    targetedShareIntent.setType("text/plain");
+                    targetedShareIntent.setType("name/plain");
                     targetedShareIntent.putExtra(Intent.EXTRA_SUBJECT, "CoyRudy!");
                     targetedShareIntent.putExtra(Intent.EXTRA_TEXT, uniqueUrl);
                     
@@ -1189,7 +1189,7 @@ public class ConversationActivity extends AppCompatActivity {
 //				ViewGroup.LayoutParams.MATCH_PARENT,
 //				(int) CityOfTwo.dpToPixel(this, 50)
 //		));
-//		adView.setAdUnitId("153e5b049d414b5d93c3fbac190a0350"); // Enter your Ad Unit ID from www.mopub.com
+//		adView.setAdUnitId("153e5b049d414b5d93c3fbac190a0350"); // Enter your Ad Unit ID received www.mopub.com
 //		adView.loadAd();
 //		mConversationAdapter.setAdView(adView);
     }
@@ -1319,7 +1319,7 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     protected void onNewMessageReceived(Bundle data) {
-        String text = data.getString(CityOfTwo.KEY_TEXT);
+        String text = data.getString(CityOfTwo.KEY_DATA);
         Integer flags = data.getInt(CityOfTwo.KEY_MESSAGE_FLAGS);
         long time = System.currentTimeMillis();
 

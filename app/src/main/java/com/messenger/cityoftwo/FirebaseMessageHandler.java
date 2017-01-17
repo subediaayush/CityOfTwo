@@ -48,7 +48,7 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 			switch (messageType) {
 				case CityOfTwo.KEY_MESSAGE: {
 					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
-					String text = data.get(CityOfTwo.KEY_TEXT);
+					String text = data.get(CityOfTwo.KEY_DATA);
 					Integer flags = Integer.parseInt(data.get(CityOfTwo.KEY_MESSAGE_FLAGS));
 					long time = System.currentTimeMillis();
 //					long time = Long.parseLong(data.get(CityOfTwo.KEY_TIME));
@@ -115,7 +115,7 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 						intent.setAction(CityOfTwo.ACTION_NEW_MESSAGE);
 
 						intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
-						intent.putExtra(CityOfTwo.KEY_TEXT, text);
+						intent.putExtra(CityOfTwo.KEY_DATA, text);
 						intent.putExtra(CityOfTwo.KEY_MESSAGE_FLAGS, flags);
 						intent.putExtra(CityOfTwo.KEY_TIME, time);
 

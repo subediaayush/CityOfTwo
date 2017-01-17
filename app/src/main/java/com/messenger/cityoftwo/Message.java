@@ -11,6 +11,7 @@ import org.json.JSONObject;
  */
 
 public class Message implements Parcelable {
+
 	public static final Creator<Message> CREATOR = new Creator<Message>() {
 		@Override
 		public Message createFromParcel(Parcel in) {
@@ -23,23 +24,24 @@ public class Message implements Parcelable {
 		}
 	};
 	String id;
-	Contact from;
+	boolean received;
 	String text;
 	long time;
 
-	public Message(String id, Contact from, String text, long time) {
+	public Message(String id, boolean received, String text, long time) {
 		this.id = id;
-		this.from = from;
+		this.received = received;
 		this.text = text;
 		this.time = time;
 	}
+
 
 	public Message(String message) {
 		try {
 			JSONObject j = new JSONObject(message);
 			id = j.getString("id");
-			from = new Contact(j.getString("from"));
-			text = j.getString("text");
+			received = j.getBoolean("received");
+			text = j.getString("name");
 			time = j.getLong("time");
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -48,7 +50,7 @@ public class Message implements Parcelable {
 
 	protected Message(Parcel in) {
 		id = in.readString();
-		from = in.readParcelable(Contact.class.getClassLoader());
+		received = in.readByte() != 0;
 		text = in.readString();
 		time = in.readLong();
 	}
@@ -58,8 +60,8 @@ public class Message implements Parcelable {
 		JSONObject j = new JSONObject();
 		try {
 			j.put("id", id);
-			j.put("from", from.toString());
-			j.put("text", text);
+			j.put("received", received);
+			j.put("name", text);
 			j.put("time", time);
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -71,8 +73,8 @@ public class Message implements Parcelable {
 		return id;
 	}
 
-	public Contact getFrom() {
-		return from;
+	public boolean getReceived() {
+		return received;
 	}
 
 	public String getText() {
@@ -92,7 +94,7 @@ public class Message implements Parcelable {
 	public void writeToParcel(Parcel dest, int flags) {
 
 		dest.writeString(id);
-		dest.writeParcelable(from, flags);
+		dest.writeByte((byte) (received ? 1 : 0));
 		dest.writeString(text);
 		dest.writeLong(time);
 	}

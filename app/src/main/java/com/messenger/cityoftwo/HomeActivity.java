@@ -9,9 +9,12 @@ import android.support.v7.widget.Toolbar;
 
 public class HomeActivity extends AppCompatActivity {
 
-	private ViewPager homePager;
-	private TabLayout tabLayout;
-
+	private final String ARG_TOKEN = "token";
+	private final String ARG_MODE = "mode";
+	private ViewPager mHomePager;
+	private TabLayout mTabLayout;
+	private HomePagerAdapter mAdapter;
+	private Integer mCurrentTab;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -21,24 +24,32 @@ public class HomeActivity extends AppCompatActivity {
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
-		homePager = (ViewPager) findViewById(R.id.home_pager);
-		setupViewPager(homePager);
+		mHomePager = (ViewPager) findViewById(R.id.home_pager);
+		setupViewPager(mHomePager);
 
-		tabLayout = (TabLayout) findViewById(R.id.tabs);
-		tabLayout.setupWithViewPager(homePager);
+		mTabLayout = (TabLayout) findViewById(R.id.tabs);
+		mTabLayout.setupWithViewPager(mHomePager);
 	}
 
 	private void setupViewPager(ViewPager viewPager) {
-		HomePagerAdapter adapter = new HomePagerAdapter(getSupportFragmentManager());
+		mAdapter = new HomePagerAdapter(getSupportFragmentManager());
 
 		String token = getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE)
 				.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
+		Bundle lobbyArgs = new Bundle();
+		lobbyArgs.putString(ARG_TOKEN, token);
 
-		adapter.addFragment(LobbyFragment.newInstance(token), "LOBBY");
-		adapter.addFragment(ContactsFragment.newInstance(token), "CONTACTS");
-		adapter.addFragment(InboxFragment.newInstance(token), "INBOX");
-		adapter.addFragment(RequestFragment.newInstance(token), "REQUEST");
-		viewPager.setAdapter(adapter);
+		Bundle contactsArgs = new Bundle();
+		contactsArgs.putString(ARG_TOKEN, token);
+		contactsArgs.putBoolean(ARG_MODE, false);
+
+
+		mAdapter.addFragment(LobbyFragment.newInstance(), lobbyArgs, "LOBBY");
+		mAdapter.addFragment(ContactsFragment.newInstance(), contactsArgs, "CONTACTS");
+//		mAdapter.addFragment(InboxFragment.newInstance(token), "INBOX");
+//		mAdapter.addFragment(RequestFragment.newInstance(token), "REQUEST");
+
+		viewPager.setAdapter(mAdapter);
 	}
 }

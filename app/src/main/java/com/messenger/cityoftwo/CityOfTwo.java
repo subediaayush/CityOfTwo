@@ -33,27 +33,27 @@ public class CityOfTwo extends Application {
 			"user_likes"
 	);
 
-	public static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN";
+	public static final String KEY_ACCESS_TOKEN = "access_token";
 	public static final String KEY_PROFILE_IMAGE = "image_uri";
 	public static final String KEY_PROFILE_NAME = "user_name";
-	public static final String KEY_PROFILE = "PROFILE";
-	public static final String KEY_SELECTED_ANSWER = "SELECTED";
+	public static final String KEY_PROFILE = "profile";
+	public static final String KEY_SELECTED_ANSWER = "selected";
 	public static final String KEY_TEST = "test";
-	public static final String KEY_MESSAGE = "MESSAGE";
-	public static final String KEY_CHAT_BEGIN = "CHAT_BEGIN";
-	public static final String KEY_TYPE = "TYPE";
-	public static final String KEY_TEXT = "TEXT";
-	public static final String KEY_CURRENT_CHAT = "CURRENT_CHAT";
-	public static final String KEY_CURRENT_CHAT_ID = "CURRENT_CHAT_ID";
-	public static final String KEY_SESSION_TOKEN = "SESSION_TOKEN";
-	public static final String KEY_CURRENT_ANSWER = "CURRENT_ANSWER";
-	public static final String KEY_LOCATION_X = "LOCATION_X";
-	public static final String KEY_LOCATION_Y = "LOCATION_Y";
-	public static final String KEY_WIDTH = "WIDTH";
-	public static final String KEY_HEIGHT = "HEIGHT";
-	public static final String KEY_COMMON_LIKES = "LIKES";
-	public static final String KEY_TEST_RESULT = "TEST_RESULT";
-	public static final String KEY_CHATROOM_ID = "CHATROOM_ID";
+	public static final String KEY_MESSAGE = "message";
+	public static final String KEY_CHAT_BEGIN = "chat_begin";
+	public static final String KEY_TYPE = "type";
+	public static final String KEY_DATA = "data";
+	public static final String KEY_CURRENT_CHAT = "current_chat";
+	public static final String KEY_CURRENT_CHAT_ID = "current_chat_id";
+	public static final String KEY_SESSION_TOKEN = "session_token";
+	public static final String KEY_CURRENT_ANSWER = "current_answer";
+	public static final String KEY_LOCATION_X = "location_x";
+	public static final String KEY_LOCATION_Y = "location_y";
+	public static final String KEY_WIDTH = "width";
+	public static final String KEY_HEIGHT = "height";
+	public static final String KEY_COMMON_LIKES = "likes";
+	public static final String KEY_TEST_RESULT = "test_result";
+	public static final String KEY_CHATROOM_ID = "chatroom_id";
 
 	public static final int APPLICATION_FOREGROUND = 0;
 	public static final int APPLICATION_BACKGROUND = 1;
@@ -63,6 +63,7 @@ public class CityOfTwo extends Application {
 	public static final int ACTIVITY_CONVERSATION = 3;
 	public static final int ACTIVITY_INTRODUCTION = 4;
 	public static final int ACTIVITY_HOME = 5;
+	public static final int ACTIVITY_FILTER = 6;
 
 	public static final int FLAG_SENT = 0b1;
 	public static final int FLAG_RECEIVED = 0b10;
@@ -118,7 +119,7 @@ public class CityOfTwo extends Application {
 	public static final String TABLE_MESSAGES = "message";
 	public static final String COLUMN_ID = "code";
 	public static final String COLUMN_CHATROOM_ID = "chatroom_id";
-	public static final String COLUMN_MESSAGE = "text";
+	public static final String COLUMN_MESSAGE = "name";
 	public static final String COLUMN_FLAGS = "flags";
 	public static final String COLUMN_TIME = "time";
 	public static final String ACTION_BEGIN_CHAT = "begin_chat";
@@ -145,6 +146,10 @@ public class CityOfTwo extends Application {
 	public static final String HEADER_TOKEN = "token";
 	public static final String KEY_REQUESTS = "contacts";
 	public static final String KEY_IS_ONLINE = "is_online";
+	public static final String KEY_PROFILE_MODE = "profile_mode";
+	public static final String KEY_CURRENT_GUEST = "current_guest";
+	public static final String KEY_BACKGROUND_MESSAGES = "background_messages";
+	public static final String KEY_IS_FRIEND = "is_friend";
 	private static final String SENDER_ID = "584281533020";
 	public static ArrayList<Conversation> mBackgroundConversation;
 	public static Bitmap logoBitmap;

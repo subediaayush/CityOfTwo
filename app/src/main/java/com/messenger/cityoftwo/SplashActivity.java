@@ -26,14 +26,14 @@ public class SplashActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		if (BuildConfig.DEBUG) {
-			Intent profileIntent = new Intent(this, ProfileActivity.class);
-
-			startActivity(profileIntent);
-			finish();
-			return;
-		}
-
+//		if (BuildConfig.DEBUG) {
+//			Intent profileIntent = new Intent(this, ProfileActivity.class);
+//
+//			startActivity(profileIntent);
+//			finish();
+//			return;
+//		}
+//
 		setContentView(R.layout.activity_splash);
 
 		checkNetworkState();

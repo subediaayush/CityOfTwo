@@ -1,5 +1,8 @@
 package com.messenger.cityoftwo;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -8,13 +11,24 @@ import java.util.Comparator;
 /**
  * Created by Aayush on 1/15/2016.
  */
-public class Conversation {
+public class Conversation implements Parcelable {
 
 
 	public static final Comparator<Conversation> CONVERSATION_COMPARATOR = new Comparator<Conversation>() {
 		@Override
 		public int compare(Conversation lhs, Conversation rhs) {
 			return (int) Math.signum(lhs.getComparableValue() - rhs.getComparableValue());
+		}
+	};
+	public static final Creator<Conversation> CREATOR = new Creator<Conversation>() {
+		@Override
+		public Conversation createFromParcel(Parcel in) {
+			return new Conversation(in);
+		}
+
+		@Override
+		public Conversation[] newArray(int size) {
+			return new Conversation[size];
 		}
 	};
 	private Integer flags;
@@ -43,7 +57,7 @@ public class Conversation {
 
 		try {
 			JSONObject j = new JSONObject(conversation);
-			messageText = j.getString("text");
+			messageText = j.getString("name");
 			messageType = j.getInt("flags");
 			messageTime = j.getLong("time");
 		} catch (JSONException e) {
@@ -55,6 +69,12 @@ public class Conversation {
 		this.text = messageText;
 		this.flags = messageType;
 		this.time = messageTime;
+	}
+
+	protected Conversation(Parcel in) {
+		text = in.readString();
+		time = in.readLong();
+		flags = in.readInt();
 	}
 
 	public Integer getFlags() {
@@ -104,7 +124,7 @@ public class Conversation {
 		String output;
 		try {
 			JSONObject j = new JSONObject();
-			j.put("text", text);
+			j.put("name", text);
 			j.put("flags", flags);
 			j.put("time", time);
 
@@ -126,5 +146,18 @@ public class Conversation {
 		if ((getFlags() & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR)
 			return Long.MAX_VALUE / 2 - 2;
 		return getTime();
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+
+		dest.writeString(this.text);
+		dest.writeLong(this.time);
+		dest.writeInt(this.flags);
 	}
 }
