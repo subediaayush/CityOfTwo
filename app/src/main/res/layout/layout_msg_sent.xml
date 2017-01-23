@@ -6,25 +6,31 @@
 	android:gravity="center_vertical|end"
 	android:orientation="horizontal"
 	android:paddingEnd="15dp"
-	android:paddingStart="56dp"
+	android:paddingStart="36dp"
 	>
+
+	<ImageView
+		android:id="@+id/status"
+		android:layout_width="10dp"
+		android:layout_height="10dp"
+		android:layout_margin="5dp"
+		/>
 
 	<TextView
 		android:id="@+id/time"
+		style="@style/ChatTime"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_margin="10dp"
 		android:text="12:12 pm"
-		android:textSize="12sp"
 		/>
 
 	<TextView
 		android:id="@+id/message_text"
-		style="@style/TextMessage"
+		style="@style/ChatTextMessage"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:textColor="@color/colorPrimaryDark"
-		android:textSize="18sp"
+		android:text="message"
 		/>
 
 

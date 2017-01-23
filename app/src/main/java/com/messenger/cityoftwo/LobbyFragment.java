@@ -33,9 +33,8 @@ import org.json.JSONObject;
  */
 public class LobbyFragment extends Fragment {
 
-	private static final String ARG_TOKEN = "token";
+	public static final String ARG_TOKEN = "token";
 	private static final String TAG = "LobbyFragment";
-
 	private String mToken;
 
 	private TextView mStatusDescription;
@@ -257,7 +256,7 @@ public class LobbyFragment extends Fragment {
 		mErrorIndicator = (ImageView) view.findViewById(R.id.status_error);
 		mSuccessIndicator = (ImageView) view.findViewById(R.id.status_success);
 		mProgressIndicator = (ProgressBar) view.findViewById(R.id.status_progress);
-//		mErrorDescription = (TextView) view.findViewById(R.code.status_error_description);
+//		mErrorDescription = (TextView) view.findViewById(R.id.status_error_description);
 		mStatusContainer = view.findViewById(R.id.lobby_status);
 
 		mMatchesContainer = view.findViewById(R.id.matches_container);

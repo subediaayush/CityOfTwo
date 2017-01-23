@@ -39,6 +39,15 @@
 		<item name="android:windowBackground">@android:color/transparent</item>
 	</style>
 
+	<style name="ChromeStylePopup" parent="android:Widget.TextView">
+		<item name="android:gravity">center</item>
+		<item name="android:minHeight">50dp</item>
+		<item name="android:minWidth">75dp</item>
+		<item name="android:padding">6dp</item>
+		<item name="android:textColor">@android:color/white</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+
 	<style name="ChatOptionsLabel">
 		<item name="android:textStyle">bold</item>
 		<item name="android:textColor">@color/White</item>
@@ -46,21 +55,24 @@
 		<item name="android:gravity">center_horizontal</item>
 	</style>
 
-	<style name="TextMessageBase">
+	<style name="ChatTextMessageBase">
 		<item name="android:background">@drawable/background_text_message</item>
 		<item name="android:padding">14dp</item>
 		<item name="android:minHeight">32dp</item>
+		<item name="android:textColor">@color/colorPrimaryDark</item>
+		<item name="android:textSize">18sp</item>
 		<item name="android:layout_margin">4dp</item>
 	</style>
 
 
-	<style name="TextMessage" parent="TextMessageBase"/>
+	<style name="ChatTextMessage" parent="ChatTextMessageBase"/>
 
 	<style name="ProfileOptionButtons">
 		<item name="android:textSize">10sp</item>
 		<item name="android:layout_width">0dp</item>
-		<item name="android:layout_height">wrap_content</item>
+		<item name="android:layout_height">match_parent</item>
 		<item name="android:layout_weight">1</item>
+		<item name="android:gravity">center</item>
 		<item name="android:background">?selectableItemBackground</item>
 		<item name="android:padding">12dp</item>
 		<item name="android:drawablePadding">8dp</item>
@@ -182,6 +194,11 @@
 		<item name="android:paddingStart">2dp</item>
 		<item name="android:paddingEnd">2dp</item>
 		<item name="android:adjustViewBounds">true</item>
+	</style>
+
+	<style name="ChatTime">
+		<item name="android:textSize">12sp</item>
+		<item name="android:gravity">center</item>
 	</style>
 
 

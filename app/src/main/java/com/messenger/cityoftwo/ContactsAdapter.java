@@ -15,9 +15,9 @@ import java.util.HashMap;
 /**
  * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
  * specified {@link ContactAdapterWrapper.ContactsEventListener}.
- * TODO: Replace the implementation with code for your data type.
+ * TODO: Replace the implementation with id for your data type.
  */
-public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
+public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> implements ContactsAdapterInterface {
 
 	public static final int GUEST_MATCH = 0;
 	public static final int GUEST_CONTACT = 1;
@@ -43,6 +43,22 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 			}
 
 			@Override
+			public void onChanged(int position, int count) {
+				notifyItemRangeChanged(position, count);
+			}
+
+			@Override
+			public boolean areContentsTheSame(Contact oldItem, Contact newItem) {
+				return oldItem.name.equals(newItem.name) &&
+						oldItem.nickName.equals(newItem.nickName);
+			}
+
+			@Override
+			public boolean areItemsTheSame(Contact item1, Contact item2) {
+				return item1.id.equals(item2.id);
+			}
+
+			@Override
 			public void onInserted(int position, int count) {
 				notifyItemRangeInserted(position, count);
 			}
@@ -55,21 +71,6 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 			@Override
 			public void onMoved(int fromPosition, int toPosition) {
 				notifyItemMoved(fromPosition, toPosition);
-			}
-
-			@Override
-			public void onChanged(int position, int count) {
-				notifyItemRangeChanged(position, count);
-			}
-
-			@Override
-			public boolean areContentsTheSame(Contact oldItem, Contact newItem) {
-				return oldItem.getName().equals(newItem.getName());
-			}
-
-			@Override
-			public boolean areItemsTheSame(Contact item1, Contact item2) {
-				return item1.getCode().equals(item2.getCode());
 			}
 		});
 
@@ -115,7 +116,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 //				.into(holder.icon);
 
 //		holder.mItem = mValues.get(position);
-//		holder.mIdView.setText(mValues.get(position).code);
+//		holder.mIdView.setText(mValues.get(position).id);
 //		holder.mContentView.setText(mValues.get(position).content);
 //
 //		holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -135,6 +136,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 		return mDataset.size();
 	}
 
+	@Override
 	public void setDataset(ArrayList<Contact> contacts) {
 		for (int i = mDataset.size() - 1; i >= 0; i--) {
 			if (!contacts.contains(mDataset.get(i)))
@@ -144,25 +146,36 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> {
 		mDataset.addAll(contacts);
 	}
 
+	@Override
 	public int insert(Contact c) {
 		return mDataset.add(c);
 	}
 
+	@Override
+	public void update(Contact c) {
+		int i = mDataset.indexOf(c);
+		if (i != SortedList.INVALID_POSITION) mDataset.updateItemAt(i, c);
+	}
+
+	@Override
 	public void insertAll(ArrayList<Contact> c) {
 		mDataset.addAll(c);
-
 	}
 
+	@Override
 	public void clear() {
 		mDataset.clear();
-		mMessages.clear();
 	}
 
+	@Override
 	public void setEventListener(ContactAdapterWrapper.ContactsEventListener mEventListener) {
 		this.mEventListener = mEventListener;
 	}
 
+	@Override
 	public Contact get(int position) {
 		return mDataset.get(position);
 	}
+
+
 }

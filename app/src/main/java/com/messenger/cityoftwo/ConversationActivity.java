@@ -58,9 +58,9 @@ import tourguide.tourguide.Sequence;
 import tourguide.tourguide.ToolTip;
 
 import static com.messenger.cityoftwo.CityOfTwo.KEY_CHATROOM_ID;
-import static com.messenger.cityoftwo.CityOfTwo.KEY_CODE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_COMMON_LIKES;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_DISTANCE;
+import static com.messenger.cityoftwo.CityOfTwo.KEY_ID;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_IS_TYPING;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_SEEN;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_FEMALE;
@@ -327,6 +327,20 @@ public class ConversationActivity extends AppCompatActivity {
     }
     
     @Override
+    protected void onStart() {
+        super.onStart();
+
+//		adView = new MoPubView(this);
+//		adView.setLayoutParams(new RecyclerView.LayoutParams(
+//				ViewGroup.LayoutParams.MATCH_PARENT,
+//				(int) CityOfTwo.dpToPixel(this, 50)
+//		));
+//		adView.setAdUnitId("153e5b049d414b5d93c3fbac190a0350"); // Enter your Ad Unit ID received www.mopub.com
+//		adView.loadAd();
+//		mConversationAdapter.setAdView(adView);
+    }
+    
+    @Override
     protected void onStop() {
         super.onStop();
 
@@ -397,7 +411,7 @@ public class ConversationActivity extends AppCompatActivity {
     private void sendTypingRequest(final boolean isTyping) {
         final SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
         String typing_request = getString(R.string.url_is_typing);
-        
+
         JSONObject j = new JSONObject();
         try {
             j.put(CityOfTwo.HEADER_IS_TYPING, isTyping);
@@ -405,29 +419,29 @@ public class ConversationActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        
+
         String[] Path = {CityOfTwo.API, typing_request};
-        
+
         HttpHandler typingHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, j) {
             @Override
             protected void onPostExecute() {
                 if (!isTyping) sendTypingSignalPending = false;
             }
         };
-        
+
         String token = "Token " + sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
         typingHttpHandler.addHeader("Authorization", token);
-        
+
         typingHttpHandler.execute();
     }
     
     private void startTutorial() {
         List<ChainTourGuide> tourGuides = new ArrayList<>();
-        
+
         Animation enter = new AlphaAnimation(0, 1);
         enter.setDuration(200);
         enter.setInterpolator(new AccelerateInterpolator());
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("Welcome to your first chat")
                         .setDescription("Here are a few things you'll need to know")
@@ -436,7 +450,7 @@ public class ConversationActivity extends AppCompatActivity {
                         .setEnterAnimation(enter))
                 .setOverlay(new Overlay().setStyle(Overlay.Style.NoHole).disableClickThroughHole(true))
                 .playLater(mLogoImage));
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("CoyRudy")
                         .setDescription("Use this button to reveal some cool options")
@@ -453,7 +467,7 @@ public class ConversationActivity extends AppCompatActivity {
                         })
                         .disableClickThroughHole(true))
                 .playLater(mLogoImage));
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("New Chat")
                         .setDescription("This will end the current chat and start a new one.")
@@ -461,7 +475,7 @@ public class ConversationActivity extends AppCompatActivity {
                         .setGravity(Gravity.NO_GRAVITY)
                         .setEnterAnimation(enter)
                 ).playLater(newChatButton));
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("Reveal")
                         .setDescription("You can also share your Facebook profile with the stranger.")
@@ -470,7 +484,7 @@ public class ConversationActivity extends AppCompatActivity {
                         .setEnterAnimation(enter))
                 // note that there is not Overlay here, so the default one will be used
                 .playLater(revealButton));
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("Filters")
                         .setDescription("Want better matches? You can filter your next match according to your preference.")
@@ -479,7 +493,7 @@ public class ConversationActivity extends AppCompatActivity {
                         .setEnterAnimation(enter))
                 // note that there is not Overlay here, so the default one will be used
                 .playLater(filtersButton));
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("Refer")
                         .setDescription("Like the app? Help spread the word!")
@@ -497,7 +511,7 @@ public class ConversationActivity extends AppCompatActivity {
                         .disableClickThroughHole(true))
                 // note that there is not Overlay here, so the default one will be used
                 .playLater(referralButton));
-        
+
         tourGuides.add(ChainTourGuide.init(this)
                 .setToolTip(new ToolTip().setTitle("All set")
                         .setDescription("Enjoy!")
@@ -514,7 +528,7 @@ public class ConversationActivity extends AppCompatActivity {
                             }
                         }))
                 .playLater(mLogoImage));
-        
+
         Sequence sequence = new Sequence.SequenceBuilder()
                 .add(tourGuides.toArray(new ChainTourGuide[tourGuides.size()]))
                 .setDefaultOverlay(new Overlay()
@@ -528,7 +542,7 @@ public class ConversationActivity extends AppCompatActivity {
                 .setDefaultPointer(null)
                 .setContinueMethod(Sequence.ContinueMethod.OverlayListener)
                 .build();
-        
+
         mTourGuideHandler = ChainTourGuide.init(this).playInSequence(sequence);
     }
     
@@ -543,7 +557,7 @@ public class ConversationActivity extends AppCompatActivity {
         mConversationAdapter.clear();
         mConversationAdapter.insertItem(new Conversation("CHAT_BEGIN", CityOfTwo.FLAG_START));
         mConversationAdapter.insertItem(new Conversation("CHAT_END", CityOfTwo.FLAG_END));
-        
+
         String likeMessage = "";
         String[] likes = headerText.split("\\, ");
         int totalLikes = likes.length;
@@ -560,7 +574,7 @@ public class ConversationActivity extends AppCompatActivity {
             }
             likeMessage = likeMessageBuilder.toString();
         }
-        
+
         mConversationAdapter.setHeaderText(likeMessage);
         mConversationAdapter.notifyDataSetChanged();
     }
@@ -575,7 +589,7 @@ public class ConversationActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         startNewChat();
                     }
-                    
+
                 })
                 .setNegativeButton("No", null)
                 .create().show();
@@ -583,32 +597,32 @@ public class ConversationActivity extends AppCompatActivity {
     
     protected void startNewChat() {
         endCurrentChat();
-        
+
         exitActivity(RESULT_OK);
     }
     
     public void revealProfile(View view) {
         hideOptions();
-        
+
         final SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-        
+
         Boolean showDialog = sp.getBoolean(CityOfTwo.KEY_SHOW_REVEAL_DIALOG, true);
-        
+
         if (!showDialog) {
             revealProfile();
             return;
         }
-        
+
         AlertDialog.Builder adb = new AlertDialog.Builder(this, R.style.AppTheme_Dialog);
         adb.setTitle("Reveal Profile");
-        
+
         View profileView = getLayoutInflater().inflate(R.layout.layout_reveal_profile, null);
         ProfilePictureView profileImageView = (ProfilePictureView) profileView.findViewById(R.id.message_profile_image);
         TextView profileTextView = (TextView) profileView.findViewById(R.id.message_profile_name);
         CheckBox profileCheckBox = (CheckBox) profileView.findViewById(R.id.donot_show_dialog);
-        
+
         profileCheckBox.setChecked(!showDialog);
-        
+
         profileCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -616,11 +630,11 @@ public class ConversationActivity extends AppCompatActivity {
                         .apply();
             }
         });
-        
+
         Profile userProfile = Profile.getCurrentProfile();
-        
+
         profileImageView.setProfileId(userProfile.getId());
-        
+
         profileTextView.setText(userProfile.getName());
         profileTextView.setTextColor(ContextCompat.getColor(this, R.color.Black));
         adb.setView(profileView);
@@ -631,7 +645,7 @@ public class ConversationActivity extends AppCompatActivity {
             }
         });
         adb.show();
-        
+
     }
     
     private void revealProfile() {
@@ -640,11 +654,11 @@ public class ConversationActivity extends AppCompatActivity {
             Profile currentProfile = Profile.getCurrentProfile();
             revealProfile.put(CityOfTwo.KEY_PROFILE_NAME, currentProfile.getName());
             revealProfile.put(CityOfTwo.KEY_PROFILE_ID, currentProfile.getId());
-            
+
             Conversation conversation = new Conversation(revealProfile.toString());
             conversation.addFlag(CityOfTwo.FLAG_SENT);
             conversation.addFlag(CityOfTwo.FLAG_PROFILE);
-            
+
             sendMessage(conversation);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -653,14 +667,14 @@ public class ConversationActivity extends AppCompatActivity {
     
     public void applyFilter(View view) {
         hideOptions();
-        
+
         FiltersFragment filtersFragment = FiltersFragment.newInstance();
         filtersFragment.setOnDialogEventListener(new FiltersFragment.OnDialogEventListener() {
             @Override
             public void OnFiltersApply(JSONObject filters) {
                 sendFilters(filters);
             }
-            
+
             @Override
             public void OnCoyRudyShared() {
                 referCoyRudy(null);
@@ -672,20 +686,20 @@ public class ConversationActivity extends AppCompatActivity {
     
     public void sendFilters(final JSONObject filters) {
         final SharedPreferences sharedPreferences = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-        
+
         String send_message = getString(R.string.url_send_filter);
-        
+
         String[] Path = {CityOfTwo.API, send_message};
-        
+
         HttpHandler filterHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, filters) {
-            
+
             @Override
             protected void onSuccess(String response) {
                 try {
                     JSONObject Response = new JSONObject(response);
-                    
+
                     Boolean status = Response.getBoolean("parsadi");
-                    
+
                     if (!status) onFailure(getResponseStatus());
                     else {
                         Integer minimumAge = filters.getInt(KEY_MIN_AGE),
@@ -693,9 +707,9 @@ public class ConversationActivity extends AppCompatActivity {
                                 maximumDistance = filters.getInt(KEY_DISTANCE);
                         Boolean matchFemale = filters.getBoolean(KEY_MATCH_FEMALE),
                                 matchMale = filters.getBoolean(KEY_MATCH_MALE);
-                        
+
                         Integer credits = Response.getInt("credit");
-                        
+
                         sharedPreferences.edit()
                                 .putInt(CityOfTwo.KEY_MIN_AGE, minimumAge)
                                 .putInt(CityOfTwo.KEY_MAX_AGE, maximumAge)
@@ -704,7 +718,7 @@ public class ConversationActivity extends AppCompatActivity {
                                 .putBoolean(CityOfTwo.KEY_MATCH_FEMALE, matchFemale)
                                 .putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, true)
                                 .apply();
-                        
+
                         new SecurePreferences(ConversationActivity.this, CityOfTwo.PACKAGE_NAME)
                                 .edit().putInt(CityOfTwo.KEY_CREDITS, credits);
                     }
@@ -713,68 +727,68 @@ public class ConversationActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            
+
             @Override
             protected void onFailure(Integer status) {
                 final Snackbar s = Snackbar.make(findViewById(R.id.snackbar_container),
                         "Could not apply filters",
                         Snackbar.LENGTH_SHORT
                 );
-                
+
                 s.setAction("Try Again", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         sendFilters(filters);
                     }
                 });
-                
+
                 View view = s.getView();
                 view.setBackgroundColor(ContextCompat.getColor(
                         ConversationActivity.this,
                         R.color.colorSnackBarError
                 ));
-                
+
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         s.dismiss();
                     }
                 });
-                
+
                 s.setActionTextColor(ContextCompat.getColor(
                         ConversationActivity.this,
                         R.color.colorSnackBarText
                 ));
-                
+
                 s.show();
-                
+
             }
         };
-        
+
         String token = "Token " + sharedPreferences.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
-        
+
         filterHttpHandler.addHeader("Authorization", token);
         filterHttpHandler.execute();
-        
+
     }
     
     public void referCoyRudy(View view) {
         hideOptions();
-        
+
         AlertDialog.Builder adb = new AlertDialog.Builder(this, R.style.AppTheme_Dialog);
         adb.setTitle("Refer CoyRudy");
-        
+
         View referCoyRudyView = LayoutInflater.from(this)
                 .inflate(R.layout.layout_share_coyrudy, null);
         TextView linkTextView = (TextView) referCoyRudyView.findViewById(R.id.coyrudy_link);
-        
+
         String uniqueCode = new SecurePreferences(this, CityOfTwo.SECURED_PREFERENCE)
-                .getString(KEY_CODE, "");
-        
+                .getString(KEY_ID, "");
+
         final String shareText = getString(R.string.url_share_coyrudy) + uniqueCode;
-        
+
         linkTextView.setText(shareText);
-        
+
         adb.setView(referCoyRudyView);
         adb.setPositiveButton("Share", new DialogInterface.OnClickListener() {
             @Override
@@ -794,24 +808,24 @@ public class ConversationActivity extends AppCompatActivity {
             }
         });
         adb.show();
-        
+
     }
     
     private void onShareCoyRudy(String uniqueUrl) {
-        
+
         List<String> targetedApps = new ArrayList<>();
-        
+
         targetedApps.add("com.facebook.katana");
         targetedApps.add("com.facebook.orca");
         targetedApps.add("com.twitter.android");
         targetedApps.add("com.google.android.apps.plus");
-        
+
         List<LabeledIntent> shareIntentList = new ArrayList<>();
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("name/plain");
-        
+
         List<ResolveInfo> resolveInfoList = getPackageManager().queryIntentActivities(shareIntent, 0);
-        
+
         if (!resolveInfoList.isEmpty()) {
             for (ResolveInfo resolveInfo : resolveInfoList) {
                 String packageName = resolveInfo.activityInfo.packageName;
@@ -821,7 +835,7 @@ public class ConversationActivity extends AppCompatActivity {
                     targetedShareIntent.setType("name/plain");
                     targetedShareIntent.putExtra(Intent.EXTRA_SUBJECT, "CoyRudy!");
                     targetedShareIntent.putExtra(Intent.EXTRA_TEXT, uniqueUrl);
-                    
+
                     shareIntentList.add(new LabeledIntent(
                             targetedShareIntent,
                             packageName,
@@ -837,42 +851,42 @@ public class ConversationActivity extends AppCompatActivity {
                     "Link copied to clipboard",
                     Snackbar.LENGTH_SHORT
             );
-            
-            
+
+
             View view = s.getView();
             view.setBackgroundColor(ContextCompat.getColor(
                     ConversationActivity.this,
                     R.color.colorSnackBarDefault
             ));
-            
+
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     s.dismiss();
                 }
             });
-            
+
             s.setActionTextColor(ContextCompat.getColor(
                     ConversationActivity.this,
                     R.color.colorSnackBarText
             ));
-            
+
             s.show();
-            
+
             Context context = ConversationActivity.this;
             android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context
                     .getSystemService(Context.CLIPBOARD_SERVICE);
             android.content.ClipData clip = android.content.ClipData
                     .newPlainText("Unique URL", uniqueUrl);
             clipboard.setPrimaryClip(clip);
-            
-            
+
+
             return;
         }
-        
+
         // convert shareIntentList to array
         LabeledIntent[] extraIntents = shareIntentList.toArray(new LabeledIntent[shareIntentList.size()]);
-        
+
         Intent chooserIntent = Intent.createChooser(new Intent(), "Select app to share");
         chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents);
         startActivity(chooserIntent);
@@ -904,11 +918,19 @@ public class ConversationActivity extends AppCompatActivity {
                     }
                 });
     }
+
+//    @Override
+//    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+//        super.onRestoreInstanceState(savedInstanceState);
+//
+//        restoreActivity(savedInstanceState);
+//        Log.i("Conversation Activity", "Instance Restored");
+//    }
     
     protected void hideOptions() {
         mOptionsDismissButton.setVisibility(View.GONE);
         final int viewHeight = mChatOptionsContainer.getHeight();
-        
+
         mChatOptionsContainer.animate().setInterpolator(new AccelerateInterpolator(.9f)).setDuration(200)
                 .translationY(-viewHeight)
                 .withEndAction(new Runnable() {
@@ -923,91 +945,83 @@ public class ConversationActivity extends AppCompatActivity {
                     }
                 });
     }
-
-//    @Override
-//    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-//        super.onRestoreInstanceState(savedInstanceState);
-//
-//        restoreActivity(savedInstanceState);
-//        Log.i("Conversation Activity", "Instance Restored");
-//    }
     
     private void sendBeginChatSignal() {
-        
+
     }
     
     protected void restoreActivity(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             ArrayList<String> textList = savedInstanceState.getStringArrayList(CityOfTwo.KEY_CURRENT_CHAT);
             String headerText = savedInstanceState.getString(CityOfTwo.KEY_CHAT_HEADER);
-            
+
             if (textList == null) textList = new ArrayList<>();
-            
+
             mConversationAdapter.clear();
-            
+
             for (String text : textList)
                 mConversationAdapter.insertItem(new Conversation(text));
-            
+
             mConversationAdapter.setHeaderText(headerText);
         } else {
             mConversationAdapter.insertItem(new Conversation("CHAT_BEGIN", CityOfTwo.FLAG_START));
             mConversationAdapter.insertItem(new Conversation("CHAT_END", CityOfTwo.FLAG_END));
-//	        mConversationAdapter.insertItem(new Conversation("CHAT_AD", CityOfTwo.FLAG_AD));
+//	        mConversationAdapter.insertItem(new Conversation("CHAT_AD", CityOfTwo.FLAG_REQUEST));
         }
     }
     
     protected void sendMessage(final Conversation bufferConv) {
         final String value = bufferConv.getText().replaceFirst("\\s+$", "");
-        
+
         mConversationAdapter.insertItem(bufferConv);
-        
+
         if (!mConversationAdapter.isLastVisible())
             mConversationListView.smoothScrollToPosition(mConversationAdapter.getItemPosition(bufferConv));
-        
+
         JSONObject params = new JSONObject();
         try {
-            params.put(CityOfTwo.HEADER_SEND_MESSAGE, value);
+            params.put(CityOfTwo.HEADER_DATA, value);
             params.put(CityOfTwo.HEADER_FLAGS, bufferConv.getFlags());
             params.put(CityOfTwo.HEADER_TIME, bufferConv.getTime());
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        
+
         String send_message = getString(R.string.url_send_message);
-        
-        
+
+
         String[] Path = {CityOfTwo.API, send_message};
-        
+
         mHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, params) {
             @Override
             protected void onSuccess(String response) {
                 try {
                     JSONObject Response = new JSONObject(response);
-                    
+
                     Boolean status = Response.getBoolean("parsadi");
-                    
+
                     if (!status)
                         onFailure(getResponseStatus());
                     else
                         Log.i("Conversation activity", "Message sent successfully");
-                    
+
                 } catch (Exception e) {
                     onFailure(getResponseStatus());
                     e.printStackTrace();
                 }
             }
-            
+
             @Override
             protected void onFailure(Integer status) {
 //                    Toast.makeText(ConversationActivity.this, "Message couldnot be sent." +
 //                            " Please try again later", Toast.LENGTH_SHORT).show();
-                
+
                 final Snackbar s = Snackbar.make(
                         mConversationListView,
                         "Your message was not sent!",
                         Snackbar.LENGTH_SHORT
                 );
-                
+
                 s.setAction("Try Again", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -1015,36 +1029,36 @@ public class ConversationActivity extends AppCompatActivity {
                         sendMessage(newConversation);
                     }
                 });
-                
+
                 View view = s.getView();
                 view.setBackgroundColor(ContextCompat.getColor(
                         ConversationActivity.this,
                         R.color.colorSnackBarError
                 ));
-                
+
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         s.dismiss();
                     }
                 });
-                
+
                 s.setActionTextColor(ContextCompat.getColor(
                         ConversationActivity.this,
                         R.color.colorSnackBarText
                 ));
-                
+
                 s.show();
-                
+
                 if (!BuildConfig.DEBUG) {
                     mConversationAdapter.removeItem(bufferConv);
                 }
             }
         };
-        
+
         String token = "Token " + getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
                 .getString(CityOfTwo.KEY_SESSION_TOKEN, "");
-        
+
         mHttpHandler.addHeader("Authorization", token);
         mHttpHandler.execute();
     }
@@ -1068,52 +1082,52 @@ public class ConversationActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        
+
         Log.i("ConversationActivity", "Activity Paused");
         CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
-        
+
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        
+
         Log.i("ConversationActivity", "Activity Resumed");
         CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
-        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_CONVERSATION);
-        
+        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_PROFILE);
+
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
         nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
         nm.cancel(CityOfTwo.NOTIFICATION_CHAT_END, 10046);
-        
+
         IntentFilter filter = new IntentFilter();
-        
+
         filter.addAction(CityOfTwo.ACTION_NEW_MESSAGE);
         filter.addAction(CityOfTwo.ACTION_BEGIN_CHAT);
         filter.addAction(CityOfTwo.ACTION_END_CHAT);
         filter.addAction(CityOfTwo.ACTION_USER_OFFLINE);
         filter.addAction(CityOfTwo.ACTION_LAST_SEEN);
         filter.addAction(CityOfTwo.ACTION_IS_TYPING);
-        
+
         LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
-        
+
         if (CityOfTwo.pendingMessages != null) CityOfTwo.pendingMessages.clear();
         if (CityOfTwo.messageCounter != null) CityOfTwo.messageCounter = 0;
-        
+
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-        
+
         Boolean userOnline = sp.getBoolean(CityOfTwo.KEY_SESSION_ACTIVE, true);
         SharedPreferences.Editor editor = sp.edit();
-        
+
         editor.remove(CityOfTwo.KEY_SESSION_ACTIVE);
-        
+
         if (!userOnline) {
             editor.remove(CityOfTwo.KEY_CHATROOM_ID)
                     .remove(CityOfTwo.KEY_CHAT_PENDING)
                     .apply();
-            
+
             new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                     .setTitle("Stranger has left the chat")
                     .setMessage("Start a new chat?")
@@ -1131,18 +1145,18 @@ public class ConversationActivity extends AppCompatActivity {
                     }).show();
             return;
         }
-        
+
         editor.apply();
-        
+
         String commonLikes = sp.getString(KEY_COMMON_LIKES, "");
         Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
         Integer chatRoomId = sp.getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
-        
+
         Long lastSeen = sp.getLong(KEY_LAST_SEEN, -1);
         Boolean isTyping = sp.getBoolean(KEY_IS_TYPING, false);
-        
+
         sp.edit().remove(KEY_LAST_SEEN).remove(KEY_IS_TYPING).apply();
-        
+
         if (chatRoomId == -1) {
             new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                     .setTitle("Stranger has left the chat")
@@ -1163,35 +1177,21 @@ public class ConversationActivity extends AppCompatActivity {
             DatabaseHelper db = new DatabaseHelper(this);
             ArrayList<Conversation> pendingMessages = db.retrieveMessages(chatRoomId);
             db.clearTable(chatRoomId);
-            
+
             if (chatPending) {
                 sp.edit().putBoolean(CityOfTwo.KEY_CHAT_PENDING, false).apply();
                 setupNewChatWindow(commonLikes);
             }
-            
+
             mConversationAdapter.insertItems(pendingMessages);
             mConversationListView.scrollToPosition(mConversationAdapter.getItemCount());
-            
+
             if (lastSeen > -1) mConversationAdapter.setLastSeen(lastSeen);
             mConversationAdapter.setTyping(isTyping);
-            
-            if (mConversationAdapter.getItemCount() > 5) sendSeenSignal();
-            
-        }
-    }
-    
-    @Override
-    protected void onStart() {
-        super.onStart();
 
-//		adView = new MoPubView(this);
-//		adView.setLayoutParams(new RecyclerView.LayoutParams(
-//				ViewGroup.LayoutParams.MATCH_PARENT,
-//				(int) CityOfTwo.dpToPixel(this, 50)
-//		));
-//		adView.setAdUnitId("153e5b049d414b5d93c3fbac190a0350"); // Enter your Ad Unit ID received www.mopub.com
-//		adView.loadAd();
-//		mConversationAdapter.setAdView(adView);
+            if (mConversationAdapter.getItemCount() > 5) sendSeenSignal();
+
+        }
     }
     
     private void endCurrentChat() {
@@ -1319,7 +1319,7 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     protected void onNewMessageReceived(Bundle data) {
-        String text = data.getString(CityOfTwo.KEY_DATA);
+        String text = data.getString(CityOfTwo.KEY_MESSAGE_DATA);
         Integer flags = data.getInt(CityOfTwo.KEY_MESSAGE_FLAGS);
         long time = System.currentTimeMillis();
 

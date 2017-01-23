@@ -10,7 +10,7 @@ import android.support.v7.widget.Toolbar;
 public class HomeActivity extends AppCompatActivity {
 
 	private final String ARG_TOKEN = "token";
-	private final String ARG_MODE = "mode";
+	private final String ARG_SECTIONED = "mode";
 	private ViewPager mHomePager;
 	private TabLayout mTabLayout;
 	private HomePagerAdapter mAdapter;
@@ -38,11 +38,11 @@ public class HomeActivity extends AppCompatActivity {
 				.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
 		Bundle lobbyArgs = new Bundle();
-		lobbyArgs.putString(ARG_TOKEN, token);
+		lobbyArgs.putString(LobbyFragment.ARG_TOKEN, token);
 
 		Bundle contactsArgs = new Bundle();
-		contactsArgs.putString(ARG_TOKEN, token);
-		contactsArgs.putBoolean(ARG_MODE, false);
+		contactsArgs.putString(ContactsFragment.ARG_TOKEN, token);
+		contactsArgs.putInt(ContactsFragment.ARG_SEARCH_MODE, ContactsFragment.SEARCH_MODE_CONTACTS);
 
 
 		mAdapter.addFragment(LobbyFragment.newInstance(), lobbyArgs, "LOBBY");

@@ -42,7 +42,7 @@ public class CityOfTwo extends Application {
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_CHAT_BEGIN = "chat_begin";
 	public static final String KEY_TYPE = "type";
-	public static final String KEY_DATA = "data";
+	public static final String KEY_MESSAGE_DATA = "data";
 	public static final String KEY_CURRENT_CHAT = "current_chat";
 	public static final String KEY_CURRENT_CHAT_ID = "current_chat_id";
 	public static final String KEY_SESSION_TOKEN = "session_token";
@@ -60,21 +60,31 @@ public class CityOfTwo extends Application {
 
 	public static final int ACTIVITY_LOBBY = 1;
 	public static final int ACTIVITY_TEST = 2;
-	public static final int ACTIVITY_CONVERSATION = 3;
+	public static final int ACTIVITY_PROFILE = 3;
 	public static final int ACTIVITY_INTRODUCTION = 4;
 	public static final int ACTIVITY_HOME = 5;
 	public static final int ACTIVITY_FILTER = 6;
 
-	public static final int FLAG_SENT = 0b1;
-	public static final int FLAG_RECEIVED = 0b10;
-	public static final int FLAG_TEXT = 0b100;
-	public static final int FLAG_PROFILE = 0b1000;
-	public static final int FLAG_AD = 0b10000;
-	public static final int FLAG_START = 0b100000;
-	public static final int FLAG_END = 0b1000000;
-	public static final int FLAG_INDICATOR = 0b10000000;
-	public static final int FLAG_TYPING = 0b100000000;
-	public static final int FLAG_LAST_SEEN = 0b1000000000;
+	public static final int FLAG_SENT =
+			0b1;
+	public static final int FLAG_RECEIVED =
+			0b10;
+	public static final int FLAG_TEXT =
+			0b100;
+	public static final int FLAG_PROFILE =
+			0b1000;
+	public static final int FLAG_REQUEST =
+			0b10000;
+	public static final int FLAG_START =
+			0b100000;
+	public static final int FLAG_END =
+			0b1000000;
+	public static final int FLAG_INDICATOR =
+			0b10000000;
+	public static final int FLAG_TYPING =
+			0b100000000;
+	public static final int FLAG_LAST_SEEN =
+			0b1000000000;
 
 	public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
 	//	public static final String HOST = "192.168.0.100:5000";
@@ -84,7 +94,7 @@ public class CityOfTwo extends Application {
 	public static final String HEADER_ACCESS_TOKEN = "access_token";
 	public static final String HEADER_TEST = "test";
 	public static final String HEADER_TEST_RESULT = "questions";
-	public static final String HEADER_SEND_MESSAGE = "message";
+	public static final String HEADER_DATA = "data";
 	public static final String HEADER_GCM_ID = "gcm_id";
 
 	public static final String API_KEY = "AIzaSyB_Wco0Sdad38QGHsCcode9P1iZ3tsqqXY";
@@ -102,22 +112,22 @@ public class CityOfTwo extends Application {
 	public static final Integer MAXIMUM_DISTANCE = 100;
 	public static final String KEY_PROFILE_ID = "profile_id";
 	public static final String KEY_PROFILE_URI = "profile_uri";
-	public static final String KEY_MESSAGE_FLAGS = "FLAGS";
-	public static final String KEY_TIME = "TIME";
+	public static final String KEY_MESSAGE_FLAGS = "flags";
+	public static final String KEY_MESSAGE_TIME = "time";
 	public static final String HEADER_FLAGS = "flags";
 	public static final String HEADER_TIME = "time";
 	public static final String KEY_TOKEN = "token";
-	public static final String KEY_CODE = "code";
+	public static final String KEY_ID = "id";
 	public static final String KEY_CREDITS = "credits";
 	public static final String KEY_FILTERS_APPLIED = "filters_applied";
 	public static final String KEY_FILTERS = "filters";
 	public static final String KEY_CHAT_PENDING = "chat_pending";
 	public static final String KEY_REG_ID = "reg_id";
 	public static final Integer ACTIVITY_LOGIN = 0;
-	public static final String KEY_CHAT_END = "CHAT_END";
+	public static final String KEY_CHAT_END = "chat_end";
 	public static final String KEY_FROM_INTRO = "from_intro";
 	public static final String TABLE_MESSAGES = "message";
-	public static final String COLUMN_ID = "code";
+	public static final String COLUMN_ID = "id";
 	public static final String COLUMN_CHATROOM_ID = "chatroom_id";
 	public static final String COLUMN_MESSAGE = "name";
 	public static final String COLUMN_FLAGS = "flags";
@@ -131,17 +141,17 @@ public class CityOfTwo extends Application {
 	public static final String SECURED_PREFERENCE = "com.messenger.cityoftwo.secured";
 	public static final String ACTION_FCM_ID = "fcm_id";
 	public static final String KEY_CHAT_HEADER = "chat_header";
-	public static final String KEY_USER_OFFLINE = "USER_OFFLINE";
-	public static final String ACTION_USER_OFFLINE = "user_offline";
+	public static final String KEY_USER_OFFLINE = "user_offline";
+	public static final String ACTION_USER_OFFLINE = "com.messenger.cityoftwo.ACTION_USER_OFFLINE";
 	public static final String KEY_FIRST_RUN = "first_run";
 	public static final String NOTIFICATION_NEW_CHAT = "notification_new_chat";
 	public static final String KEY_SESSION_ACTIVE = "session_active";
 	public static final String HEADER_IS_TYPING = "is_typing";
 	public static final String HEADER_LAST_SEEN = "last_seen";
-	public static final String KEY_LAST_SEEN = "LAST_SEEN";
-	public static final String ACTION_LAST_SEEN = "last_seen";
-	public static final String KEY_IS_TYPING = "IS_TYPING";
-	public static final String ACTION_IS_TYPING = "is_typing";
+	public static final String KEY_LAST_SEEN = "last_seen";
+	public static final String ACTION_LAST_SEEN = "com.messenger.cityoftwo.ACTION_LAST_SEEN";
+	public static final String KEY_IS_TYPING = "is_typing";
+	public static final String ACTION_IS_TYPING = "com.messenger.cityoftwo.ACTION_IS_TYPING";
 	public static final String NOTIFICATION_CHAT_END = "notification_chat_end";
 	public static final String HEADER_TOKEN = "token";
 	public static final String KEY_REQUESTS = "contacts";
@@ -150,6 +160,8 @@ public class CityOfTwo extends Application {
 	public static final String KEY_CURRENT_GUEST = "current_guest";
 	public static final String KEY_BACKGROUND_MESSAGES = "background_messages";
 	public static final String KEY_IS_FRIEND = "is_friend";
+	public static final String KEY_CODE = "code";
+	public static final String KEY_FBID = "fbid";
 	private static final String SENDER_ID = "584281533020";
 	public static ArrayList<Conversation> mBackgroundConversation;
 	public static Bitmap logoBitmap;

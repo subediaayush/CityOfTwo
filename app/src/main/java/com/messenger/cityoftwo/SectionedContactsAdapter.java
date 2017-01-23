@@ -12,6 +12,7 @@ import com.messenger.cityoftwo.dummy.DummyContent.DummyItem;
 import com.truizlop.sectionedrecyclerview.SimpleSectionedAdapter;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListener;
 
@@ -20,13 +21,14 @@ import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListene
  * specified {@link ContactsEventListener}.
  * TODO: Replace the implementation with id for your data type.
  */
-public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHolder> implements ContactsAdapterInterface {
+public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ContactsAdapterInterface {
 
 	public static final int GUEST_MATCH = 0;
 	public static final int GUEST_CONTACT = 1;
 	private static final String TAG = "SectionedContactAdapter";
 
 	private SortedList<Contact> mDataset;
+	private Hashtable<Integer, Integer> mDataSection;
 
 	private Context mContext;
 
@@ -91,18 +93,16 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 //		return new ContactHolder(view);
 //	}
 
-	@Override
 	protected String getSectionHeaderTitle(int section) {
 //		if (!isSectioned) return "";
 		return (GUEST_CONTACT == section) ? "Contacts" : "Matches";
 	}
 
-	@Override
+
 	protected int getSectionCount() {
 		return 2;
 	}
 
-	@Override
 	protected int getItemCountForSection(int section) {
 		int counter = 0;
 		boolean isContact = section == GUEST_CONTACT;
@@ -111,7 +111,6 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 		return counter;
 	}
 
-	@Override
 	protected ContactHolder onCreateItemViewHolder(ViewGroup parent, int viewType) {
 		View view = LayoutInflater.from(mContext).inflate(
 				R.layout.layout_contact,
@@ -204,5 +203,30 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 		for (int i = mDataset.size() - 1; i >= 0; i++) {
 			if (mDataset.get(i).isFriend == contactSection) mDataset.removeItemAt(i);
 		}
+	}
+
+	@Override
+	public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+		return null;
+	}
+
+	@Override
+	public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+
+	}
+
+	@Override
+	public int getItemViewType(int position) {
+
+		return super.getItemViewType(position);
+	}
+
+	@Override
+	public int getItemCount() {
+		return mDataset.size() + getSectionCount();
+	}
+
+	public interface SectionLabel {
+		void getLabel();
 	}
 }

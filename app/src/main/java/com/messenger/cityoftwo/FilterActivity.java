@@ -131,8 +131,8 @@ public class FilterActivity extends AppCompatActivity {
 		filterToggle.setChecked(enableFilters);
 		enableDisableView(filtersContainer, enableFilters);
 
-//        final TextView minAge = (TextView) rootView.findViewById(R.code.filter_age_min);
-//        final TextView maxAge = (TextView) rootView.findViewById(R.code.filter_age_max);
+//        final TextView minAge = (TextView) rootView.findViewById(R.id.filter_age_min);
+//        final TextView maxAge = (TextView) rootView.findViewById(R.id.filter_age_max);
 
 		final RangeBar ageRange = (RangeBar) findViewById(R.id.filter_age_range);
 		ageRange.setDrawTicks(false);
@@ -142,7 +142,7 @@ public class FilterActivity extends AppCompatActivity {
 
 		final RangeBar distanceRange = (RangeBar) findViewById(R.id.filter_distance_bar);
 		distanceRange.setDrawTicks(false);
-//        final TextView distanceText = (TextView) rootView.findViewById(R.code.filter_distance_text);
+//        final TextView distanceText = (TextView) rootView.findViewById(R.id.filter_distance_text);
 
 		RadioGroup unitChooser = (RadioGroup) findViewById(R.id.filter_distance_unit);
 

@@ -197,14 +197,14 @@ public class InboxFragment extends Fragment implements InboxAdapter.InboxEventLi
 
 		final Contact guest = new Contact("");
 
-		String code = guest.code;
+		Integer code = guest.id;
 
 		new HttpHandler(
 				CityOfTwo.HOST,
 				path,
 				HttpHandler.POST,
-				CityOfTwo.KEY_CODE,
-				code
+				CityOfTwo.KEY_ID,
+				String.valueOf(code)
 		) {
 			@Override
 			protected void onSuccess(String response) {

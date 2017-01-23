@@ -70,21 +70,6 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 			}
 
 			@Override
-			public void onInserted(int position, int count) {
-				notifyItemRangeInserted(position, count);
-			}
-
-			@Override
-			public void onRemoved(int position, int count) {
-				notifyItemRangeRemoved(position, count);
-			}
-
-			@Override
-			public void onMoved(int fromPosition, int toPosition) {
-				notifyItemMoved(fromPosition, toPosition);
-			}
-
-			@Override
 			public void onChanged(int position, int count) {
 				notifyItemRangeChanged(position, count);
 			}
@@ -99,6 +84,21 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 				return item1.getText().equals(item2.getText()) &&
 						item1.getFlags().equals(item2.getFlags()) &&
 						item1.getTime() == item2.getTime();
+			}
+
+			@Override
+			public void onInserted(int position, int count) {
+				notifyItemRangeInserted(position, count);
+			}
+
+			@Override
+			public void onRemoved(int position, int count) {
+				notifyItemRangeRemoved(position, count);
+			}
+
+			@Override
+			public void onMoved(int fromPosition, int toPosition) {
+				notifyItemMoved(fromPosition, toPosition);
 			}
 		});
 		this.context = context;
@@ -197,7 +197,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //		} else if (((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) ||
 //				((viewType & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END)) {
 //			return new GenericHolder(view);
-//		} else if ((viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+//		} else if ((viewType & CityOfTwo.FLAG_REQUEST) == CityOfTwo.FLAG_REQUEST) {
 //			return new AdHolder(view);
 //		} else if ((viewType & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR) {
 //			return new IndicatorHolder(view);

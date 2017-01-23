@@ -48,10 +48,10 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 			switch (messageType) {
 				case CityOfTwo.KEY_MESSAGE: {
 					int chatroomId = Integer.parseInt(data.get(CityOfTwo.KEY_CHATROOM_ID));
-					String text = data.get(CityOfTwo.KEY_DATA);
+					String text = data.get(CityOfTwo.KEY_MESSAGE_DATA);
 					Integer flags = Integer.parseInt(data.get(CityOfTwo.KEY_MESSAGE_FLAGS));
 					long time = System.currentTimeMillis();
-//					long time = Long.parseLong(data.get(CityOfTwo.KEY_TIME));
+//					long time = Long.parseLong(data.get(CityOfTwo.KEY_MESSAGE_TIME));
 
 					Conversation c = new Conversation(text, flags, time);
 					c.removeFlag(CityOfTwo.FLAG_SENT);
@@ -59,9 +59,9 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 
 					// Current activity is not Conversation Activity
 					// Current activity is Conversation Activty but is in background
-					if ((currentActivity == CityOfTwo.ACTIVITY_CONVERSATION &&
+					if ((currentActivity == CityOfTwo.ACTIVITY_PROFILE &&
 							applicationState == CityOfTwo.APPLICATION_BACKGROUND) ||
-							currentActivity != CityOfTwo.ACTIVITY_CONVERSATION) {
+							currentActivity != CityOfTwo.ACTIVITY_PROFILE) {
 
 						db.insertMessage(chatroomId, c);
 
@@ -115,9 +115,9 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 						intent.setAction(CityOfTwo.ACTION_NEW_MESSAGE);
 
 						intent.putExtra(CityOfTwo.KEY_TYPE, messageType);
-						intent.putExtra(CityOfTwo.KEY_DATA, text);
+						intent.putExtra(CityOfTwo.KEY_MESSAGE_DATA, text);
 						intent.putExtra(CityOfTwo.KEY_MESSAGE_FLAGS, flags);
-						intent.putExtra(CityOfTwo.KEY_TIME, time);
+						intent.putExtra(CityOfTwo.KEY_MESSAGE_TIME, time);
 
 						mBroadcaster.sendBroadcast(intent);
 					}

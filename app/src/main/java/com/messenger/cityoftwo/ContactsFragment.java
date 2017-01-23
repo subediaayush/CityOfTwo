@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * A fragment representing a list of Items.
@@ -26,22 +28,33 @@ import java.util.ArrayList;
  */
 public class ContactsFragment extends DialogFragment implements ContactAdapterWrapper.ContactsEventListener {
 
-	private static final String ARG_TOKEN = "token";
-	private static final String ARG_MODE = "mode";
-	private static final String KEY_MODE = "mode";
-	private static final String KEY_CONTACTS = "contacts";
-	private static final String KEY_TOKEN = "token";
-	private final String ARG_CURRENT_GUEST = "current_guest";
+	public final static String ARG_SEARCH_MODE = "mode";
+	public final static String ARG_CONTACTS = "contacts";
+	public final static String ARG_TOKEN = "token";
+
+	public final static int SEARCH_MODE_CONTACTS = 0b01;
+	public final static int SEARCH_MODE_MATCHES = 0b10;
+
+	private static final String TAG = "ContactsFragment";
+
+	private final String KEY_MESSAGE_RECEIVED = "message_received";
+	private final String KEY_MESSAGE_SENT = "message_sent";
+	private final String KEY_MESSAGES = "messages";
+
 	private String mToken;
 
 	private ArrayList<Contact> mContacts;
 	private RecyclerView mContactList;
 	private TextView mEmptyView;
 
+	private HashMap<Integer, ArrayList<Conversation>> mRecentMessages;
+
 	private ProgressBar mLoadingView;
 	private ContactAdapterWrapper mContactAdapter;
 
-	private boolean isSectioned;
+	private int searchMode;
+
+	private ContactsFragmentListener mListener;
 
 	/**
 	 * Mandatory empty constructor for the fragment manager to instantiate the
@@ -66,56 +79,6 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 //	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-	                         Bundle savedInstanceState) {
-		View view = inflater.inflate(R.layout.fragment_contacts_list, container, false);
-
-		mContactList = (RecyclerView) view.findViewById(R.id.contact_list);
-		mEmptyView = (TextView) view.findViewById(R.id.empty_view);
-		mLoadingView = (ProgressBar) view.findViewById(R.id.loading_view);
-
-		mEmptyView.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mEmptyView.setVisibility(View.INVISIBLE);
-				mLoadingView.setVisibility(View.VISIBLE);
-				mContactList.setVisibility(View.INVISIBLE);
-
-				reloadInfo();
-			}
-		});
-
-
-		if (savedInstanceState != null) {
-			mContacts = savedInstanceState.getParcelableArrayList(KEY_CONTACTS);
-			mToken = savedInstanceState.getString(KEY_TOKEN);
-			isSectioned = savedInstanceState.getBoolean(KEY_MODE);
-
-			mLoadingView.setVisibility(View.INVISIBLE);
-			if (mContacts.isEmpty()) {
-				mContactList.setVisibility(View.INVISIBLE);
-				mEmptyView.setVisibility(View.VISIBLE);
-			} else {
-				mContactList.setVisibility(View.VISIBLE);
-				mEmptyView.setVisibility(View.INVISIBLE);
-			}
-		} else {
-			mContactList.setVisibility(View.INVISIBLE);
-			mEmptyView.setVisibility(View.INVISIBLE);
-			mLoadingView.setVisibility(View.VISIBLE);
-
-			reloadInfo();
-		}
-
-		Context context = view.getContext();
-		mContactList.setLayoutManager(new LinearLayoutManager(context));
-		mContactAdapter = new ContactAdapterWrapper(context, isSectioned);
-		mContactList.setAdapter(mContactAdapter.getAdapter());
-
-		return view;
-	}
-
-	@Override
 	public void onDetach() {
 		super.onDetach();
 	}
@@ -126,7 +89,7 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 
 		if (getArguments() != null) {
 			mToken = getArguments().getString(ARG_TOKEN, "");
-			isSectioned = getArguments().getBoolean(ARG_MODE, false);
+			searchMode = getArguments().getInt(ARG_SEARCH_MODE, SEARCH_MODE_CONTACTS);
 		}
 	}
 
@@ -134,9 +97,9 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 
-		outState.putParcelableArrayList(KEY_CONTACTS, mContacts);
-		outState.putString(KEY_TOKEN, mToken);
-		outState.putBoolean(KEY_MODE, isSectioned);
+		outState.putParcelableArrayList(ARG_CONTACTS, mContacts);
+		outState.putString(ARG_TOKEN, mToken);
+		outState.putInt(ARG_SEARCH_MODE, searchMode);
 	}
 
 	private void reloadInfo() {
@@ -148,11 +111,95 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 		Contact contact = mContactAdapter.get(position);
 
 		Intent contactIntent = new Intent(getActivity(), ProfileActivity.class);
-		contactIntent.putExtra(ARG_CURRENT_GUEST, contact);
+
+		contactIntent.putExtra(
+				ProfileActivity.ARG_PROFILE_MODE,
+				ChatAdapter.MODE_CHAT
+		);
+
+		if (mListener != null) mListener.onContactSelected(contact);
+
+		contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST, contact);
+
+		startActivityForResult(contactIntent, CityOfTwo.ACTIVITY_PROFILE);
 	}
 
 	public int getTotalContacts() {
 		return mContactAdapter.getItemCount();
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if (requestCode == CityOfTwo.ACTIVITY_PROFILE) {
+			Contact c = data.getParcelableExtra(ProfileActivity.ARG_CURRENT_GUEST);
+			mContactAdapter.update(c);
+		}
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+	                         Bundle savedInstanceState) {
+		View view = inflater.inflate(R.layout.fragment_contacts_list, container, false);
+
+		mContactList = (RecyclerView) view.findViewById(R.id.contact_list);
+		mEmptyView = (TextView) view.findViewById(R.id.empty_view);
+		mLoadingView = (ProgressBar) view.findViewById(R.id.loading_view);
+
+		mEmptyView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mEmptyView.setVisibility(View.GONE);
+				mLoadingView.setVisibility(View.VISIBLE);
+				mContactList.setVisibility(View.INVISIBLE);
+
+				reloadInfo();
+			}
+		});
+
+
+		if (savedInstanceState != null) {
+			mContacts = savedInstanceState.getParcelableArrayList(ARG_CONTACTS);
+			mToken = savedInstanceState.getString(ARG_TOKEN);
+			searchMode = savedInstanceState.getInt(ARG_SEARCH_MODE);
+
+
+			mLoadingView.setVisibility(View.GONE);
+			if (mContacts.isEmpty()) {
+				mContactList.setVisibility(View.INVISIBLE);
+				mEmptyView.setVisibility(View.VISIBLE);
+			} else {
+				mContactList.setVisibility(View.VISIBLE);
+				mEmptyView.setVisibility(View.GONE);
+			}
+		} else {
+			mContactList.setVisibility(View.INVISIBLE);
+			mEmptyView.setVisibility(View.GONE);
+			mLoadingView.setVisibility(View.VISIBLE);
+
+			reloadInfo();
+		}
+
+		Context context = view.getContext();
+		mContactList.setLayoutManager(new LinearLayoutManager(context));
+		mContactAdapter = new ContactAdapterWrapper(context, searchMode);
+		mContactList.setAdapter(mContactAdapter.getAdapter());
+
+		mContactAdapter.setEventListener(this);
+
+		return view;
+	}
+
+	public void setListener(ContactsFragmentListener listener) {
+		this.mListener = mListener;
+	}
+
+	/**
+	 * Created by Aayush on 1/23/2017.
+	 */
+	public static interface ContactsFragmentListener {
+		void onContactSelected(Contact contact);
 	}
 
 	/**
@@ -166,62 +213,131 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 	 * >Communicating with Other Fragments</a> for more information.
 	 */
 	private class ContactsHttpHandler {
-		private HttpHandler httpHandler;
+		private HttpHandler contactsHttpHandler;
+		private HttpHandler matchesHttpHandler;
+
 		private String token;
+		private boolean listInitiated = false;
 
 		private ContactsHttpHandler(String token) {
 			this.token = token;
 
-			String[] path = {
+			String[] pathContacts = {
 					CityOfTwo.API,
-					"get-contacts"
+					getString(R.string.url_get_messages)
 			};
 
-			httpHandler = new HttpHandler(
-					CityOfTwo.HOST,
-					path
-			) {
-				@Override
-				protected void onSuccess(String response) {
-					try {
-						ArrayList<Contact> contacts = new ArrayList<>();
-						JSONArray j = (new JSONObject(response)).getJSONArray(KEY_CONTACTS);
-//						JSONArray j = new JSONArray((new JSONObject(response)).getString(KEY_CONTACTS));
-						for (int i = 0; i < j.length(); i++) {
-							JSONObject j1 = new JSONObject(j.getString(i));
-							j1.put(CityOfTwo.KEY_IS_FRIEND, true);
-							contacts.add(new Contact(j1.toString()));
-						}
-
-						mContacts = contacts;
-					} catch (JSONException e) {
-						e.printStackTrace();
-					}
-				}
-
-				@Override
-				protected void onFailure(Integer status) {
-
-				}
-
-				@Override
-				protected void onPostExecute() {
-					mLoadingView.setVisibility(View.INVISIBLE);
-					if (getTotalContacts() == 0) {
-						mContactList.setVisibility(View.INVISIBLE);
-						mEmptyView.setVisibility(View.VISIBLE);
-					} else {
-						mContactList.setVisibility(View.VISIBLE);
-						mEmptyView.setVisibility(View.INVISIBLE);
-					}
-				}
+			String[] pathMatches = {
+					CityOfTwo.API,
+					getString(R.string.url_get_matches)
 			};
 
-			httpHandler.addHeader("Authorization", "Token " + this.token);
+			if ((searchMode & SEARCH_MODE_CONTACTS) == SEARCH_MODE_CONTACTS)
+				contactsHttpHandler = new HttpHandler(
+						CityOfTwo.HOST,
+						pathContacts
+				) {
+
+					@Override
+					protected void onSuccess(String response) {
+						addContacts(response, true);
+						refreshContactList();
+					}
+
+					@Override
+					protected void onFailure(Integer status) {
+						refreshContactList();
+					}
+
+
+				};
+
+			if ((searchMode & SEARCH_MODE_MATCHES) == SEARCH_MODE_MATCHES)
+				matchesHttpHandler = new HttpHandler(
+						CityOfTwo.HOST,
+						pathMatches
+				) {
+
+					@Override
+					protected void onSuccess(String response) {
+						addContacts(response, false);
+						refreshContactList();
+					}
+
+					@Override
+					protected void onFailure(Integer status) {
+						refreshContactList();
+					}
+
+
+				};
+
+			contactsHttpHandler.addHeader("Authorization", "Token " + this.token);
+		}
+
+		private void addContacts(String response, boolean isFriend) {
+			try {
+				ArrayList<Contact> contacts = new ArrayList<>();
+				JSONArray contactListJSON = (new JSONObject(response)).getJSONArray(KEY_MESSAGES);
+//						JSONArray contactListJSON = new JSONArray((new JSONObject(response)).getString(ARG_CONTACTS));
+				for (int i = 0; i < contactListJSON.length(); i++) {
+					JSONObject contactJSON = contactListJSON.getJSONObject(i);
+					contactJSON.put(CityOfTwo.KEY_IS_FRIEND, isFriend);
+					Contact c = new Contact(contactJSON.toString());
+
+					ArrayList<Conversation> messsages = new ArrayList<>();
+
+					JSONObject rawConversation;
+					Conversation buffer;
+
+					rawConversation = contactJSON.getJSONObject(KEY_MESSAGE_RECEIVED);
+					Log.i(TAG, rawConversation.toString());
+
+					buffer = new Conversation(rawConversation.toString());
+//							buffer.setFlag(Integer.parseInt(buffer.getFlags().toString(),2));
+					buffer.removeFlag(CityOfTwo.FLAG_SENT);
+					buffer.addFlag(CityOfTwo.FLAG_RECEIVED);
+					messsages.add(buffer);
+
+					rawConversation = contactJSON.getJSONObject(KEY_MESSAGE_SENT);
+					Log.i(TAG, rawConversation.toString());
+
+					buffer = new Conversation(rawConversation.toString());
+//							buffer.setFlag(Integer.parseInt(buffer.getFlags().toString(),2));
+					buffer.removeFlag(CityOfTwo.FLAG_RECEIVED);
+					buffer.addFlag(CityOfTwo.FLAG_SENT);
+					messsages.add(buffer);
+
+					c.setLastMessage(messsages);
+					contacts.add(c);
+				}
+
+				if (listInitiated) {
+					mContacts.addAll(contacts);
+					mContactAdapter.insertAll(mContacts);
+				} else {
+					mContacts = contacts;
+					mContactAdapter.setDataset(mContacts);
+					listInitiated = true;
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private void refreshContactList() {
+			mLoadingView.setVisibility(View.GONE);
+			if (getTotalContacts() == 0) {
+				mContactList.setVisibility(View.INVISIBLE);
+				mEmptyView.setVisibility(View.VISIBLE);
+			} else {
+				mContactList.setVisibility(View.VISIBLE);
+				mEmptyView.setVisibility(View.GONE);
+			}
 		}
 
 		public void execute() {
-			httpHandler.execute();
+			contactsHttpHandler.execute();
 		}
 	}
 }

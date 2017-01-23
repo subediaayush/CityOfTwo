@@ -14,7 +14,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.messenger.cityoftwo.CityOfTwo.KEY_CODE;
+import static com.messenger.cityoftwo.CityOfTwo.KEY_ID;
 
 /**
  * Created by Aayush on 1/17/2017.
@@ -89,7 +89,7 @@ public class Utils {
 			TextView linkTextView = (TextView) referCoyRudyView.findViewById(R.id.coyrudy_link);
 
 			String uniqueCode = new SecurePreferences(context, CityOfTwo.SECURED_PREFERENCE)
-					.getString(KEY_CODE, "");
+					.getString(KEY_ID, "");
 
 			final String shareText = context.getString(R.string.url_share_coyrudy) + uniqueCode;
 

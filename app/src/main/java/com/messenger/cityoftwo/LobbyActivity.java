@@ -115,7 +115,7 @@ public class LobbyActivity extends AppCompatActivity {
         fm.executePendingTransactions();
 //        mBackgroundAnimationFragment = BackgroundAnimationFragment.newInstance();
 //        getSupportFragmentManager().beginTransaction()
-//                .replace(R.code.lobby_background, mBackgroundAnimationFragment)
+//                .replace(R.id.lobby_background, mBackgroundAnimationFragment)
 //                .commit();
 
         mAccessToken = AccessToken.getCurrentAccessToken();
@@ -162,10 +162,10 @@ public class LobbyActivity extends AppCompatActivity {
 
                             startActivityForResult(
                                     conversationIntent,
-                                    CityOfTwo.ACTIVITY_CONVERSATION);
+                                    CityOfTwo.ACTIVITY_PROFILE);
                         } else {
 
-                            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
+                            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_PROFILE);
 
                             overridePendingTransition(
                                     android.R.anim.fade_in,
@@ -381,7 +381,7 @@ public class LobbyActivity extends AppCompatActivity {
                         signUp(accessToken);
                     } else {
                         String sessionToken = Response.getString(CityOfTwo.KEY_TOKEN);
-                        String uniqueCode = Response.getString(CityOfTwo.KEY_CODE);
+                        String uniqueCode = Response.getString(CityOfTwo.KEY_ID);
                         Integer credits = Response.getInt(CityOfTwo.KEY_CREDITS);
                         Boolean filters_applied = Response.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED);
 
@@ -410,7 +410,7 @@ public class LobbyActivity extends AppCompatActivity {
                                     .putBoolean(CityOfTwo.KEY_MATCH_MALE, matchMale)
                                     .putBoolean(CityOfTwo.KEY_MATCH_FEMALE, matchFemale);
                         }
-                        securedEditor.putString(CityOfTwo.KEY_CODE, uniqueCode)
+                        securedEditor.putString(CityOfTwo.KEY_ID, uniqueCode)
                                 .putInt(CityOfTwo.KEY_CREDITS, credits)
                                 .apply();
 
@@ -424,7 +424,7 @@ public class LobbyActivity extends AppCompatActivity {
                             submitTest(testResult);
                         }
 
-                        // Modify code to adapt for testing phase
+                        // Modify id to adapt for testing phase
 
                         // String test = Response.getString("test");
 
@@ -737,13 +737,13 @@ public class LobbyActivity extends AppCompatActivity {
     }
 
     private void setStatus(int state) {
-        // Run code before changing state
+        // Run id before changing state
 
         lobbyState = state;
         if (mImageFlipper == null)
             mImageFlipper = (FrameLayout) findViewById(R.id.lobby_image_flipper);
 
-        // Run code after changing state
+        // Run id after changing state
         if (lobbyState == ERROR) {
 
             // Code for debug version
@@ -760,7 +760,7 @@ public class LobbyActivity extends AppCompatActivity {
                                 ConversationActivity.class
                         );
                         Log.i("Lobby", "Opeing chat in offline");
-                        startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
+                        startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_PROFILE);
                         overridePendingTransition(
                                 android.R.anim.fade_in,
                                 android.R.anim.fade_out
@@ -868,7 +868,7 @@ public class LobbyActivity extends AppCompatActivity {
         if (chatPending) {
             Log.i("Lobby", "Chat pending, opening pending chat");
             Intent conversationIntent = new Intent(this, ConversationActivity.class);
-            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_CONVERSATION);
+            startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_PROFILE);
         }
     }
 

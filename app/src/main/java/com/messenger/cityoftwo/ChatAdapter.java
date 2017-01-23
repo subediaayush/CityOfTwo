@@ -1,18 +1,23 @@
 package com.messenger.cityoftwo;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.support.annotation.ColorInt;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Locale;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -23,15 +28,32 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+	public static final int STATUS_PENDING = 0;
+	public static final int STATUS_SENT = 1;
+	public static final int STATUS_SEEN = 2;
+	public static final int STATUS_ERROR = -1;
+
 	public static final int MODE_CHAT = 0;
 	public static final int MODE_PROFILE = 1;
+
+	private final String TAG = "ChatAdapter";
+
+	private final long MILLIS_IN_DAY = 86400000;
+	private final long DAYS_IN_WEEK = MILLIS_IN_DAY * 7;
+	private final long MONTHS_IN_YEAR = MILLIS_IN_DAY * 365;
 
 	private Context mContext;
 	private SortedList<Conversation> mConversationList;
 
+	private HashSet<Integer> mSentMessages;
+	private HashSet<Integer> mErrorMessages;
+
+	private int mLastSeen = -1;
+
 	private Contact mGuest;
-	private AdapterListener adapterListener;
 	private int mode;
+
+	private ChatEventListener mEventListener;
 
 	public ChatAdapter(Context context, Contact guest) {
 
@@ -39,25 +61,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 		mGuest = guest;
 
+		mSentMessages = new HashSet<>();
+		mErrorMessages = new HashSet<>();
+
 		mConversationList = new SortedList<>(Conversation.class, new SortedList.Callback<Conversation>() {
 			@Override
 			public int compare(Conversation o1, Conversation o2) {
 				return Conversation.CONVERSATION_COMPARATOR.compare(o1, o2);
-			}
-
-			@Override
-			public void onInserted(int position, int count) {
-				notifyItemRangeInserted(position, count);
-			}
-
-			@Override
-			public void onRemoved(int position, int count) {
-				notifyItemRangeRemoved(position, count);
-			}
-
-			@Override
-			public void onMoved(int fromPosition, int toPosition) {
-				notifyItemMoved(fromPosition, toPosition);
 			}
 
 			@Override
@@ -76,6 +86,21 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 						item1.getTime() == item2.getTime() &&
 						item1.getFlags().equals(item2.getFlags());
 			}
+
+			@Override
+			public void onInserted(int position, int count) {
+				notifyItemRangeInserted(position, count);
+			}
+
+			@Override
+			public void onRemoved(int position, int count) {
+				notifyItemRangeRemoved(position, count);
+			}
+
+			@Override
+			public void onMoved(int fromPosition, int toPosition) {
+				notifyItemMoved(fromPosition, toPosition);
+			}
 		});
 	}
 
@@ -85,6 +110,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		if ((viewType & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
 			View view = LayoutInflater.from(mContext)
 					.inflate(R.layout.layout_msg_start, parent, false);
+			Log.i(TAG, "Assigning Profile holder. FLAG: " + Integer.toBinaryString(viewType));
 			return new ProfileViewHolder(view);
 		}
 
@@ -92,11 +118,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
 				View view = LayoutInflater.from(mContext)
 						.inflate(R.layout.layout_msg_sent, parent, false);
+				Log.i(TAG, "Assigning Text (Sent) holder. FLAG: " + Integer.toBinaryString(viewType));
 				return new TextViewHolder(view);
 			}
 			if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
 				View view = LayoutInflater.from(mContext)
 						.inflate(R.layout.layout_msg_received, parent, false);
+				Log.i(TAG, "Assigning Text (Recv) holder. FLAG: " + Integer.toBinaryString(viewType));
 				return new TextViewHolder(view);
 			}
 		}
@@ -105,14 +133,18 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
 				View view = LayoutInflater.from(mContext)
 						.inflate(R.layout.layout_profile_sent, parent, false);
+				Log.i(TAG, "Assigning Reveal (Sent) holder. FLAG: " + Integer.toBinaryString(viewType));
 				return new RevealViewHolder(view);
 			}
 			if ((viewType & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
 				View view = LayoutInflater.from(mContext)
 						.inflate(R.layout.layout_profile_received, parent, false);
+				Log.i(TAG, "Assigning Reveal (Recv)holder. FLAG: " + Integer.toBinaryString(viewType));
 				return new RevealViewHolder(view);
 			}
 		}
+
+		Log.i(TAG, "No holder found. Assigning Empty holder. FLAG: " + Integer.toBinaryString(viewType));
 
 		return new GenericViewHolder(LayoutInflater.from(mContext).inflate(
 				R.layout.layout_msg_empty, parent, false
@@ -160,7 +192,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		return null;
 	}
 
-	private void handleTextItem(TextViewHolder holder, int position, int flags) {
+	private void handleTextItem(TextViewHolder holder, final int position, int flags) {
 		Conversation c = mConversationList.get(position);
 
 		if ((flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
@@ -173,8 +205,63 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 		holder.text.setText(c.getText());
 
-		String messageTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(c.getTime());
+		String messageTime;
+		messageTime = humanizeDateTime(c.getTime());
+
 		holder.time.setText(messageTime);
+
+		int status = getStatus(position);
+
+		@ColorInt
+		int color = Color.TRANSPARENT;
+		if (status == STATUS_SEEN && position == mLastSeen) color = Color.GREEN;
+		else if (status == STATUS_ERROR) color = Color.RED;
+		else if (status == STATUS_SENT) color = Color.YELLOW;
+
+		holder.status.setBackgroundColor(color);
+
+		holder.text.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null)
+					mEventListener.onConversationClicked(position, getStatus(position));
+			}
+		});
+	}
+
+	private String humanizeDateTime(long time) {
+		long now = System.currentTimeMillis();
+
+		long diff = Math.abs(now - time);
+
+		if (diff < MILLIS_IN_DAY) return new SimpleDateFormat(
+				"hh:mm a",
+				Locale.getDefault()
+		).format(time);
+
+		else if (diff < DAYS_IN_WEEK) return new SimpleDateFormat(
+				"hh:mm a\nEEEE",
+				Locale.getDefault()
+		).format(time);
+
+		else if (diff < MONTHS_IN_YEAR) return new SimpleDateFormat(
+				"hh:mm a\nMMMM dd",
+				Locale.getDefault()
+		).format(time);
+
+		else return new SimpleDateFormat(
+					"hh:mm a\nMMM dd, yyyy",
+					Locale.getDefault()
+			).format(time);
+
+	}
+
+	private int getStatus(int position) {
+		if (mErrorMessages.contains(position)) return STATUS_ERROR;
+		if (position <= mLastSeen) return STATUS_SEEN;
+		if (mSentMessages.contains(position)) return STATUS_SENT;
+
+		return STATUS_PENDING;
 	}
 
 	private String getRandomImage() {
@@ -182,9 +269,52 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 	}
 
 	private void handleProfileItem(ProfileViewHolder holder, int position, int flags) {
+
+		holder.message.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onSendMessage();
+			}
+		});
+
+		holder.save.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onSaveContact();
+			}
+		});
+
+		holder.reveal.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onRevealContact();
+			}
+		});
+
+		holder.facebook.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onViewProfile();
+			}
+		});
+
+		holder.commonLikes.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onViewCommonLikes();
+			}
+		});
+
+		holder.block.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onBlockProfile();
+			}
+		});
+
 		switch (mode) {
 			case MODE_CHAT:
-
+				break;
 		}
 	}
 
@@ -208,10 +338,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		mConversationList.clear();
 	}
 
-	public void setAdapterListener(AdapterListener listener) {
-		this.adapterListener = listener;
-	}
-
 	public void setGuest(Contact guest) {
 		this.mGuest = guest;
 	}
@@ -229,7 +355,79 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		this.mode = mode;
 	}
 
-	public interface AdapterListener {
+	public void setChatEventListener(ChatEventListener c) {
+		mEventListener = c;
+	}
+
+	public void setLastSeen(long lastSeen) {
+		Conversation lastSeenWrapper = new Conversation("last_seen", CityOfTwo.FLAG_LAST_SEEN, lastSeen);
+
+		int chatLength = getItemCount();
+
+		int latestIndex = mLastSeen == -1 ? 0 : mLastSeen;
+		index_lookup:
+		for (int i = latestIndex; i < chatLength; i++) {
+			Conversation c = mConversationList.get(i);
+			int comp = Conversation.TIME_COMPARATOR.compare(lastSeenWrapper, c);
+
+			if (comp != -1) {
+				if (c.containsFlag(CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT)) {
+					latestIndex = i;
+					break;
+				} else {
+					for (int j = i; i >= 0; i--) {
+						Conversation c_ = mConversationList.get(j);
+						if (c_.containsFlag(CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT)) {
+							latestIndex = j;
+							break index_lookup;
+						}
+					}
+				}
+			}
+
+			if (c.containsFlag(CityOfTwo.FLAG_SENT)) {
+				setStatus(i, STATUS_SEEN);
+			}
+
+		}
+
+		if (mLastSeen != latestIndex) {
+			mLastSeen = latestIndex;
+			notifyItemRangeChanged(0, mLastSeen);
+		}
+	}
+
+	public void setStatus(int index, int status) {
+		if (status == STATUS_ERROR) {
+			mErrorMessages.add(index);
+			mSentMessages.remove(index);
+		} else if (status == STATUS_SENT) {
+			mSentMessages.add(index);
+			mErrorMessages.remove(index);
+		} else if (status == STATUS_SEEN || status == STATUS_PENDING) {
+			mSentMessages.remove(index);
+			mErrorMessages.remove(index);
+		}
+
+		notifyItemChanged(index);
+	}
+
+	public interface ChatEventListener {
+		void onConversationClicked(int postion, int status);
+
+		void onEditNickname();
+
+		void onSendMessage();
+
+		void onSaveContact();
+
+		void onRevealContact();
+
+		void onViewProfile();
+
+		void onViewCommonLikes();
+
+		void onBlockProfile();
 	}
 
 	private class TextViewHolder extends RecyclerView.ViewHolder {
@@ -237,6 +435,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		TextView time;
 		TextView text;
 		CircleImageView image;
+		ImageView status;
 
 		public TextViewHolder(View itemView) {
 			super(itemView);
@@ -245,6 +444,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			text = (TextView) itemView.findViewById(R.id.message_text);
 
 			image = (CircleImageView) itemView.findViewById(R.id.icon);
+			status = (ImageView) itemView.findViewById(R.id.status);
 		}
 	}
 

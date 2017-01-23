@@ -35,139 +35,145 @@
 		app:layout_behavior="@string/appbar_scrolling_view_behavior"
 		/>
 
+	<View
+		android:id="@+id/chat_is_typing_indicator"
+		android:layout_width="32dp"
+		android:layout_height="32dp"
+		android:layout_gravity="start|bottom"
+		android:layout_marginBottom="60dp"
+		android:layout_marginStart="15dp"
+		android:background="@drawable/ic_placeholder"
+		/>
+
 	<LinearLayout
-		android:id="@+id/chat_options_container"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_gravity="bottom"
 		android:layout_margin="5dp"
+		android:animateLayoutChanges="true"
 		android:background="@drawable/chat_input_background"
-		android:elevation="3dp"
 		android:orientation="vertical"
-		android:paddingBottom="56dp"
 		>
 
 		<LinearLayout
+			android:id="@+id/chat_options_container"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:orientation="horizontal"
+			android:layout_marginBottom="5dp"
+			android:elevation="3dp"
+			android:orientation="vertical"
+			android:visibility="gone"
 			>
 
-			<Button
-				android:id="@+id/message"
-				style="@style/ProfileOptionButtons.Light"
-				android:drawableTop="@drawable/ic_send_new_message_light"
-				android:text="New Chat"
-				/>
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal"
+				>
 
-			<Button
-				android:id="@+id/save"
-				style="@style/ProfileOptionButtons.Light"
-				android:drawableTop="@drawable/ic_send_request_light"
-				android:text="Save as Contact"
-				/>
+				<Button
+					android:id="@+id/message"
+					style="@style/ProfileOptionButtons.Light"
+					android:drawableTop="@drawable/ic_send_new_message_light"
+					android:text="New Chat"
+					/>
 
-			<Button
-				android:id="@+id/reveal"
-				style="@style/ProfileOptionButtons.Light"
-				android:drawableTop="@drawable/ic_self_reveal_light"
-				android:text="Reveal"
-				/>
+				<Button
+					android:id="@+id/save"
+					style="@style/ProfileOptionButtons.Light"
+					android:drawableTop="@drawable/ic_send_request_light"
+					android:text="Save as Contact"
+					/>
 
+				<Button
+					android:id="@+id/reveal"
+					style="@style/ProfileOptionButtons.Light"
+					android:drawableTop="@drawable/ic_self_reveal_light"
+					android:text="Reveal"
+					/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				>
+
+				<Button
+					android:id="@+id/profile"
+					style="@style/ProfileOptionButtons.Light"
+					android:drawableTop="@drawable/ic_facebook_light"
+					android:text="View Profile"
+					/>
+
+				<Button
+					android:id="@+id/filters"
+					style="@style/ProfileOptionButtons.Light"
+					android:drawableTop="@drawable/ic_filters_light"
+					android:text="Change Filters"
+					/>
+
+				<Button
+					android:id="@+id/refer"
+					style="@style/ProfileOptionButtons.Light"
+					android:drawableTop="@drawable/ic_refer_light"
+					android:text="Refer CoyRudy"
+					/>
+			</LinearLayout>
 		</LinearLayout>
 
 		<LinearLayout
+			android:id="@+id/chat_input_view"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			>
-
-			<Button
-				android:id="@+id/profile"
-				style="@style/ProfileOptionButtons.Light"
-				android:drawableTop="@drawable/ic_facebook_light"
-				android:text="View Profile"
-				/>
-
-			<Button
-				android:id="@+id/filters"
-				style="@style/ProfileOptionButtons.Light"
-				android:drawableTop="@drawable/ic_filters_light"
-				android:text="Change Filters"
-				/>
-
-			<Button
-				android:id="@+id/refer"
-				style="@style/ProfileOptionButtons.Light"
-				android:drawableTop="@drawable/ic_refer_light"
-				android:text="Refer CoyRudy"
-				/>
-		</LinearLayout>
-	</LinearLayout>
-
-	<LinearLayout
-		android:id="@+id/chat_input_view"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_gravity="bottom"
-		android:layout_margin="5dp"
-		android:elevation="4dp"
-		android:orientation="vertical"
-		app:layout_scrollFlags="scroll|enterAlways"
-		>
-
-
-		<View
-			android:id="@+id/chat_is_typing_indicator"
-			android:layout_width="32dp"
-			android:layout_height="32dp"
-			android:layout_marginBottom="4dp"
-			android:layout_marginStart="15dp"
-			android:background="@drawable/ic_placeholder"
-			/>
-
-		<LinearLayout
-			android:layout_width="match_parent"
-			android:layout_height="46dp"
 			android:layout_gravity="bottom"
-			android:background="@drawable/chat_input_background"
-			android:orientation="horizontal"
+			android:elevation="4dp"
+			android:orientation="vertical"
 			>
 
-			<ImageView
-				android:id="@+id/chat_extras_button"
-				style="@style/ChatOptionsButton"
-				android:layout_width="46dp"
+			<LinearLayout
+				android:layout_width="match_parent"
 				android:layout_height="46dp"
-				android:background="@drawable/input_button"
-				appCompat:srcCompat="@drawable/ic_add"
-				/>
+				android:layout_gravity="bottom"
+				android:background="@drawable/chat_input_background"
+				android:orientation="horizontal"
+				>
 
-			<EditText
-				android:id="@+id/input_text"
-				android:layout_width="0dp"
-				android:layout_height="46dp"
-				android:layout_weight="1"
-				android:background="@null"
-				android:gravity="center_vertical"
-				android:hint="Enter your message"
-				android:imeOptions="actionSend"
-				android:minLines="3"
-				android:padding="5dp"
-				android:textColor="@color/white"
-				android:textColorHint="@color/colorPrimaryLight"
-				android:textCursorDrawable="@null"
-				android:textSize="15sp"
-				/>
+				<ImageView
+					android:id="@+id/chat_extras_button"
+					style="@style/ChatOptionsButton"
+					android:layout_width="46dp"
+					android:layout_height="46dp"
+					android:background="@drawable/input_button"
+					appCompat:srcCompat="@drawable/ic_add"
+					/>
 
-			<ImageView
-				android:id="@+id/send_button"
-				style="@style/ChatOptionsButton"
-				android:layout_width="46dp"
-				android:layout_height="46dp"
-				android:background="@drawable/input_button"
-				app:srcCompat="@drawable/ic_send"
-				/>
+				<EditText
+					android:id="@+id/input_text"
+					android:layout_width="0dp"
+					android:layout_height="46dp"
+					android:layout_weight="1"
+					android:background="@null"
+					android:gravity="center_vertical"
+					android:hint="Enter your message"
+					android:imeOptions="actionSend"
+					android:minLines="3"
+					android:padding="5dp"
+					android:textColor="@color/white"
+					android:textColorHint="@color/colorPrimaryLight"
+					android:textCursorDrawable="@null"
+					android:textSize="15sp"
+					/>
+
+				<ImageView
+					android:id="@+id/send_button"
+					style="@style/ChatOptionsButton"
+					android:layout_width="46dp"
+					android:layout_height="46dp"
+					android:background="@drawable/input_button"
+					app:srcCompat="@drawable/ic_send"
+					/>
+			</LinearLayout>
 		</LinearLayout>
 	</LinearLayout>
-
 </android.support.design.widget.CoordinatorLayout>

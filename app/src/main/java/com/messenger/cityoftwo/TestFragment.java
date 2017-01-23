@@ -67,7 +67,7 @@ public class TestFragment extends Fragment {
 
 		context = getContext();
 
-//        testPager = (NonSwipeableViewPager) rootView.findViewById(R.code.test_viewpager);
+//        testPager = (NonSwipeableViewPager) rootView.findViewById(R.id.test_viewpager);
 		questionContainer = (RelativeLayout) rootView.findViewById(R.id.question_container);
 		answerContainer = (LinearLayout) rootView.findViewById(R.id.answer_container);
 		testQuestion = (TextView) rootView.findViewById(R.id.test_question);

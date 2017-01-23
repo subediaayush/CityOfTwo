@@ -124,7 +124,7 @@ public class LoginActivity extends AppCompatActivity {
 //                    );
 //
 //                    Log.i("Lobby", "Opeing chat in offline");
-//                    startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_CONVERSATION);
+//                    startActivityForResult(conversationActivity, CityOfTwo.ACTIVITY_PROFILE);
 //                    overridePendingTransition(
 //                            android.R.anim.fade_in,
 //                            android.R.anim.fade_out
@@ -318,21 +318,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-
-        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOGIN);
-        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
 
@@ -357,5 +342,20 @@ public class LoginActivity extends AppCompatActivity {
             default:
                 break;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_BACKGROUND);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOGIN);
+        CityOfTwo.setApplicationState(CityOfTwo.APPLICATION_FOREGROUND);
     }
 }

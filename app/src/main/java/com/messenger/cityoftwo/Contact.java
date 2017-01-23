@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
@@ -35,34 +36,39 @@ public class Contact implements Parcelable {
 			else return 1;
 		}
 	};
-	public static final Comparator<Contact> MESSAGE_COMPARATOR = new Comparator<Contact>() {
-		@Override
-		public int compare(Contact lhs, Contact rhs) {
-			// Declare equal if both contacts have or do not have any message
-			if ((lhs.lastMessage == null) == (rhs.lastMessage == null)) return 0;
 
-			if (lhs.lastMessage == null) return 1;
-			else return -1;
-		}
-	};
 	public static final Comparator<Contact> NAME_COMPARATOR = new Comparator<Contact>() {
 		@Override
 		public int compare(Contact lhs, Contact rhs) {
 			return lhs.name.compareTo(rhs.name);
 		}
 	};
+
+	public static final Comparator<Contact> MESSAGE_COMPARATOR = new Comparator<Contact>() {
+		@Override
+		public int compare(Contact lhs, Contact rhs) {
+			// Declare equal if both contacts have or do not have any message
+			if ((lhs.lastMessages.isEmpty() == rhs.lastMessages.isEmpty())) return 0;
+
+			if (lhs.lastMessages.isEmpty()) return 1;
+			else return -1;
+		}
+	};
+
 	public boolean isFriend;
-	String code;
+	Integer id;
+	String fid;
 	String name;
 	String nickName;
 	boolean hasRevealed;
 	String status;
 	String[] topLikes;
-	Conversation lastMessage;
+	ArrayList<Conversation> lastMessages;
 	int commonLikes;
 
-	public Contact(String code, String name, String nickName, boolean hasRevealed, String icon, String status, String[] topLikes, int commonLikes, boolean isFriend, Conversation lastMessage) {
-		this.code = code;
+	public Contact(Integer code, String fid, String name, String nickName, boolean hasRevealed, String status, String[] topLikes, int commonLikes, boolean isFriend) {
+		this.id = code;
+		this.fid = fid;
 		this.name = name;
 		this.nickName = nickName;
 		this.hasRevealed = hasRevealed;
@@ -70,7 +76,8 @@ public class Contact implements Parcelable {
 		this.topLikes = topLikes;
 		this.commonLikes = commonLikes;
 		this.isFriend = isFriend;
-		this.lastMessage = lastMessage;
+
+		this.lastMessages = new ArrayList<>();
 	}
 
 	public Contact(String contact) {
@@ -83,17 +90,25 @@ public class Contact implements Parcelable {
 			nickName = j.getString("nickname");
 			hasRevealed = j.getBoolean("has_revealed");
 			status = j.getString("status");
-			lastMessage = new Conversation(j.getString("message"));
 			commonLikes = j.getInt("common_likes");
 			isFriend = j.getBoolean("is_friend");
 
 			JSONArray arr = j.getJSONArray("top_likes");
 			int size = arr.length();
 			topLikes = new String[size];
+
 			for (int i = 0; i < size; i++)
 				topLikes[i] = (String) arr.get(i);
 
-			code = j.getString("code");
+			lastMessages = new ArrayList<>();
+			if (j.has("last_messages")) {
+				JSONArray rawMessages = j.getJSONArray("last_messages");
+				for (int i = 0; i < rawMessages.length(); i++)
+					lastMessages.add(new Conversation(rawMessages.getString(i)));
+			}
+
+			id = j.getInt("id");
+			fid = j.getString("fbid");
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -101,13 +116,17 @@ public class Contact implements Parcelable {
 
 	protected Contact(Parcel in) {
 		isFriend = in.readByte() != 0;
-		code = in.readString();
+		id = in.readInt();
+		fid = in.readString();
 		name = in.readString();
 		nickName = in.readString();
 		hasRevealed = in.readByte() != 0;
 		status = in.readString();
 		topLikes = in.createStringArray();
-		lastMessage = in.readParcelable(Conversation.class.getClassLoader());
+
+		lastMessages = new ArrayList<>();
+		in.readTypedList(lastMessages, Conversation.CREATOR);
+
 		commonLikes = in.readInt();
 	}
 
@@ -119,18 +138,21 @@ public class Contact implements Parcelable {
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeByte((byte) (isFriend ? 1 : 0));
-		dest.writeString(code);
+		dest.writeInt(id);
+		dest.writeString(fid);
 		dest.writeString(name);
 		dest.writeString(nickName);
 		dest.writeByte((byte) (hasRevealed ? 1 : 0));
 		dest.writeString(status);
 		dest.writeStringArray(topLikes);
-		dest.writeParcelable(lastMessage, flags);
+
+		dest.writeTypedList(lastMessages);
+
 		dest.writeInt(commonLikes);
 	}
 
-	public String getCode() {
-		return code;
+	public Integer getId() {
+		return id;
 	}
 
 	public String getName() {
@@ -155,7 +177,7 @@ public class Contact implements Parcelable {
 
 	@Override
 	public boolean equals(Object o) {
-		return o instanceof Contact && getCode().equals(((Contact) o).getCode());
+		return o instanceof Contact && getId().equals(((Contact) o).getId());
 	}
 
 	@Override
@@ -166,14 +188,20 @@ public class Contact implements Parcelable {
 			j.put("nickname", nickName);
 			j.put("has_revealed", hasRevealed);
 			j.put("status", status);
-			j.put("message", lastMessage);
 			j.put("common_likes", commonLikes);
 			j.put("topLikes", topLikes);
+			j.put("last_messages", new JSONArray(lastMessages));
 			j.put("is_friend", isFriend);
-			j.put("code", code);
+			j.put("id", id);
+			j.put("fbid", fid);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		return j.toString();
+	}
+
+
+	public void setLastMessage(ArrayList<Conversation> messages) {
+		lastMessages = messages;
 	}
 }

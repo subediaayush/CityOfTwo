@@ -424,7 +424,8 @@ public class IntroductionActivity extends IntroductionActivityBase {
 					accountInitialized = true;
 					startIfReady();
 
-				} catch (JSONException ignored) {
+				} catch (JSONException e) {
+					e.printStackTrace();
 					onFailure(-1);
 				}
 

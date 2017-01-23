@@ -14,11 +14,22 @@ public class ChatLayoutManager extends LinearLayoutManager {
 
 	private static final float MILLISECONDS_PER_INCH = 36f;
 	private Context mContext;
+	private boolean isScrollEnabled = true;
 
 
 	public ChatLayoutManager(Context context) {
 		super(context);
 		mContext = context;
+	}
+
+	public void setScrollEnabled(boolean flag) {
+		this.isScrollEnabled = flag;
+	}
+
+	@Override
+	public boolean canScrollVertically() {
+		//Similarly you can customize "canScrollHorizontally()" for managing horizontal scroll
+		return isScrollEnabled && super.canScrollVertically();
 	}
 
 	@Override

@@ -8,16 +8,38 @@ import org.json.JSONObject;
 
 import java.util.Comparator;
 
+import static com.messenger.cityoftwo.CityOfTwo.FLAG_END;
+import static com.messenger.cityoftwo.CityOfTwo.FLAG_START;
+
 /**
  * Created by Aayush on 1/15/2016.
  */
 public class Conversation implements Parcelable {
 
 
+	public static final Comparator<Conversation> FLAGS_COMPARATOR = new Comparator<Conversation>() {
+		@Override
+		public int compare(Conversation o1, Conversation o2) {
+			if (o1.getFlags().equals(o2.getFlags())) return 0;
+
+			if (o1.containsFlag(FLAG_START) || o2.containsFlag(FLAG_END)) return -1;
+			if (o2.containsFlag(FLAG_START) || o1.containsFlag(FLAG_END)) return 1;
+
+			return 0;
+		}
+	};
+	public static final Comparator<Conversation> TIME_COMPARATOR = new Comparator<Conversation>() {
+		@Override
+		public int compare(Conversation o1, Conversation o2) {
+			return (int) Math.signum(o1.getTime() - o2.getTime());
+		}
+	};
 	public static final Comparator<Conversation> CONVERSATION_COMPARATOR = new Comparator<Conversation>() {
 		@Override
 		public int compare(Conversation lhs, Conversation rhs) {
-			return (int) Math.signum(lhs.getComparableValue() - rhs.getComparableValue());
+			int res = FLAGS_COMPARATOR.compare(lhs, rhs);
+
+			return res == 0 ? TIME_COMPARATOR.compare(lhs, rhs) : res;
 		}
 	};
 	public static final Creator<Conversation> CREATOR = new Creator<Conversation>() {
@@ -57,10 +79,11 @@ public class Conversation implements Parcelable {
 
 		try {
 			JSONObject j = new JSONObject(conversation);
-			messageText = j.getString("name");
+			messageText = j.getString("data");
 			messageType = j.getInt("flags");
 			messageTime = j.getLong("time");
 		} catch (JSONException e) {
+			e.printStackTrace();
 			messageText = conversation;
 			messageType = 0;
 			messageTime = System.currentTimeMillis();
@@ -105,6 +128,14 @@ public class Conversation implements Parcelable {
 		this.flags &= ~flag;
 	}
 
+	public boolean containsFlag(int flag) {
+		return (flags & flag) == flag;
+	}
+
+	public void resetFlag() {
+		this.flags = 0;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (o == null) return false;
@@ -124,7 +155,7 @@ public class Conversation implements Parcelable {
 		String output;
 		try {
 			JSONObject j = new JSONObject();
-			j.put("name", text);
+			j.put("data", text);
 			j.put("flags", flags);
 			j.put("time", time);
 
@@ -134,18 +165,6 @@ public class Conversation implements Parcelable {
 		}
 
 		return output;
-	}
-
-	private long getComparableValue() {
-		if ((getFlags() & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START)
-			return Long.MIN_VALUE / 2;
-		if ((getFlags() & CityOfTwo.FLAG_END) == CityOfTwo.FLAG_END)
-			return Long.MAX_VALUE / 2;
-		if ((getFlags() & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD)
-			return Long.MAX_VALUE / 2 - 1;
-		if ((getFlags() & CityOfTwo.FLAG_INDICATOR) == CityOfTwo.FLAG_INDICATOR)
-			return Long.MAX_VALUE / 2 - 2;
-		return getTime();
 	}
 
 	@Override

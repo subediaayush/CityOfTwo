@@ -50,25 +50,9 @@ public class ChatItemAnimator extends BaseItemAnimator {
         int viewType = holder.getItemViewType();
         if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
                 (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE ||
-                (viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
+                (viewType & CityOfTwo.FLAG_REQUEST) == CityOfTwo.FLAG_REQUEST) {
             View view = holder.itemView;
             ViewCompat.setTranslationY(view, view.getHeight());
-        }
-    }
-
-    @Override
-    protected void animateAddImpl(final RecyclerView.ViewHolder holder) {
-        int viewType = holder.getItemViewType();
-        if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
-                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE ||
-                (viewType & CityOfTwo.FLAG_AD) == CityOfTwo.FLAG_AD) {
-            final View view = holder.itemView;
-            ViewCompat.animate(view)
-                    .translationY(0)
-                    .setDuration(mAddDuration)
-                    .setInterpolator(new AccelerateInterpolator())
-                    .setListener(new DefaultAddVpaListener(holder))
-                    .start();
         }
     }
 
@@ -81,5 +65,21 @@ public class ChatItemAnimator extends BaseItemAnimator {
                 .setDuration(mRemoveDuration)
                 .setListener(new DefaultRemoveVpaListener(holder))
                 .start();
+    }
+
+    @Override
+    protected void animateAddImpl(final RecyclerView.ViewHolder holder) {
+        int viewType = holder.getItemViewType();
+        if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT ||
+                (viewType & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE ||
+                (viewType & CityOfTwo.FLAG_REQUEST) == CityOfTwo.FLAG_REQUEST) {
+            final View view = holder.itemView;
+            ViewCompat.animate(view)
+                    .translationY(0)
+                    .setDuration(mAddDuration)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new DefaultAddVpaListener(holder))
+                    .start();
+        }
     }
 }

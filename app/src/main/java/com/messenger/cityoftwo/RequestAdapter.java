@@ -15,7 +15,7 @@ import java.util.HashSet;
 /**
  * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
  * specified {@link com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListener}.
- * TODO: Replace the implementation with code for your data type.
+ * TODO: Replace the implementation with id for your data type.
  */
 public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
 	SortedList<Message> mDataset;
@@ -34,21 +34,6 @@ public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> 
 			}
 
 			@Override
-			public void onInserted(int position, int count) {
-				notifyItemRangeInserted(position, count);
-			}
-
-			@Override
-			public void onRemoved(int position, int count) {
-				notifyItemRangeRemoved(position, count);
-			}
-
-			@Override
-			public void onMoved(int fromPosition, int toPosition) {
-				notifyItemMoved(fromPosition, toPosition);
-			}
-
-			@Override
 			public void onChanged(int position, int count) {
 				notifyItemRangeChanged(position, count);
 			}
@@ -61,6 +46,21 @@ public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> 
 			@Override
 			public boolean areItemsTheSame(Message item1, Message item2) {
 				return item1.getId().equals(item2.getId());
+			}
+
+			@Override
+			public void onInserted(int position, int count) {
+				notifyItemRangeInserted(position, count);
+			}
+
+			@Override
+			public void onRemoved(int position, int count) {
+				notifyItemRangeRemoved(position, count);
+			}
+
+			@Override
+			public void onMoved(int fromPosition, int toPosition) {
+				notifyItemMoved(fromPosition, toPosition);
 			}
 		});
 	}

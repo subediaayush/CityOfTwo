@@ -43,7 +43,7 @@ public class SplashActivity extends AppCompatActivity {
 //		new Handler().postDelayed(new Runnable() {
 //			@Override
 //			public void run() {
-//				findViewById(R.code.splash_description).setVisibility(View.GONE);
+//				findViewById(R.id.splash_description).setVisibility(View.GONE);
 //				new Handler().postDelayed(new Runnable() {
 //					@Override
 //					public void run() {
@@ -145,7 +145,8 @@ public class SplashActivity extends AppCompatActivity {
 					startActivity(intent);
 					finish();
 
-				} catch (JSONException ignored) {
+				} catch (JSONException e) {
+					e.printStackTrace();
 					startAppIntro();
 				}
 

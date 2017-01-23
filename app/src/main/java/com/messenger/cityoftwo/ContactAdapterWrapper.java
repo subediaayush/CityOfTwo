@@ -9,19 +9,24 @@ import java.util.ArrayList;
  * Created by Aayush on 1/16/2017.
  */
 
-public class ContactAdapterWrapper {
+public class ContactAdapterWrapper implements ContactsAdapterInterface {
 	private SectionedContactsAdapter sectionedContactsAdapter;
 	private ContactsAdapter contactsAdapter;
 
 	private Context mContext;
+
 	private boolean isSectioned;
 
-	public ContactAdapterWrapper(Context context, boolean isSectioned) {
+	public ContactAdapterWrapper(Context context, int searchMode) {
 		this.mContext = context;
-		this.isSectioned = isSectioned;
 
-		if (isSectioned) sectionedContactsAdapter = new SectionedContactsAdapter(mContext);
-		else contactsAdapter = new ContactsAdapter(mContext);
+		isSectioned = searchMode ==
+				(ContactsFragment.SEARCH_MODE_MATCHES | ContactsFragment.SEARCH_MODE_CONTACTS);
+
+		if (isSectioned)
+			sectionedContactsAdapter = new SectionedContactsAdapter(mContext);
+		else
+			contactsAdapter = new ContactsAdapter(mContext);
 	}
 
 	public RecyclerView.Adapter getAdapter() {
@@ -34,41 +39,53 @@ public class ContactAdapterWrapper {
 	}
 
 
+	@Override
 	public void setDataset(ArrayList<Contact> contacts) {
 		if (isSectioned) sectionedContactsAdapter.setDataset(contacts);
 		else contactsAdapter.setDataset(contacts);
 	}
 
+	@Override
 	public int insert(Contact c) {
 		return isSectioned
 				? sectionedContactsAdapter.insert(c)
 				: contactsAdapter.insert(c);
 	}
 
+	@Override
+	public void update(Contact c) {
+		if (isSectioned) sectionedContactsAdapter.update(c);
+		else contactsAdapter.update(c);
+	}
+
+	@Override
 	public void insertAll(ArrayList<Contact> c) {
 		if (isSectioned) sectionedContactsAdapter.insertAll(c);
 		else contactsAdapter.insertAll(c);
 	}
 
+	@Override
 	public void clear() {
 		if (isSectioned) sectionedContactsAdapter.clear();
 		else contactsAdapter.clear();
 	}
 
-	public void clearSection(int section) {
-		if (isSectioned) sectionedContactsAdapter.clearSection(section);
-		else contactsAdapter.clear();
-	}
-
+	@Override
 	public void setEventListener(ContactsEventListener mEventListener) {
 		if (isSectioned) sectionedContactsAdapter.setEventListener(mEventListener);
 		else contactsAdapter.setEventListener(mEventListener);
 	}
 
+	@Override
 	public Contact get(int position) {
 		return isSectioned
 				? sectionedContactsAdapter.get(position)
 				: contactsAdapter.get(position);
+	}
+
+	public void clearSection(int section) {
+		if (isSectioned) sectionedContactsAdapter.clearSection(section);
+		else contactsAdapter.clear();
 	}
 
 	public interface ContactsEventListener {
