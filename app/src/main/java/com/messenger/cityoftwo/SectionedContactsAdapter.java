@@ -3,6 +3,7 @@ package com.messenger.cityoftwo;
 import android.content.Context;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +18,13 @@ import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListene
 /**
  * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
  * specified {@link ContactsEventListener}.
- * TODO: Replace the implementation with code for your data type.
+ * TODO: Replace the implementation with id for your data type.
  */
-public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHolder> {
+public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHolder> implements ContactsAdapterInterface {
 
 	public static final int GUEST_MATCH = 0;
 	public static final int GUEST_CONTACT = 1;
+	private static final String TAG = "SectionedContactAdapter";
 
 	private SortedList<Contact> mDataset;
 
@@ -36,12 +38,30 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 			@Override
 			public int compare(Contact o1, Contact o2) {
 				int comparison;
-				comparison = Contact.FRIEND_COMPARATOR.compare(o1, o2);
+				/*comparison = Contact.FRIEND_COMPARATOR.compare(o1, o2);
 
-				if (comparison == 0) comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
+				if (comparison == 0)*/
+				comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
 				if (comparison == 0) comparison = Contact.NAME_COMPARATOR.compare(o1, o2);
 
 				return comparison;
+			}
+
+			@Override
+			public void onChanged(int position, int count) {
+				notifyItemRangeChanged(position, count);
+			}
+
+			@Override
+			public boolean areContentsTheSame(Contact oldItem, Contact newItem) {
+				return oldItem.name.equals(newItem.name) &&
+						oldItem.lastMessages.size() == newItem.lastMessages.size() &&
+						oldItem.nickName.equals(newItem.nickName);
+			}
+
+			@Override
+			public boolean areItemsTheSame(Contact item1, Contact item2) {
+				return item1.id.equals(item2.id);
 			}
 
 			@Override
@@ -57,21 +77,6 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 			@Override
 			public void onMoved(int fromPosition, int toPosition) {
 				notifyItemMoved(fromPosition, toPosition);
-			}
-
-			@Override
-			public void onChanged(int position, int count) {
-				notifyItemRangeChanged(position, count);
-			}
-
-			@Override
-			public boolean areContentsTheSame(Contact oldItem, Contact newItem) {
-				return oldItem.getName().equals(newItem.getName());
-			}
-
-			@Override
-			public boolean areItemsTheSame(Contact item1, Contact item2) {
-				return item1.getCode().equals(item2.getCode());
 			}
 		});
 
@@ -89,12 +94,7 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 	@Override
 	protected String getSectionHeaderTitle(int section) {
 //		if (!isSectioned) return "";
-		return section == GUEST_CONTACT ? "Contacts" : "Matches";
-	}
-
-	@Override
-	public int getItemCount() {
-		return mDataset.size();
+		return (GUEST_CONTACT == section) ? "Contacts" : "Matches";
 	}
 
 	@Override
@@ -105,9 +105,9 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 	@Override
 	protected int getItemCountForSection(int section) {
 		int counter = 0;
-		boolean contactSection = section == GUEST_CONTACT;
+		boolean isContact = section == GUEST_CONTACT;
 		for (int i = 0; i < mDataset.size(); i++)
-			if (mDataset.get(i).isFriend == contactSection) counter++;
+			if (mDataset.get(i).isFriend == isContact) counter++;
 		return counter;
 	}
 
@@ -123,6 +123,7 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 
 	@Override
 	protected void onBindItemViewHolder(ContactHolder holder, int section, final int position) {
+		Log.i(TAG, "Section: " + getSectionHeaderTitle(section) + " Item: " + position);
 		Contact contact = mDataset.get(position);
 		if (contact.nickName.isEmpty()) {
 			holder.name.setText(contact.name);
@@ -142,7 +143,7 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 //				.into(holder.icon);
 
 //		holder.mItem = mValues.get(position);
-//		holder.mIdView.setText(mValues.get(position).code);
+//		holder.mIdView.setText(mValues.get(position).id);
 //		holder.mContentView.setText(mValues.get(position).content);
 //
 //		holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -157,6 +158,7 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 //		});
 	}
 
+	@Override
 	public void setDataset(ArrayList<Contact> contacts) {
 		for (int i = mDataset.size() - 1; i >= 0; i--) {
 			if (!contacts.contains(mDataset.get(i)))
@@ -166,16 +168,35 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 		mDataset.addAll(contacts);
 	}
 
+	@Override
 	public int insert(Contact c) {
 		return mDataset.add(c);
 	}
 
+	@Override
+	public void update(Contact c) {
+		int i = mDataset.indexOf(c);
+		if (i != SortedList.INVALID_POSITION) mDataset.updateItemAt(i, c);
+	}
+
+	@Override
 	public void insertAll(ArrayList<Contact> c) {
 		mDataset.addAll(c);
 	}
 
+	@Override
 	public void clear() {
 		mDataset.clear();
+	}
+
+	@Override
+	public void setEventListener(ContactsEventListener mEventListener) {
+		this.mEventListener = mEventListener;
+	}
+
+	@Override
+	public Contact get(int position) {
+		return mDataset.get(position);
 	}
 
 	public void clearSection(int section) {
@@ -183,13 +204,5 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 		for (int i = mDataset.size() - 1; i >= 0; i++) {
 			if (mDataset.get(i).isFriend == contactSection) mDataset.removeItemAt(i);
 		}
-	}
-
-	public void setEventListener(ContactsEventListener mEventListener) {
-		this.mEventListener = mEventListener;
-	}
-
-	public Contact get(int position) {
-		return mDataset.get(position);
 	}
 }
