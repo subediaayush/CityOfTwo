@@ -60,7 +60,7 @@ public class ContactAdapterWrapper implements ContactsAdapterInterface {
 
 	@Override
 	public void insertAll(ArrayList<Contact> c) {
-		if (isSectioned) sectionedContactsAdapter.insertAll(c);
+		if (!c.isEmpty()) if (isSectioned) sectionedContactsAdapter.insertAll(c);
 		else contactsAdapter.insertAll(c);
 	}
 

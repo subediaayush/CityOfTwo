@@ -337,7 +337,10 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 		}
 
 		public void execute() {
-			contactsHttpHandler.execute();
+			if ((searchMode & SEARCH_MODE_CONTACTS) == SEARCH_MODE_CONTACTS)
+				contactsHttpHandler.execute();
+			if ((searchMode & SEARCH_MODE_MATCHES) == SEARCH_MODE_MATCHES)
+				matchesHttpHandler.execute();
 		}
 	}
 }

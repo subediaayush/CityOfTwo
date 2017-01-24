@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.messenger.cityoftwo.dummy.DummyContent.DummyItem;
+import com.truizlop.sectionedrecyclerview.HeaderViewHolder;
 import com.truizlop.sectionedrecyclerview.SimpleSectionedAdapter;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListene
  * specified {@link ContactsEventListener}.
  * TODO: Replace the implementation with id for your data type.
  */
-public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ContactsAdapterInterface {
+public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHolder> implements ContactsAdapterInterface {
 
 	public static final int GUEST_MATCH = 0;
 	public static final int GUEST_CONTACT = 1;
@@ -40,10 +41,9 @@ public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.
 			@Override
 			public int compare(Contact o1, Contact o2) {
 				int comparison;
-				/*comparison = Contact.FRIEND_COMPARATOR.compare(o1, o2);
+				comparison = Contact.FRIEND_COMPARATOR.compare(o1, o2);
 
-				if (comparison == 0)*/
-				comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
+				if (comparison == 0) comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
 				if (comparison == 0) comparison = Contact.NAME_COMPARATOR.compare(o1, o2);
 
 				return comparison;
@@ -93,12 +93,6 @@ public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.
 //		return new ContactHolder(view);
 //	}
 
-	protected String getSectionHeaderTitle(int section) {
-//		if (!isSectioned) return "";
-		return (GUEST_CONTACT == section) ? "Contacts" : "Matches";
-	}
-
-
 	protected int getSectionCount() {
 		return 2;
 	}
@@ -106,8 +100,10 @@ public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.
 	protected int getItemCountForSection(int section) {
 		int counter = 0;
 		boolean isContact = section == GUEST_CONTACT;
-		for (int i = 0; i < mDataset.size(); i++)
-			if (mDataset.get(i).isFriend == isContact) counter++;
+		for (int i = 0; i < mDataset.size(); i++) {
+			boolean isGuestFriend = mDataset.get(i).isFriend;
+			if (isGuestFriend == isContact) counter++;
+		}
 		return counter;
 	}
 
@@ -122,7 +118,6 @@ public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.
 
 	@Override
 	protected void onBindItemViewHolder(ContactHolder holder, int section, final int position) {
-		Log.i(TAG, "Section: " + getSectionHeaderTitle(section) + " Item: " + position);
 		Contact contact = mDataset.get(position);
 		if (contact.nickName.isEmpty()) {
 			holder.name.setText(contact.name);
@@ -155,6 +150,17 @@ public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.
 //				}
 //			}
 //		});
+	}
+
+	@Override
+	protected void onBindSectionHeaderViewHolder(HeaderViewHolder holder, int section) {
+		Log.i(TAG, "Section: " + getSectionHeaderTitle(section) + " Items: " + getItemCountForSection(section));
+		super.onBindSectionHeaderViewHolder(holder, section);
+	}
+
+	protected String getSectionHeaderTitle(int section) {
+//		if (!isSectioned) return "";
+		return (GUEST_CONTACT == section) ? "Contacts" : "Matches";
 	}
 
 	@Override
@@ -205,28 +211,4 @@ public class SectionedContactsAdapter extends RecyclerView.Adapter<RecyclerView.
 		}
 	}
 
-	@Override
-	public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-		return null;
-	}
-
-	@Override
-	public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-
-	}
-
-	@Override
-	public int getItemViewType(int position) {
-
-		return super.getItemViewType(position);
-	}
-
-	@Override
-	public int getItemCount() {
-		return mDataset.size() + getSectionCount();
-	}
-
-	public interface SectionLabel {
-		void getLabel();
-	}
 }
