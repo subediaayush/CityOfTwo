@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -56,6 +57,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	public static final String ARG_CURRENT_GUEST = "current_guest";
 	public static final String ARG_OFFLINE_MESSAGES = "offline_messsages";
 	public static final String ARG_CURRENT_CHAT = "current_chat";
+	public static final String ARG_CURRENT_GUEST_POSITION = "current_guest_position";
 	private static final String TAG = "ProfileActivity";
 	private final String ARG_PARAMS = "params";
 
@@ -728,11 +730,18 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 			return;
 		}
 
+		setResultAsGuest();
+		finish();
+	}
+
+	private void setResultAsGuest() {
 		Intent resultIntent = new Intent();
 		resultIntent.putExtra(ARG_CURRENT_GUEST, mGuest);
+		resultIntent.putExtra(ARG_CURRENT_GUEST_POSITION,
+				getIntent().getIntExtra(ARG_CURRENT_GUEST_POSITION, -1));
 
 		setResult(RESULT_OK, resultIntent);
-		finish();
+
 	}
 
 	private void resumeConversation(Bundle savedInstanceState) {
@@ -770,11 +779,45 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 		final ContactsFragment newChatDialog = ContactsFragment.newInstance();
 		newChatDialog.setArguments(contactsArgs);
 
+		ViewGroup.LayoutParams params = newChatDialog.getDialog().getWindow().getAttributes();
+		params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+		params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+
+		newChatDialog.getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+
 		newChatDialog.setListener(new ContactsFragment.ContactsFragmentListener() {
 			@Override
-			public void onContactSelected(Contact contact) {
+			public void onContactSelected(Contact contact, int position) {
 				newChatDialog.dismiss();
+
+				if (contact.equals(mGuest)) return;
+
+				Intent contactIntent = new Intent(ProfileActivity.this, ProfileActivity.class);
+
+				contactIntent.putExtra(
+						ProfileActivity.ARG_PROFILE_MODE,
+						ChatAdapter.MODE_CHAT
+				);
+
+				contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST, contact);
+				contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST_POSITION, position);
+
+				startActivityForResult(contactIntent, CityOfTwo.ACTIVITY_PROFILE);
+
+				setResultAsGuest();
+				finish();
 			}
+
+			@Override
+			public void onContactsLoaded(int number) {
+
+			}
+
+			@Override
+			public void onContactLoadError() {
+
+			}
+
 		});
 		newChatDialog.show(fm, "CONTACTS");
 	}

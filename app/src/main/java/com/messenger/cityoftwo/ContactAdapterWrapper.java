@@ -53,9 +53,9 @@ public class ContactAdapterWrapper implements ContactsAdapterInterface {
 	}
 
 	@Override
-	public void update(Contact c) {
-		if (isSectioned) sectionedContactsAdapter.update(c);
-		else contactsAdapter.update(c);
+	public void update(Contact c, int position) {
+		if (isSectioned) sectionedContactsAdapter.update(c, position);
+		else contactsAdapter.update(c, position);
 	}
 
 	@Override

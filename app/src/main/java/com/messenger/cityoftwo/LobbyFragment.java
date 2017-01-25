@@ -61,6 +61,7 @@ public class LobbyFragment extends Fragment {
 
 
 	private LobbyEventListener mListener;
+	private View mMatchesCardContainer;
 
 	public LobbyFragment() {
 		// Required empty public constructor
@@ -186,11 +187,39 @@ public class LobbyFragment extends Fragment {
 	}
 
 	private void initMatchesView() {
-		mMatches.removeAllViews();
+		Bundle contactsArgs = new Bundle();
+		contactsArgs.putString(ContactsFragment.ARG_TOKEN, mToken);
+		contactsArgs.putInt(ContactsFragment.ARG_SEARCH_MODE, ContactsFragment.SEARCH_MODE_MATCHES);
 
-		mMatchesContainer.setVisibility(View.GONE);
-		mMatchesPlaceholder.setVisibility(View.VISIBLE);
+		ContactsFragment contactsFragment = ContactsFragment.newInstance();
+		contactsFragment.setArguments(contactsArgs);
 
+		getChildFragmentManager().beginTransaction()
+				.replace(R.id.matches_container, contactsFragment)
+				.commit();
+
+		contactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
+			@Override
+			public void onContactSelected(Contact contact, int position) {
+
+			}
+
+			@Override
+			public void onContactsLoaded(int number) {
+				showSearchSuccess();
+				if (number == 0){
+					mStatusDescription.setText("No matches found");
+				} else {
+					mMatchesCardContainer.setVisibility(View.VISIBLE);
+					mStatusDescription.setText("Matches loaded");
+				}
+			}
+
+			@Override
+			public void onContactLoadError() {
+				showSearchFailure();
+			}
+		});
 	}
 
 	private void waitForServer() {
@@ -260,11 +289,11 @@ public class LobbyFragment extends Fragment {
 		mStatusContainer = view.findViewById(R.id.lobby_status);
 
 		mMatchesContainer = view.findViewById(R.id.matches_container);
-		mMatches = (ViewGroup) view.findViewById(R.id.matches);
-		mMatchesPlaceholder = view.findViewById(R.id.matches_placeholder);
+//		mMatches = (ViewGroup) view.findViewById(R.id.matches);
+		mMatchesCardContainer = view.findViewById(R.id.matches_card_container);
 		mMatchesCounter = (TextView) view.findViewById(R.id.matches_counter);
-		mSurpriseButton = (Button) view.findViewById(R.id.matches_surprise);
-		mRescanButton = (Button) view.findViewById(R.id.matches_rescan);
+//		mSurpriseButton = (Button) view.findViewById(R.id.matches_surprise);
+//		mRescanButton = (Button) view.findViewById(R.id.matches_rescan);
 
 		mFilterDistance = (TextView) view.findViewById(R.id.filter_distance);
 		mFilterGender = (TextView) view.findViewById(R.id.filter_gender);
@@ -296,21 +325,21 @@ public class LobbyFragment extends Fragment {
 			}
 		});
 
-		mSurpriseButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				startRandomConversation();
-			}
-		});
+//		mSurpriseButton.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				startRandomConversation();
+//			}
+//		});
 
-		mRescanButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				waitForServer();
-				initStatusView();
-				initMatchesView();
-			}
-		});
+//		mRescanButton.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				waitForServer();
+//				initStatusView();
+//				initMatchesView();
+//			}
+//		});
 
 		mFilterReset.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -368,6 +397,7 @@ public class LobbyFragment extends Fragment {
 
 						if (success) {
 							showSearchSuccess();
+							initMatchesView();
 						} else {
 							showSearchFailure();
 						}
@@ -389,4 +419,5 @@ public class LobbyFragment extends Fragment {
 			httpHandler.execute();
 		}
 	}
+
 }

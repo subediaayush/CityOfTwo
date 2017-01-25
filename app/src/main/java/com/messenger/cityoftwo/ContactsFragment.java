@@ -1,7 +1,6 @@
 package com.messenger.cityoftwo;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -109,33 +108,15 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 	@Override
 	public void onProfileViewed(int position) {
 		Contact contact = mContactAdapter.get(position);
-
-		Intent contactIntent = new Intent(getActivity(), ProfileActivity.class);
-
-		contactIntent.putExtra(
-				ProfileActivity.ARG_PROFILE_MODE,
-				ChatAdapter.MODE_CHAT
-		);
-
-		if (mListener != null) mListener.onContactSelected(contact);
-
-		contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST, contact);
-
-		startActivityForResult(contactIntent, CityOfTwo.ACTIVITY_PROFILE);
+		if (mListener != null) mListener.onContactSelected(contact, position);
 	}
 
 	public int getTotalContacts() {
 		return mContactAdapter.getItemCount();
 	}
 
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-
-		if (requestCode == CityOfTwo.ACTIVITY_PROFILE) {
-			Contact c = data.getParcelableExtra(ProfileActivity.ARG_CURRENT_GUEST);
-			mContactAdapter.update(c);
-		}
+	protected void reloadContact(Contact contact, int position){
+		mContactAdapter.update(contact, position);
 	}
 
 	@Override
@@ -163,6 +144,12 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 			mContacts = savedInstanceState.getParcelableArrayList(ARG_CONTACTS);
 			mToken = savedInstanceState.getString(ARG_TOKEN);
 			searchMode = savedInstanceState.getInt(ARG_SEARCH_MODE);
+
+			if ((searchMode & SEARCH_MODE_MATCHES) == SEARCH_MODE_MATCHES) {
+				mEmptyView.setText("No one available");
+			} else {
+				mEmptyView.setText("You do not have any contacts");
+			}
 
 
 			mLoadingView.setVisibility(View.GONE);
@@ -199,7 +186,11 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 	 * Created by Aayush on 1/23/2017.
 	 */
 	public static interface ContactsFragmentListener {
-		void onContactSelected(Contact contact);
+		void onContactSelected(Contact contact, int position);
+
+		void onContactsLoaded(int totalContacts);
+
+		void onContactLoadError();
 	}
 
 	/**
@@ -213,6 +204,7 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 	 * >Communicating with Other Fragments</a> for more information.
 	 */
 	private class ContactsHttpHandler {
+
 		private HttpHandler contactsHttpHandler;
 		private HttpHandler matchesHttpHandler;
 
@@ -232,7 +224,7 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 					getString(R.string.url_get_matches)
 			};
 
-			if ((searchMode & SEARCH_MODE_CONTACTS) == SEARCH_MODE_CONTACTS)
+			if ((searchMode & SEARCH_MODE_CONTACTS) == SEARCH_MODE_CONTACTS) {
 				contactsHttpHandler = new HttpHandler(
 						CityOfTwo.HOST,
 						pathContacts
@@ -246,13 +238,15 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 
 					@Override
 					protected void onFailure(Integer status) {
+						if (mListener != null)mListener.onContactLoadError();
 						refreshContactList();
 					}
 
 
 				};
-
-			if ((searchMode & SEARCH_MODE_MATCHES) == SEARCH_MODE_MATCHES)
+				contactsHttpHandler.addHeader("Authorization", "Token " + this.token);
+			}
+			if ((searchMode & SEARCH_MODE_MATCHES) == SEARCH_MODE_MATCHES) {
 				matchesHttpHandler = new HttpHandler(
 						CityOfTwo.HOST,
 						pathMatches
@@ -266,13 +260,14 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 
 					@Override
 					protected void onFailure(Integer status) {
+						if (mListener != null)mListener.onContactLoadError();
 						refreshContactList();
 					}
 
 
 				};
-
-			contactsHttpHandler.addHeader("Authorization", "Token " + this.token);
+				matchesHttpHandler.addHeader("Authorization", "Token " + this.token);
+			}
 		}
 
 		private void addContacts(String response, boolean isFriend) {
@@ -315,6 +310,8 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 				if (listInitiated) {
 					mContacts.addAll(contacts);
 					mContactAdapter.insertAll(mContacts);
+
+					if (mListener != null) mListener.onContactsLoaded(mContacts.size());
 				} else {
 					mContacts = contacts;
 					mContactAdapter.setDataset(mContacts);
@@ -322,6 +319,7 @@ public class ContactsFragment extends DialogFragment implements ContactAdapterWr
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
+				if (mListener != null)mListener.onContactLoadError();
 			}
 		}
 

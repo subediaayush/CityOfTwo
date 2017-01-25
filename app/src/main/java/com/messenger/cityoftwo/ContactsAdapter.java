@@ -152,7 +152,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 	}
 
 	@Override
-	public void update(Contact c) {
+	public void update(Contact c, int position) {
 		int i = mDataset.indexOf(c);
 		if (i != SortedList.INVALID_POSITION) mDataset.updateItemAt(i, c);
 	}

@@ -1,6 +1,7 @@
 package com.messenger.cityoftwo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -15,6 +16,9 @@ public class HomeActivity extends AppCompatActivity {
 	private TabLayout mTabLayout;
 	private HomePagerAdapter mAdapter;
 	private Integer mCurrentTab;
+
+	private ContactsFragment mContactsFragment;
+	private LobbyFragment mLobbyFragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -44,12 +48,53 @@ public class HomeActivity extends AppCompatActivity {
 		contactsArgs.putString(ContactsFragment.ARG_TOKEN, token);
 		contactsArgs.putInt(ContactsFragment.ARG_SEARCH_MODE, ContactsFragment.SEARCH_MODE_CONTACTS);
 
+		mLobbyFragment = LobbyFragment.newInstance();
+		mContactsFragment = ContactsFragment.newInstance();
+		mContactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
+			@Override
+			public void onContactSelected(Contact contact, int position) {
+				Intent contactIntent = new Intent(HomeActivity.this, ProfileActivity.class);
 
-		mAdapter.addFragment(LobbyFragment.newInstance(), lobbyArgs, "LOBBY");
-		mAdapter.addFragment(ContactsFragment.newInstance(), contactsArgs, "CONTACTS");
+				contactIntent.putExtra(
+						ProfileActivity.ARG_PROFILE_MODE,
+						ChatAdapter.MODE_CHAT
+				);
+
+				contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST, contact);
+				contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST_POSITION, position);
+
+				startActivityForResult(contactIntent, CityOfTwo.ACTIVITY_PROFILE);
+			}
+
+			@Override
+			public void onContactsLoaded(int totalContacts) {
+
+			}
+
+			@Override
+			public void onContactLoadError() {
+
+			}
+		});
+
+		mAdapter.addFragment(mLobbyFragment, lobbyArgs, "LOBBY");
+		mAdapter.addFragment(mContactsFragment, contactsArgs, "CONTACTS");
 //		mAdapter.addFragment(InboxFragment.newInstance(token), "INBOX");
 //		mAdapter.addFragment(RequestFragment.newInstance(token), "REQUEST");
 
 		viewPager.setAdapter(mAdapter);
 	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if (requestCode == CityOfTwo.ACTIVITY_PROFILE) {
+			Contact contact = data.getParcelableExtra(ProfileActivity.ARG_CURRENT_GUEST);
+			Integer position = data.getParcelableExtra(ProfileActivity.ARG_CURRENT_GUEST_POSITION);
+
+			mContactsFragment.reloadContact(contact, position);
+		}
+	}
+
 }
