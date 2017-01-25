@@ -13,7 +13,7 @@ import com.truizlop.sectionedrecyclerview.HeaderViewHolder;
 import com.truizlop.sectionedrecyclerview.SimpleSectionedAdapter;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.Comparator;
 
 import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListener;
 
@@ -24,18 +24,35 @@ import static com.messenger.cityoftwo.ContactAdapterWrapper.ContactsEventListene
  */
 public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHolder> implements ContactsAdapterInterface {
 
-	public static final int GUEST_MATCH = 0;
-	public static final int GUEST_CONTACT = 1;
+	public static final String GUEST_MATCH = "Matches";
+	public static final String GUEST_CONTACT = "Contacts";
 	private static final String TAG = "SectionedContactAdapter";
+	private final Comparator<Contact> mDataComparator =
+			new Comparator<Contact>() {
+				@Override
+				public int compare(Contact o1, Contact o2) {
+					int comparison;
+					comparison = Contact.FRIEND_COMPARATOR.compare(o1, o2);
 
+					if (comparison == 0) comparison = Contact.MESSAGE_COMPARATOR.compare(o1, o2);
+					if (comparison == 0) comparison = Contact.NAME_COMPARATOR.compare(o1, o2);
+
+					return comparison;
+
+				}
+
+			};
+
+	//	private SimpleSectionedAdapter.<Integer, Integer> mDataSection;
 	private SortedList<Contact> mDataset;
-	private Hashtable<Integer, Integer> mDataSection;
-
+	private ArrayList<String> mSections;
 	private Context mContext;
-
 	private ContactsEventListener mEventListener;
 
 	public SectionedContactsAdapter(Context context) {
+
+//		mDataset = new ArrayList<>();
+		mSections = new ArrayList<>();
 
 		mDataset = new SortedList<>(Contact.class, new SortedList.Callback<Contact>() {
 			@Override
@@ -94,12 +111,18 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 //	}
 
 	protected int getSectionCount() {
-		return 2;
+		return mSections.size();
 	}
 
 	protected int getItemCountForSection(int section) {
+		int sectionCount = getSectionCount();
+
+		if (sectionCount == 1) {
+			return mDataset.size();
+		}
+
 		int counter = 0;
-		boolean isContact = section == GUEST_CONTACT;
+		boolean isContact = mSections.get(section).equals(GUEST_CONTACT);
 		for (int i = 0; i < mDataset.size(); i++) {
 			boolean isGuestFriend = mDataset.get(i).isFriend;
 			if (isGuestFriend == isContact) counter++;
@@ -159,8 +182,7 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 	}
 
 	protected String getSectionHeaderTitle(int section) {
-//		if (!isSectioned) return "";
-		return (GUEST_CONTACT == section) ? "Contacts" : "Matches";
+		return mSections.get(section);
 	}
 
 	@Override
@@ -170,28 +192,60 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 				mDataset.removeItemAt(i);
 		}
 
+
+		for (Contact contact : contacts) {
+			if (setupSections(contact)) break;
+		}
+
 		mDataset.addAll(contacts);
+
+		notifyItemRangeChanged(0, mDataset.size());
 	}
 
 	@Override
 	public int insert(Contact c) {
+		mDataset.add(c);
+
+		setupSections(c);
+//		notifyItemInserted(position);
 		return mDataset.add(c);
 	}
 
 	@Override
-	public void update(Contact c) {
-		int i = mDataset.indexOf(c);
-		if (i != SortedList.INVALID_POSITION) mDataset.updateItemAt(i, c);
+	public void update(Contact c, int position) {
+
+		if (position != SortedList.INVALID_POSITION) {
+			mDataset.updateItemAt(position, c);
+//			notifyItemChanged(position);
+		}
+
+		mSections.clear();
+		for (int i = 0; i < mDataset.size(); i++) {
+			if (setupSections(mDataset.get(i))) break;
+		}
 	}
 
 	@Override
-	public void insertAll(ArrayList<Contact> c) {
-		mDataset.addAll(c);
+	public void insertAll(ArrayList<Contact> contacts) {
+		int i = mDataset.size();
+		mDataset.addAll(contacts);
+
+		for (Contact contact : contacts)
+			if (setupSections(contact)) break;
+
+//		notifyItemRangeInserted(i, contacts.size());
+
+//		Collections.sort(mDataset, mDataComparator);
+//
+//		notifyDataSetChanged();
 	}
 
 	@Override
 	public void clear() {
+		int size = mDataset.size();
 		mDataset.clear();
+		mSections.clear();
+//		notifyItemRangeRemoved(0, size);
 	}
 
 	@Override
@@ -204,10 +258,22 @@ public class SectionedContactsAdapter extends SimpleSectionedAdapter<ContactHold
 		return mDataset.get(position);
 	}
 
+	private boolean setupSections(Contact contact) {
+		if (contact.isFriend && !mSections.contains(GUEST_CONTACT)) mSections.add(GUEST_CONTACT);
+		else if (!contact.isFriend && !mSections.contains(GUEST_MATCH)) mSections.add(GUEST_MATCH);
+
+		return mSections.size() >= 2;
+	}
+
 	public void clearSection(int section) {
-		boolean contactSection = section == GUEST_CONTACT;
+		boolean contactSection = mSections.get(section).equals(GUEST_CONTACT);
 		for (int i = mDataset.size() - 1; i >= 0; i++) {
-			if (mDataset.get(i).isFriend == contactSection) mDataset.removeItemAt(i);
+			if (mDataset.get(i).isFriend == contactSection) {
+				mDataset.removeItemAt(i);
+//				notifyItemRemoved(i);
+			}
+
+			mSections.remove(section);
 		}
 	}
 
