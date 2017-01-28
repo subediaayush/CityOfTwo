@@ -1,6 +1,7 @@
 package com.messenger.cityoftwo;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.v7.util.SortedList;
@@ -13,12 +14,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Locale;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -33,14 +30,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 	public static final int STATUS_SEEN = 2;
 	public static final int STATUS_ERROR = -1;
 
-	public static final int MODE_CHAT = 0;
-	public static final int MODE_PROFILE = 1;
-
 	private final String TAG = "ChatAdapter";
-
-	private final long MILLIS_IN_DAY = 86400000;
-	private final long DAYS_IN_WEEK = MILLIS_IN_DAY * 7;
-	private final long MONTHS_IN_YEAR = MILLIS_IN_DAY * 365;
 
 	private Context mContext;
 	private SortedList<Conversation> mConversationList;
@@ -52,6 +42,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 	private Contact mGuest;
 	private int mode;
+
+	private Boolean requestResponse = null;
 
 	private ChatEventListener mEventListener;
 
@@ -114,6 +106,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			return new ProfileViewHolder(view);
 		}
 
+		if ((viewType & CityOfTwo.FLAG_REQUEST) == CityOfTwo.FLAG_REQUEST) {
+			View view = LayoutInflater.from(mContext)
+					.inflate(R.layout.layout_msg_request, parent, false);
+			Log.i(TAG, "Assigning Profile holder. FLAG: " + Integer.toBinaryString(viewType));
+			return new RequestViewHolder(view);
+		}
+
 		if ((viewType & CityOfTwo.FLAG_TEXT) == CityOfTwo.FLAG_TEXT) {
 			if ((viewType & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
 				View view = LayoutInflater.from(mContext)
@@ -161,6 +160,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			handleTextItem((TextViewHolder) holder, position, flags);
 		} else if ((flags & CityOfTwo.FLAG_PROFILE) == CityOfTwo.FLAG_PROFILE) {
 			handleRevealItem((RevealViewHolder) holder, position, flags);
+		} else if ((flags & CityOfTwo.FLAG_REQUEST) == CityOfTwo.FLAG_REQUEST) {
+			handleRequestItem((RequestViewHolder) holder, position, flags);
 		}
 	}
 
@@ -174,18 +175,73 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		return mConversationList.size();
 	}
 
-	private void handleRevealItem(RevealViewHolder holder, int position, int flags) {
-		if ((flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-			mGuest.hasRevealed = true;
+	private void handleRequestItem(final RequestViewHolder holder, int position, int flags) {
+		String message;
+		if ((requestResponse == null) && ((flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED)) {
+			message = mGuest.nickName + " wants to add you as a contact.";
 
-			Picasso.with(mContext)
-					.load(getFBProfilePicture(mGuest))
-					.into(holder.image);
+			holder.response.setVisibility(View.VISIBLE);
 
-			notifyItemRangeChanged(0, mConversationList.size());
+			holder.accept.setEnabled(true);
+			holder.decline.setEnabled(true);
+
+			holder.accept.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					holder.accept.setEnabled(false);
+					holder.decline.setEnabled(false);
+					if (mEventListener != null) mEventListener.onAcceptRequest(true);
+				}
+			});
+
+			holder.decline.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					holder.accept.setEnabled(false);
+					holder.decline.setEnabled(false);
+					if (mEventListener != null) mEventListener.onAcceptRequest(false);
+				}
+			});
+		} else {
+			holder.response.setVisibility(View.GONE);
+
+			if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
+				message = "You sent " + mGuest.nickName + " a request.";
+			} else {
+				String response = requestResponse ? " accepted " : " declined ";
+				message = "You" + response + mGuest.nickName + "'s request.";
+			}
+		}
+		holder.request.setText(message);
+	}
+
+	private void handleRevealItem(final RevealViewHolder holder, int position, int flags) {
+		String name;
+		final String fbid;
+		if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
+			SharedPreferences sp = mContext.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE);
+			name = sp.getString(CityOfTwo.KET_NAME, "");
+			fbid = sp.getString(CityOfTwo.KEY_FBID, "");
+		} else {
+			name = mGuest.name;
+			fbid = mGuest.fid;
+
+			if (!mGuest.hasRevealed) {
+				mGuest.hasRevealed = true;
+				notifyItemRangeChanged(0, mConversationList.size());
+			}
 		}
 
-		holder.name.setText(mGuest.name);
+		Utils.loadFacebookPicture(mContext, fbid, holder.image);
+
+		if (!name.isEmpty()) holder.name.setText(name);
+
+		holder.itemView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null) mEventListener.onViewProfile(fbid);
+			}
+		});
 	}
 
 	private String getFBProfilePicture(Contact mGuest) {
@@ -196,17 +252,23 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		Conversation c = mConversationList.get(position);
 
 		if ((flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-			Picasso.with(mContext)
-					.load(
-							mGuest.hasRevealed ? getFBProfilePicture(mGuest) : getRandomImage()
-					)
-					.into(holder.image);
+			int nextFlag = mConversationList.get(position + 1).getFlags();
+			if ((nextFlag & CityOfTwo.FLAG_RECEIVED) != CityOfTwo.FLAG_RECEIVED) {
+
+				if (mGuest.hasRevealed)
+					Utils.loadFacebookPicture(mContext, mGuest.fid, holder.image);
+				else Utils.loadRandomPicture(mContext, mGuest.id, holder.image);
+
+				holder.image.setVisibility(View.VISIBLE);
+			} else {
+				holder.image.setVisibility(View.INVISIBLE);
+			}
 		}
 
 		holder.text.setText(c.getText());
 
 		String messageTime;
-		messageTime = humanizeDateTime(c.getTime());
+		messageTime = Utils.humanizeDateTime(c.getTime());
 
 		holder.time.setText(messageTime);
 
@@ -229,33 +291,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		});
 	}
 
-	private String humanizeDateTime(long time) {
-		long now = System.currentTimeMillis();
-
-		long diff = Math.abs(now - time);
-
-		if (diff < MILLIS_IN_DAY) return new SimpleDateFormat(
-				"hh:mm a",
-				Locale.getDefault()
-		).format(time);
-
-		else if (diff < DAYS_IN_WEEK) return new SimpleDateFormat(
-				"hh:mm a\nEEEE",
-				Locale.getDefault()
-		).format(time);
-
-		else if (diff < MONTHS_IN_YEAR) return new SimpleDateFormat(
-				"hh:mm a\nMMMM dd",
-				Locale.getDefault()
-		).format(time);
-
-		else return new SimpleDateFormat(
-					"hh:mm a\nMMM dd, yyyy",
-					Locale.getDefault()
-			).format(time);
-
-	}
-
 	private int getStatus(int position) {
 		if (mErrorMessages.contains(position)) return STATUS_ERROR;
 		if (position <= mLastSeen) return STATUS_SEEN;
@@ -264,25 +299,55 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		return STATUS_PENDING;
 	}
 
-	private String getRandomImage() {
-		return null;
+	public void setRequestResponse(Boolean requestResponse) {
+		this.requestResponse = requestResponse;
+		notifyItemRangeChanged(0, getItemCount());
 	}
 
 	private void handleProfileItem(ProfileViewHolder holder, int position, int flags) {
 
-		holder.message.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mEventListener != null) mEventListener.onSendMessage();
-			}
-		});
+		if (!mGuest.hasRevealed) {
+			holder.name.setVisibility(View.GONE);
+			holder.url.setVisibility(View.GONE);
 
-		holder.save.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mEventListener != null) mEventListener.onSaveContact();
-			}
-		});
+			Utils.loadRandomPicture(mContext, mGuest.id, holder.image);
+		} else {
+			holder.name.setVisibility(View.VISIBLE);
+			holder.url.setVisibility(View.VISIBLE);
+
+			holder.name.setText(mGuest.name);
+			holder.url.setText(mGuest + " at fb.com");
+			holder.url.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					if (mEventListener != null) mEventListener.onViewProfile(mGuest.fid);
+				}
+			});
+
+			Utils.loadFacebookPicture(mContext, mGuest.fid, holder.image);
+		}
+
+		if (mGuest.nickName.isEmpty()) {
+			holder.nickname.setVisibility(View.GONE);
+		} else {
+			holder.nickname.setVisibility(View.VISIBLE);
+			holder.nickname.setText(mGuest.nickName);
+		}
+
+		if (mGuest.status.isEmpty()) {
+			holder.status.setVisibility(View.GONE);
+		} else {
+			holder.status.setVisibility(View.VISIBLE);
+			holder.status.setText(mGuest.status);
+		}
+
+		String[] likes = mGuest.topLikes;
+
+		String commonLikesMessages = "Likes " +
+				Utils.getReadableList(likes) + " and " +
+				(mGuest.commonLikes - likes.length) + " others";
+
+		holder.commonLikes.setText(commonLikesMessages);
 
 		holder.reveal.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -291,30 +356,31 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			}
 		});
 
-		holder.facebook.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mEventListener != null) mEventListener.onViewProfile();
-			}
-		});
-
-		holder.commonLikes.setOnClickListener(new View.OnClickListener() {
+		holder.likes.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				if (mEventListener != null) mEventListener.onViewCommonLikes();
 			}
 		});
 
-		holder.block.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mEventListener != null) mEventListener.onBlockProfile();
-			}
-		});
-
-		switch (mode) {
-			case MODE_CHAT:
-				break;
+		if (mGuest.isFriend) {
+			holder.save.setText("Remove from contacts");
+			holder.save.setIcon(R.drawable.ic_unsave);
+			holder.save.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					if (mEventListener != null) mEventListener.onRemoveContact();
+				}
+			});
+		} else {
+			holder.save.setText("Save as Contact");
+			holder.save.setIcon(R.drawable.ic_send_request);
+			holder.save.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					if (mEventListener != null) mEventListener.onSaveContact();
+				}
+			});
 		}
 	}
 
@@ -412,6 +478,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		notifyItemChanged(index);
 	}
 
+	public Conversation get(int i) {
+		return mConversationList.get(i);
+	}
+
+
 	public interface ChatEventListener {
 		void onConversationClicked(int postion, int status);
 
@@ -423,11 +494,38 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 		void onRevealContact();
 
-		void onViewProfile();
+		void onViewProfile(String fbid);
 
 		void onViewCommonLikes();
 
 		void onBlockProfile();
+
+		void onAcceptRequest(boolean accept);
+
+		void onRemoveContact();
+	}
+
+	/**
+	 * Created by Aayush on 1/25/2017.
+	 */
+	public static class RequestViewHolder extends RecyclerView.ViewHolder {
+
+		TextView request;
+		View response;
+
+		Button accept;
+		Button decline;
+
+		public RequestViewHolder(View itemView) {
+			super(itemView);
+
+			request = (TextView) itemView.findViewById(R.id.request_message);
+
+			response = itemView.findViewById(R.id.request_response);
+
+			accept = (Button) itemView.findViewById(R.id.request_accept);
+			decline = (Button) itemView.findViewById(R.id.request_decline);
+		}
 	}
 
 	private class TextViewHolder extends RecyclerView.ViewHolder {
@@ -463,12 +561,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		TextView url;
 		TextView commonLikes;
 
-		Button message;
-		Button save;
-		Button reveal;
-		Button facebook;
-		Button likes;
-		Button block;
+		OptionButtonHolder save;
+		OptionButtonHolder reveal;
+		OptionButtonHolder likes;
 
 		View optionsContainer;
 
@@ -479,14 +574,12 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			nickname = (TextView) itemView.findViewById(R.id.profile_nickname);
 			image = (CircleImageView) itemView.findViewById(R.id.icon);
 			url = (TextView) itemView.findViewById(R.id.profile_url);
+			status = (TextView) itemView.findViewById(R.id.profile_status);
 			commonLikes = (TextView) itemView.findViewById(R.id.profile_commonlikes);
 
-			message = (Button) itemView.findViewById(R.id.message);
-			save = (Button) itemView.findViewById(R.id.save);
-			reveal = (Button) itemView.findViewById(R.id.reveal);
-			facebook = (Button) itemView.findViewById(R.id.profile);
-			likes = (Button) itemView.findViewById(R.id.likes);
-			block = (Button) itemView.findViewById(R.id.block);
+			save = new OptionButtonHolder(itemView.findViewById(R.id.save));
+			reveal = new OptionButtonHolder(itemView.findViewById(R.id.reveal));
+			likes = new OptionButtonHolder(itemView.findViewById(R.id.likes));
 
 			optionsContainer = itemView.findViewById(R.id.profile_options_container);
 		}
@@ -500,7 +593,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			super(itemView);
 
 			name = (TextView) itemView.findViewById(R.id.profile_name);
-			image = (CircleImageView) itemView.findViewById(R.id.icon);
+			image = (CircleImageView) itemView.findViewById(R.id.profile_icon);
 		}
 	}
 }

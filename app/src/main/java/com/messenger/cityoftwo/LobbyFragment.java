@@ -71,11 +71,14 @@ public class LobbyFragment extends Fragment {
 	 * Use this factory method to create a new instance of
 	 * this fragment using the provided parameters.
 	 *
+	 * @param args
 	 * @return A new instance of fragment LobbyFragment.
 	 */
 	// TODO: Rename and change types and number of parameters
-	public static LobbyFragment newInstance() {
-		return new LobbyFragment();
+	public static LobbyFragment newInstance(Bundle args) {
+		LobbyFragment fragment = new LobbyFragment();
+		if (args != null) fragment.setArguments(args);
+		return fragment;
 	}
 
 	// TODO: Rename method, update argument and hook method into UI event
@@ -191,7 +194,7 @@ public class LobbyFragment extends Fragment {
 		contactsArgs.putString(ContactsFragment.ARG_TOKEN, mToken);
 		contactsArgs.putInt(ContactsFragment.ARG_SEARCH_MODE, ContactsFragment.SEARCH_MODE_MATCHES);
 
-		ContactsFragment contactsFragment = ContactsFragment.newInstance();
+		ContactsFragment contactsFragment = ContactsFragment.newInstance(getArguments());
 		contactsFragment.setArguments(contactsArgs);
 
 		getChildFragmentManager().beginTransaction()
@@ -207,7 +210,7 @@ public class LobbyFragment extends Fragment {
 			@Override
 			public void onContactsLoaded(int number) {
 				showSearchSuccess();
-				if (number == 0){
+				if (number == 0) {
 					mStatusDescription.setText("No matches found");
 				} else {
 					mMatchesCardContainer.setVisibility(View.VISIBLE);

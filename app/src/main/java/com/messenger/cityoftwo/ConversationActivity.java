@@ -618,7 +618,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         View profileView = getLayoutInflater().inflate(R.layout.layout_reveal_profile, null);
         ProfilePictureView profileImageView = (ProfilePictureView) profileView.findViewById(R.id.message_profile_image);
-        TextView profileTextView = (TextView) profileView.findViewById(R.id.message_profile_name);
+        TextView profileTextView = (TextView) profileView.findViewById(R.id.profile_name);
         CheckBox profileCheckBox = (CheckBox) profileView.findViewById(R.id.donot_show_dialog);
 
         profileCheckBox.setChecked(!showDialog);

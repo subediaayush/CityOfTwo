@@ -22,17 +22,11 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONException;
@@ -42,11 +36,13 @@ import java.util.ArrayList;
 
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
-import static com.messenger.cityoftwo.ChatAdapter.MODE_CHAT;
-import static com.messenger.cityoftwo.ChatAdapter.MODE_PROFILE;
+import static com.messenger.cityoftwo.CityOfTwo.FLAG_SENT;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_CHATROOM_ID;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_IS_TYPING;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_SEEN;
+import static com.messenger.cityoftwo.CityOfTwo.getFacebookPageURI;
+import static com.messenger.cityoftwo.ContactsFragment.MODE_OFFLINE;
+import static com.messenger.cityoftwo.ContactsFragment.MODE_ONLINE;
 
 /**
  * Created by Aayush on 1/5/2017.
@@ -59,6 +55,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	public static final String ARG_CURRENT_CHAT = "current_chat";
 	public static final String ARG_CURRENT_GUEST_POSITION = "current_guest_position";
 	private static final String TAG = "ProfileActivity";
+	private static final String ARG_OFFLINE_MESSAGES_SENT = "offline_messages_sent";
 	private final String ARG_PARAMS = "params";
 
 	Contact mGuest;
@@ -70,16 +67,18 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	View mOptionsContainer;
 	View isTypingIndicator;
 
+	View mBackgroundContainer;
+
 	ChatAdapter mAdapter;
 	RecyclerView mConversationList;
 	ChatLayoutManager mLayoutManager;
 
-	Button mNewChatButton;
-	Button mSaveButton;
-	Button mRevealButton;
-	Button mFacebookButton;
-	Button mFiltersButton;
-	Button mReferButton;
+	OptionButtonHolder mNewChat;
+	OptionButtonHolder mSave;
+	OptionButtonHolder mReveal;
+	OptionButtonHolder mFacebook;
+	OptionButtonHolder mFilters;
+	OptionButtonHolder mRefer;
 
 	View.OnClickListener saveContactClickListener;
 	View.OnClickListener revealProfileClickListener;
@@ -98,11 +97,15 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	private Runnable typingSignalRunnable;
 	private String mInputBuffer = "";
 	private boolean isTypingSignalPending;
+
+	private ContactsFragment mNewChatFragment;
 	/**
 	 * ATTENTION: This was auto-generated to implement the App Indexing API.
 	 * See https://g.co/AppIndexing/AndroidStudio for more information.
 	 */
 	private GoogleApiClient client;
+	private int mPosition;
+	private int mChatMode;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -121,7 +124,15 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 		mOptionsContainer = findViewById(R.id.chat_options_container);
 		isTypingIndicator = findViewById(R.id.chat_is_typing_indicator);
 
-		mOptionsContainer.setVisibility(View.GONE);
+		mBackgroundContainer = findViewById(R.id.background_container);
+		mBackgroundContainer.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mOptionsContainer.getVisibility() == View.VISIBLE) hideOptionsContainer();
+			}
+		});
+
+		hideOptionsContainer();
 
 //		if (savedInstanceState == null) {
 		params = getIntent().getExtras();
@@ -157,24 +168,13 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 		mConversationList.setAdapter(mAdapter);
 
-		switch (params.getInt(ARG_PROFILE_MODE, MODE_CHAT)) {
-			case MODE_CHAT:
-				mInputContainer.setVisibility(View.VISIBLE);
-				mAdapter.setMode(MODE_CHAT);
-				break;
-			case MODE_PROFILE:
-				mInputContainer.setVisibility(View.GONE);
-				mAdapter.setMode(MODE_PROFILE);
-				break;
-		}
-
 		mExtrasButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				if (mOptionsContainer.getVisibility() == View.VISIBLE) {
-					mOptionsContainer.setVisibility(View.GONE);
+					hideOptionsContainer();
 				} else {
-					mOptionsContainer.setVisibility(View.VISIBLE);
+					showOptionsContainer();
 				}
 			}
 		});
@@ -182,13 +182,37 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 		mSendButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+
 				String input = mChatInput.getText().toString().trim();
 				if (!input.isEmpty()) {
-					Conversation c = new Conversation(input,
+					final Conversation c = new Conversation(input,
 							CityOfTwo.FLAG_TEXT | CityOfTwo.FLAG_SENT
 					);
 					mChatInput.getText().clear();
-					sendMessage(c);
+
+					boolean offlineMessageSent = false;
+					for (int i = 0; i < mAdapter.getItemCount(); i++) {
+						if (mAdapter.get(i).containsFlag(FLAG_SENT)) {
+							offlineMessageSent = true;
+							break;
+						}
+					}
+
+					if (mChatMode == MODE_OFFLINE && offlineMessageSent) {
+						new AlertDialog.Builder(ProfileActivity.this, R.style.AppTheme_Dialog)
+								.setTitle("Send message to " + mGuest.nickName)
+								.setMessage("Sending offline message will delete your older message. Are you sure you want to do this?")
+								.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										sendMessage(c);
+									}
+								})
+								.setNegativeButton("No", null)
+								.show();
+					} else {
+						sendMessage(c);
+					}
 				}
 			}
 		});
@@ -204,7 +228,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if (!isTypingSignalPending) {
+				if (!isTypingSignalPending && mChatMode == MODE_ONLINE) {
 					mInputBuffer = s.toString();
 					isTypingSignalPending = true;
 
@@ -215,6 +239,8 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 		if (savedInstanceState != null) {
 			Contact guest = savedInstanceState.getParcelable(ARG_CURRENT_GUEST);
+			mPosition = savedInstanceState.getInt(ARG_CURRENT_GUEST_POSITION);
+			mChatMode = savedInstanceState.getInt(ARG_PROFILE_MODE);
 
 			assert guest != null;
 
@@ -224,12 +250,19 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 				startNewConversation();
 			}
 		} else {
+			mChatMode = params.getInt(ARG_PROFILE_MODE);
 			startNewConversation();
 		}
+
 
 		ArrayList<Conversation> offlineConversation = params.getParcelableArrayList(
 				CityOfTwo.KEY_BACKGROUND_MESSAGES
 		);
+
+		if (mChatMode == MODE_OFFLINE) {
+			showMessage(mGuest.nickName + " is not available right now." +
+					" However you can leave them an offline message.");
+		}
 
 		isTypingIndicator.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
 			@Override
@@ -300,18 +333,12 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 			}
 		};
 		
-		setupListeners();
 		setupOptionButtons();
-		// ATTENTION: This was auto-generated to implement the App Indexing API.
-		// See https://g.co/AppIndexing/AndroidStudio for more information.
-		client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 	}
 
 	@Override
 	protected void onStart() {
-		super.onStart();// ATTENTION: This was auto-generated to implement the App Indexing API.
-// See https://g.co/AppIndexing/AndroidStudio for more information.
-		client.connect();
+		super.onStart();
 
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(CityOfTwo.ACTION_IS_TYPING);
@@ -326,8 +353,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 	@Override
 	protected void onStop() {
-		super.onStop();// ATTENTION: This was auto-generated to implement the App Indexing API.
-// See https://g.co/AppIndexing/AndroidStudio for more information.
+		super.onStop();
 
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(mChatBroadcastReceiver);
 
@@ -343,8 +369,19 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 		outState.putParcelableArrayList(ARG_CURRENT_CHAT, currentChat);
 		outState.putParcelable(ARG_CURRENT_GUEST, mGuest);
+		outState.putInt(ARG_CURRENT_GUEST_POSITION, mPosition);
 
 		super.onSaveInstanceState(outState);
+	}
+
+	private void hideOptionsContainer() {
+		mOptionsContainer.setVisibility(View.GONE);
+		mBackgroundContainer.setVisibility(View.GONE);
+	}
+
+	private void showOptionsContainer() {
+		mOptionsContainer.setVisibility(View.VISIBLE);
+		mBackgroundContainer.setVisibility(View.VISIBLE);
 	}
 
 	private void sendTypingSignal() {
@@ -523,97 +560,68 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	}
 
 	private void setupOptionButtons() {
-		mNewChatButton = (Button) findViewById(R.id.message);
-		mSaveButton = (Button) findViewById(R.id.save);
-		mRevealButton = (Button) findViewById(R.id.reveal);
-		mFacebookButton = (Button) findViewById(R.id.profile);
-		mFiltersButton = (Button) findViewById(R.id.filters);
-		mReferButton = (Button) findViewById(R.id.refer);
+		mNewChat = new OptionButtonHolder(findViewById(R.id.message));
+		mSave = new OptionButtonHolder(findViewById(R.id.save));
+		mReveal = new OptionButtonHolder(findViewById(R.id.reveal));
+		mFacebook = new OptionButtonHolder(findViewById(R.id.profile));
+		mFilters = new OptionButtonHolder(findViewById(R.id.filters));
+		mRefer = new OptionButtonHolder(findViewById(R.id.refer));
 
-		mNewChatButton.setOnClickListener(newChatClickListener);
-		mSaveButton.setOnClickListener(saveContactClickListener);
-		mRevealButton.setOnClickListener(revealProfileClickListener);
-		mFacebookButton.setOnClickListener(viewFacebookProfileClickListener);
-		mFiltersButton.setOnClickListener(changeFiltersClickListener);
-		mReferButton.setOnClickListener(referClickListener);
-	}
+		if (mGuest.isFriend) {
+			mSave.setText("Remove from contacts");
+			mSave.setIcon(R.drawable.ic_unsave_light);
+		} else {
+			mSave.setText("Add as contact");
+			mSave.setIcon(R.drawable.ic_send_request_light);
+		}
 
-	private void setupListeners() {
-		saveContactClickListener = new View.OnClickListener() {
+		mNewChat.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						mOptionsContainer.setVisibility(View.GONE);
-					}
-				}, 100);
-				onSaveContact();
-			}
-		};
-		revealProfileClickListener = new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						mOptionsContainer.setVisibility(View.GONE);
-					}
-				}, 100);
-				onRevealContact();
-			}
-		};
-		viewFacebookProfileClickListener = new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						mOptionsContainer.setVisibility(View.GONE);
-					}
-				}, 100);
-				onViewProfile();
-			}
-		};
-		newChatClickListener = new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						mOptionsContainer.setVisibility(View.GONE);
-					}
-				}, 100);
+				Utils.hideLater(mOptionsContainer, 100);
 				onNewChat();
 			}
-		};
-		changeFiltersClickListener = new View.OnClickListener() {
+		});
+		mSave.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						mOptionsContainer.setVisibility(View.GONE);
-					}
-				}, 100);
+				Utils.hideLater(mOptionsContainer, 100);
+
+				if (mGuest.isFriend) onRemoveContact();
+				else onSaveContact();
+			}
+		});
+		mReveal.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Utils.hideLater(mOptionsContainer, 100);
+				onRevealContact();
+			}
+		});
+		mFacebook.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Utils.hideLater(mOptionsContainer, 100);
+				onViewProfile(mGuest.fid);
+			}
+		});
+		mFilters.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Utils.hideLater(mOptionsContainer, 100);
 				onChangeFilters();
 			}
-		};
-		referClickListener = new View.OnClickListener() {
+		});
+		mRefer.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						mOptionsContainer.setVisibility(View.GONE);
-					}
-				}, 100);
+				Utils.hideLater(mOptionsContainer, 100);
 				onReferCoyRudy();
 			}
-		};
+		});
 	}
 
-	private void showErrorMessage(String errorMessage) {
+	private void showMessage(String errorMessage) {
 		final Toast popup = new Toast(this);
 
 		View popupView = LayoutInflater.from(this).inflate(
@@ -639,7 +647,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 		final int position = mAdapter.insert(c);
 
 		mConversationList.smoothScrollToPosition(
-				mAdapter.getItemCount() - 1
+				position
 		);
 
 		JSONObject params = new JSONObject();
@@ -648,11 +656,15 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 			params.put(CityOfTwo.HEADER_DATA, value);
 			params.put(CityOfTwo.HEADER_FLAGS, c.getFlags());
 			params.put(CityOfTwo.HEADER_TIME, c.getTime());
+			params.put(CityOfTwo.HEADER_TO, mGuest.id);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 
-		String send_message = getString(R.string.url_send_message);
+		String send_message;
+		if (mChatMode == MODE_ONLINE) send_message = getString(R.string.url_send_message);
+		else send_message = getString(R.string.url_send_offline_message);
+
 
 		String[] Path = {CityOfTwo.API, send_message};
 
@@ -666,8 +678,18 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 					if (!status)
 						onFailure(getResponseStatus());
-					else
+					else {
 						mAdapter.setStatus(position, ChatAdapter.STATUS_SENT);
+						if (mChatMode == MODE_OFFLINE) {
+							for (int i = 0; i < position; i++) {
+								if (mAdapter.get(i).containsFlag(CityOfTwo.FLAG_SENT)) {
+									mAdapter.removeAt(i);
+									break;
+								}
+							}
+						}
+					}
+
 
 				} catch (Exception e) {
 					onFailure(getResponseStatus());
@@ -677,7 +699,12 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 			@Override
 			protected void onFailure(Integer status) {
-				mAdapter.setStatus(position, ChatAdapter.STATUS_ERROR);
+				if (mChatMode == MODE_OFFLINE) {
+					mAdapter.removeAt(position);
+					showMessage("Message sending failed!");
+				} else {
+					mAdapter.setStatus(position, ChatAdapter.STATUS_ERROR);
+				}
 			}
 		};
 
@@ -699,7 +726,6 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	private void startNewConversation() {
 		Log.i(TAG, "Starting new conversation");
 		String guest = mGuest.toString();
-
 
 		ArrayList<Conversation> offlineMessages = mGuest.lastMessages;
 		if (offlineMessages == null) offlineMessages = new ArrayList<>();
@@ -726,7 +752,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	@Override
 	public void onBackPressed() {
 		if (mOptionsContainer.getVisibility() == View.VISIBLE) {
-			mOptionsContainer.setVisibility(View.GONE);
+			hideOptionsContainer();
 			return;
 		}
 
@@ -755,14 +781,17 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 	}
 
 	private void onReferCoyRudy() {
+		hideOptionsContainer();
 		Utils.CoyRudy.referCoyRudy(ProfileActivity.this);
 	}
 
 	private void onChangeFilters() {
+		hideOptionsContainer();
 		startActivity(new Intent(ProfileActivity.this, FilterActivity.class));
 	}
 
 	private void onNewChat() {
+		hideOptionsContainer();
 		setupNewChatDialog();
 	}
 
@@ -776,19 +805,16 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 		contactsArgs.putInt(ContactsFragment.ARG_SEARCH_MODE, searchMode);
 
 		FragmentManager fm = getSupportFragmentManager();
-		final ContactsFragment newChatDialog = ContactsFragment.newInstance();
-		newChatDialog.setArguments(contactsArgs);
 
-		ViewGroup.LayoutParams params = newChatDialog.getDialog().getWindow().getAttributes();
-		params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-		params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+		mNewChatFragment = ContactsFragment.newInstance(contactsArgs);
 
-		newChatDialog.getDialog().getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+		final DialogWrapper wrapper = DialogWrapper.newInstance("New Chat");
+		wrapper.setFragment(mNewChatFragment);
 
-		newChatDialog.setListener(new ContactsFragment.ContactsFragmentListener() {
+		mNewChatFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
 			@Override
 			public void onContactSelected(Contact contact, int position) {
-				newChatDialog.dismiss();
+				wrapper.dismiss();
 
 				if (contact.equals(mGuest)) return;
 
@@ -796,7 +822,7 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 				contactIntent.putExtra(
 						ProfileActivity.ARG_PROFILE_MODE,
-						ChatAdapter.MODE_CHAT
+						ContactsFragment.MODE_ONLINE
 				);
 
 				contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST, contact);
@@ -810,16 +836,33 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 			@Override
 			public void onContactsLoaded(int number) {
-
+				wrapper.onItemsPrepared();
+				if (number == 0) {
+					wrapper.dismiss();
+					new AlertDialog.Builder(ProfileActivity.this, R.style.AppTheme_Dialog)
+							.setMessage("No one available for chat.")
+							.setPositiveButton("Ok", null)
+							.show();
+				}
 			}
 
 			@Override
 			public void onContactLoadError() {
+				wrapper.dismiss();
 
+				new AlertDialog.Builder(ProfileActivity.this, R.style.AppTheme_Dialog)
+						.setMessage("Error while searching for available people")
+						.setPositiveButton("Try again", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								setupNewChatDialog();
+							}
+						})
+						.show();
 			}
 
 		});
-		newChatDialog.show(fm, "CONTACTS");
+		wrapper.show(fm);
 	}
 
 	@Override
@@ -834,53 +877,58 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 	@Override
 	public void onSendMessage() {
-		params.putInt(ARG_PROFILE_MODE, MODE_CHAT);
+		params.putInt(ARG_PROFILE_MODE, MODE_ONLINE);
 		mInputContainer.setVisibility(View.VISIBLE);
 		mChatInput.requestFocus();
+
+		mConversationList.smoothScrollToPosition(mAdapter.getItemCount() - 1);
 	}
 
 	@Override
 	public void onSaveContact() {
-		if (mGuest.isFriend) removeFriend();
-		else addFriend();
-	}
-
-	@Override
-	public void onRevealContact() {
-		JSONObject j = new JSONObject();
-		String fbid = "";
-		try {
-			j.put(CityOfTwo.KEY_FBID, fbid);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-
 		Conversation c = new Conversation(
-				j.toString(),
-				CityOfTwo.FLAG_PROFILE | CityOfTwo.FLAG_SENT
+				"",
+				CityOfTwo.FLAG_REQUEST | CityOfTwo.FLAG_SENT
 		);
 
 		sendMessage(c);
 	}
 
 	@Override
-	public void onViewProfile() {
-		if (mGuest.hasRevealed)
-			showFacebookProfile();
+	public void onRevealContact() {
+		Conversation c = new Conversation(
+				"",
+				CityOfTwo.FLAG_PROFILE | CityOfTwo.FLAG_SENT
+		);
+		sendMessage(c);
+	}
+
+	@Override
+	public void onViewProfile(String fbid) {
+		if (!mGuest.fid.equals(fbid) || mGuest.hasRevealed)
+			showFacebookProfile(fbid);
 		else
-			showErrorMessage("Cannot view profile of users until they reveal themselves to you.");
+			showMessage("Cannot view profile of users until they reveal themselves to you.");
 	}
 
 	@Override
 	public void onViewCommonLikes() {
-		final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ProfileActivity.this, android.R.layout.select_dialog_singlechoice);
-		arrayAdapter.addAll(mGuest.topLikes);
+		String token = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+				.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
-		new AlertDialog.Builder(ProfileActivity.this)
-				.setTitle("Common Likes")
-				.setNegativeButton("Ok", null)
-				.setAdapter(arrayAdapter, null)
-				.show();
+		Bundle args = new Bundle();
+		args.putString(CommonLikesFragment.ARG_TOKEN, token);
+		args.putParcelable(CommonLikesFragment.ARG_CURRENT_GUEST, mGuest);
+
+		FragmentManager fm = getSupportFragmentManager();
+
+		DialogWrapper wrapper = DialogWrapper.newInstance("Common Likes");
+
+		CommonLikesFragment commonLikesFragment = CommonLikesFragment.newInstance();
+		commonLikesFragment.setArguments(args);
+
+		wrapper.setFragment(commonLikesFragment);
+		wrapper.show(fm);
 	}
 
 	@Override
@@ -888,23 +936,95 @@ public class ProfileActivity extends AppCompatActivity implements ChatAdapter.Ch
 
 	}
 
-	private void showFacebookProfile() {
+	@Override
+	public void onAcceptRequest(final boolean accept) {
+		String host = CityOfTwo.HOST;
+
+		String[] path = new String[]{
+				CityOfTwo.API,
+				getString(R.string.url_accept_request)
+		};
+
+		JSONObject j = new JSONObject();
+
+		try {
+			j.put(CityOfTwo.KEY_FRIEND_ID, mGuest.id);
+			j.put(CityOfTwo.KEY_RESPONSE, accept);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+
+		HttpHandler handler = new HttpHandler(host, path, HttpHandler.POST, j) {
+			@Override
+			protected void onSuccess(String response) {
+				try {
+					JSONObject j = new JSONObject(response);
+					boolean success = j.getBoolean("parsadi");
+
+					if (success) {
+						mAdapter.setRequestResponse(accept);
+					}
+				} catch (JSONException e) {
+					mAdapter.setRequestResponse(null);
+					e.printStackTrace();
+				}
+			}
+
+			@Override
+			protected void onFailure(Integer status) {
+				mAdapter.setRequestResponse(null);
+			}
+		};
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		String token = "Token " + sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+		handler.addHeader("Authorization", token);
 
 	}
 
-	/**
-	 * ATTENTION: This was auto-generated to implement the App Indexing API.
-	 * See https://g.co/AppIndexing/AndroidStudio for more information.
-	 */
-	public Action getIndexApiAction() {
-		Thing object = new Thing.Builder()
-				.setName("Profile Page") // TODO: Define a title for the content shown.
-				// TODO: Make sure this auto-generated URL is correct.
-				.setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-				.build();
-		return new Action.Builder(Action.TYPE_VIEW)
-				.setObject(object)
-				.setActionStatus(Action.STATUS_TYPE_COMPLETED)
-				.build();
+	@Override
+	public void onRemoveContact() {
+		String host = CityOfTwo.HOST;
+
+		String[] path = new String[]{
+				CityOfTwo.API,
+				getString(R.string.url_remove_from_contact)
+		};
+
+		JSONObject j = new JSONObject();
+
+		try {
+			j.put(CityOfTwo.KEY_FRIEND_ID, mGuest.id);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		HttpHandler handler = new HttpHandler(host, path, HttpHandler.POST, j) {
+			@Override
+			protected void onSuccess(String response) {
+				try {
+					JSONObject j = new JSONObject(response);
+					boolean success = j.getBoolean("parsadi");
+
+					if (success) {
+						mAdapter.notifyItemChanged(0);
+						setupOptionButtons();
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		String token = "Token " + sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+		handler.addHeader("Authorization", token);
 	}
+
+	private void showFacebookProfile(String fbid) {
+		Uri uri = getFacebookPageURI(this, fbid);
+
+		Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+		this.startActivity(intent);
+	}
+
 }

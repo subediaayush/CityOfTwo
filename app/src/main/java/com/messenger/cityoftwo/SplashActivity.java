@@ -107,6 +107,7 @@ public class SplashActivity extends AppCompatActivity {
 					String uniqueCode = j.getString(CityOfTwo.KEY_CODE);
 					Integer credits = j.getInt(CityOfTwo.KEY_CREDITS);
 					Boolean filters_applied = j.getBoolean(CityOfTwo.KEY_FILTERS_APPLIED);
+					String fbid = j.getString(CityOfTwo.KEY_FBID);
 
 					SharedPreferences.Editor securedEditor = new SecurePreferences(
 							SplashActivity.this,
@@ -118,6 +119,7 @@ public class SplashActivity extends AppCompatActivity {
 
 					editor.putBoolean(CityOfTwo.KEY_FILTERS_APPLIED, filters_applied)
 							.putBoolean(CityOfTwo.KEY_USER_OFFLINE, false)
+							.putString(CityOfTwo.KEY_FBID, fbid)
 							.putString(CityOfTwo.KEY_SESSION_TOKEN, token);
 
 					if (filters_applied) {

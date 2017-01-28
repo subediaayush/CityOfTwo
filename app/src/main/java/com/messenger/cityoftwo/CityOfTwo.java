@@ -65,6 +65,11 @@ public class CityOfTwo extends Application {
 	public static final int ACTIVITY_HOME = 5;
 	public static final int ACTIVITY_FILTER = 6;
 
+	public static final long MILLIS_IN_DAY = 86400000;
+	public static final long DAYS_IN_WEEK = MILLIS_IN_DAY * 7;
+	public static final long MONTHS_IN_YEAR = MILLIS_IN_DAY * 365;
+
+
 	public static final int FLAG_SENT =
 			0b1;
 	public static final int FLAG_RECEIVED =
@@ -162,6 +167,13 @@ public class CityOfTwo extends Application {
 	public static final String KEY_IS_FRIEND = "is_friend";
 	public static final String KEY_CODE = "code";
 	public static final String KEY_FBID = "fbid";
+	public static final String KET_NAME = "name";
+	public static final String HEADER_TO = "to";
+	public static final String KEY_FRIEND_ID = "friend_id";
+	public static final String KEY_RESPONSE = "response";
+	public static final String KEY_NAME = "name";
+	public static final String KEY_CATEGORY = "category";
+	public static final String KEY_ICON = "icon";
 	private static final String SENDER_ID = "584281533020";
 	public static ArrayList<Conversation> mBackgroundConversation;
 	public static Bitmap logoBitmap;

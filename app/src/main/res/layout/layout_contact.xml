@@ -9,10 +9,9 @@
 	android:paddingStart="16dp"
 	>
 
-	<ImageView
+	<de.hdodenhof.circleimageview.CircleImageView
 		android:id="@+id/contact_icon"
 		style="@style/CardContactIcons"
-		android:src="@drawable/ic_placeholder"
 		/>
 
 	<TextView

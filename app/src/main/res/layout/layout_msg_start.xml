@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:appCompat="http://schemas.android.com/apk/res-auto"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:id="@+id/chat_introduction_view"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
@@ -60,6 +60,15 @@
 				/>
 
 			<TextView
+				android:id="@+id/profile_status"
+				style="@style/CardContent.ListItem"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="7dp"
+				android:text="I am the great. Ain't nobody like me. :)"
+				/>
+
+			<TextView
 				android:id="@+id/profile_commonlikes"
 				style="@style/CardContent.ListItem"
 				android:layout_width="wrap_content"
@@ -97,7 +106,7 @@
 						android:layout_width="24dp"
 						android:layout_height="24dp"
 						android:layout_gravity="end"
-						appCompat:srcCompat="@drawable/ic_edit"
+						app:srcCompat="@drawable/ic_edit"
 						/>
 				</FrameLayout>
 
@@ -117,74 +126,76 @@
 		android:layout_marginTop="15dp"
 		>
 
-		<LinearLayout
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:divider="@drawable/divider_grey"
-			android:orientation="vertical"
-			android:showDividers="middle"
-			>
 
 			<LinearLayout
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:divider="@drawable/divider_grey"
-				android:orientation="horizontal"
 				android:showDividers="middle"
 				>
 
-				<Button
-					android:id="@+id/message"
-					style="@style/ProfileOptionButtons"
-					android:drawableTop="@drawable/ic_send_new_message"
-					android:text="Send Message"
-					/>
-
-				<Button
+				<LinearLayout
 					android:id="@+id/save"
 					style="@style/ProfileOptionButtons"
-					android:drawableTop="@drawable/ic_send_request"
-					android:text="Save as Contact"
-					/>
+					android:orientation="vertical"
+					>
 
-				<Button
+					<ImageView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						app:srcCompat="@drawable/ic_send_request"
+						/>
+
+					<TextView
+						style="@style/ProfileOptionButtonsLabels"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent"
+						android:text="Save as Contact"
+						/>
+				</LinearLayout>
+
+				<LinearLayout
 					android:id="@+id/reveal"
 					style="@style/ProfileOptionButtons"
-					android:drawableTop="@drawable/ic_self_reveal"
-					android:text="Reveal"
-					/>
+					android:orientation="vertical"
+					>
 
-			</LinearLayout>
+					<ImageView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						app:srcCompat="@drawable/ic_self_reveal"
+						/>
 
-			<LinearLayout
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:divider="@drawable/divider_grey"
-				android:showDividers="middle"
-				>
+					<TextView
+						style="@style/ProfileOptionButtonsLabels"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent"
+						android:text="Reveal"
+						/>
+				</LinearLayout>
 
-				<Button
-					android:id="@+id/profile"
-					style="@style/ProfileOptionButtons"
-					android:drawableTop="@drawable/ic_facebook"
-					android:text="Facebook"
-					/>
-
-				<Button
+				<LinearLayout
 					android:id="@+id/likes"
 					style="@style/ProfileOptionButtons"
-					android:drawableTop="@drawable/ic_likes"
-					android:text="Common Likes"
-					/>
+					android:orientation="vertical"
+					>
 
-				<Button
-					android:id="@+id/block"
-					style="@style/ProfileOptionButtons"
-					android:drawableTop="@drawable/ic_block"
-					android:text="Block User"
-					/>
+					<ImageView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						app:srcCompat="@drawable/ic_likes"
+						/>
+
+					<TextView
+						style="@style/ProfileOptionButtonsLabels"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent"
+						android:text="Common Likes"
+						/>
+				</LinearLayout>
+
+
 			</LinearLayout>
-		</LinearLayout>
 	</android.support.v7.widget.CardView>
 
 </LinearLayout>

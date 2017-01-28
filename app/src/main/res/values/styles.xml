@@ -72,10 +72,9 @@
 		<item name="android:layout_width">0dp</item>
 		<item name="android:layout_height">match_parent</item>
 		<item name="android:layout_weight">1</item>
-		<item name="android:gravity">center</item>
+		<item name="android:gravity">center_horizontal</item>
 		<item name="android:background">?selectableItemBackground</item>
 		<item name="android:padding">12dp</item>
-		<item name="android:drawablePadding">8dp</item>
 		<item name="android:textColor">@color/colorPrimary</item>
 	</style>
 
@@ -87,7 +86,16 @@
 
 	</style>
 
-	<style name="ProfileOptionButtons.Light">
+	<style name="ProfileOptionButtonsLabels">
+		<item name="android:layout_marginTop">10dp</item>
+		<item name="android:textSize">10sp</item>
+		<item name="android:textStyle">bold</item>
+		<item name="android:textAllCaps">true</item>
+		<item name="android:gravity">center</item>
+		<item name="android:textColor">@color/colorPrimary</item>
+	</style>
+
+	<style name="ProfileOptionButtonsLabels.Light">
 		<item name="android:textColor">@color/white</item>
 	</style>
 
@@ -198,6 +206,24 @@
 
 	<style name="ChatTime">
 		<item name="android:textSize">12sp</item>
+		<item name="android:gravity">center</item>
+	</style>
+
+	<style name="Request.Title">
+		<item name="android:textSize">10sp</item>
+		<item name="android:textAllCaps">true</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+
+	<style name="Request.Button" parent="Request.Title">
+		<item name="android:background">@drawable/request_button</item>
+		<item name="android:height">32dp</item>
+		<item name="android:minHeight">0dp</item>
+	</style>
+
+	<style name="Request">
+		<item name="android:layout_marginTop">5dp</item>
+		<item name="android:layout_marginBottom">5dp</item>
 		<item name="android:gravity">center</item>
 	</style>
 

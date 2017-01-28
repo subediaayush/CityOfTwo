@@ -20,5 +20,10 @@
     <string name="url_delete_message">delete-message/</string>
     <string name="url_is_online">is-online/</string>
     <string name="url_get_matches">get-matches/</string>
+    <string name="url_start_conversation">start-conversation/</string>
+    <string name="url_get_icon">get-icon/</string>
+    <string name="url_accept_request">accept-request/</string>
+    <string name="url_remove_from_contact">remove-from-contact/</string>
+    <string name="url_get_common_likes">get-common-likes</string>
 
 </resources>

@@ -262,7 +262,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 				profileImageView.setProfileId(profileId);
 
-				TextView profileTextView = (TextView) holder.contentContainer.findViewById(R.id.message_profile_name);
+				TextView profileTextView = (TextView) holder.contentContainer.findViewById(R.id.profile_name);
 				profileTextView.setText(profileName);
 
 				holder.contentContainer.setOnClickListener(new View.OnClickListener() {
