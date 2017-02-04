@@ -186,7 +186,7 @@ public class LobbyActivity extends AppCompatActivity {
                         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                                 .remove(CityOfTwo.KEY_CHAT_PENDING)
                                 .remove(CityOfTwo.KEY_COMMON_LIKES)
-                                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                                .remove(CityOfTwo.KEY_LAST_CHATROOM)
                                 .remove(CityOfTwo.KEY_SESSION_ACTIVE)
                                 .apply();
 
@@ -204,7 +204,7 @@ public class LobbyActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
-                        .remove(CityOfTwo.KEY_CHATROOM_ID)
+                        .remove(CityOfTwo.KEY_LAST_CHATROOM)
                         .remove(CityOfTwo.KEY_COMMON_LIKES)
                         .remove(CityOfTwo.KEY_CHAT_PENDING)
                         .apply();
@@ -328,7 +328,7 @@ public class LobbyActivity extends AppCompatActivity {
                 })
                 .withEndAction(new Runnable() {
                     public void run() {
-                        // Animate the description in after the icon animation
+                        // Animate the description in after the image animation
                         // is done. Slide and fade the name in received underneath
                         // the picture.
 
@@ -753,7 +753,7 @@ public class LobbyActivity extends AppCompatActivity {
                     public void run() {
                         Editor editor = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit();
                         editor.putString(CityOfTwo.KEY_COMMON_LIKES, "chari, pari, mari")
-                                .putInt(CityOfTwo.KEY_CHATROOM_ID, 1)
+                                .putInt(CityOfTwo.KEY_LAST_CHATROOM, 1)
                                 .apply();
                         Intent conversationActivity = new Intent(
                                 LobbyActivity.this,
@@ -840,9 +840,9 @@ public class LobbyActivity extends AppCompatActivity {
         CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_LOBBY);
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
-        nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
-        nm.cancel(CityOfTwo.NOTIFICATION_CHAT_END, 10046);
+        nm.cancel(FirebaseMessageHandler.TAG_NOTIFICATION_NEW_MESSAGE, 10044);
+        nm.cancel(FirebaseMessageHandler.TAG_NOTIFICATION_CHAT_BEGIN, 10045);
+        nm.cancel(FirebaseMessageHandler.TAG_NOTIFICATION_CHAT_END, 10046);
 
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
@@ -852,7 +852,7 @@ public class LobbyActivity extends AppCompatActivity {
         editor.remove(CityOfTwo.KEY_SESSION_ACTIVE);
 
         if (!userOnline) {
-            editor.remove(CityOfTwo.KEY_CHATROOM_ID)
+            editor.remove(CityOfTwo.KEY_LAST_CHATROOM)
                     .remove(CityOfTwo.KEY_CHAT_PENDING)
                     .apply();
 
@@ -879,7 +879,7 @@ public class LobbyActivity extends AppCompatActivity {
         revealView(mLobbyProgressBar);
 
         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
-                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                .remove(CityOfTwo.KEY_LAST_CHATROOM)
                 .remove(CityOfTwo.KEY_COMMON_LIKES)
                 .remove(CityOfTwo.KEY_CHAT_PENDING)
                 .apply();

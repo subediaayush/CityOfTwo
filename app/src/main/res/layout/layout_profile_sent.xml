@@ -1,38 +1,48 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
-	android:gravity="end"
+	android:animateLayoutChanges="true"
+	android:gravity="center_vertical|end"
 	android:orientation="horizontal"
-	android:paddingEnd="16dp"
-	android:paddingStart="48dp"
+	android:paddingEnd="15dp"
+	android:paddingStart="36dp"
 	>
-	<TextView
-		android:id="@+id/profile_name"
+
+	<ImageView
+		android:id="@+id/status"
+		android:layout_width="10dp"
+		android:layout_height="10dp"
+		android:layout_margin="5dp"
+		android:visibility="gone"
+		/>
+
+	<LinearLayout
+		android:id="@+id/profile_container"
+		style="@style/ChatTextMessage"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_centerVertical="true"
-		android:layout_marginStart="-32dp"
-		android:background="@drawable/background_text_message"
-		android:elevation="3dp"
-		android:padding="16dp"
-		android:paddingStart="32dp"
-		android:text="User Name"
-		android:textColor="@color/colorPrimary"
-		android:textSize="18sp"
-		/>
+		android:gravity="center_vertical"
+		>
 
-	<de.hdodenhof.circleimageview.CircleImageView
-		android:id="@+id/profile_icon"
-		android:layout_width="100dp"
-		android:layout_height="100dp"
-		android:layout_margin="5dp"
-		android:layout_toStartOf="@id/profile_name"
-		android:elevation="3dp"
-		app:civ_border_color="@color/white"
-		app:civ_border_width="@dimen/width_reveal_image_border"
-		/>
+		<de.hdodenhof.circleimageview.CircleImageView
+			android:id="@+id/profile_icon"
+			android:layout_width="100dp"
+			android:layout_height="100dp"
+			android:layout_margin="10dp"
+			android:background="@drawable/ic_placeholder"
+			/>
+
+		<TextView
+			android:id="@+id/profile_name"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:elevation="3dp"
+			android:padding="16dp"
+			android:text="User Name"
+			android:textColor="@color/colorPrimary"
+			android:textSize="18sp"
+			/>
+	</LinearLayout>
 
 
-</RelativeLayout>
+</LinearLayout>

@@ -4,21 +4,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.LabeledIntent;
 import android.content.pm.ResolveInfo;
-import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.facebook.AccessToken;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.HttpMethod;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -29,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static android.content.Context.MODE_PRIVATE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_CODE;
 
 /**
@@ -36,9 +31,6 @@ import static com.messenger.cityoftwo.CityOfTwo.KEY_CODE;
  */
 
 public class Utils {
-
-	private static String lastFBID = "";
-	private static String lastFBURL = "";
 
 	public static String getReadableList(String[] list) {
 		int i;
@@ -83,67 +75,55 @@ public class Utils {
 				.into(imageView);
 	}
 
-	public static void loadFacebookPicture(final Context context, final String fbid, final ImageView imageView) {
-		if (lastFBID.equals(fbid) && !lastFBURL.isEmpty()) {
-			Picasso.with(context)
-					.load(lastFBURL)
-					.into(imageView);
+	public static void registerToken(Context context, String fcmid) {
+		final SharedPreferences sp = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
-			return;
-		}
+		String broadcast_gcm = context.getString(R.string.url_broadcast_gcm),
+				header = CityOfTwo.HEADER_GCM_ID,
+				value = fcmid;
 
-		final String TAG = "GraphAPI";
+		String[] path = {CityOfTwo.API, broadcast_gcm};
 
-		String requestUri = "/" + fbid + "/picture";
-
-		int height = imageView.getLayoutParams().height;
-		int width = imageView.getLayoutParams().width;
-
-		Bundle args = new Bundle();
-		args.putBoolean("redirect", false);
-		args.putInt("height", height);
-		args.putInt("width", width);
-
-		new GraphRequest(
-				AccessToken.getCurrentAccessToken(),
-				requestUri,
-				args,
-				HttpMethod.GET,
-				new GraphRequest.Callback() {
-					public void onCompleted(GraphResponse response) {
-						try {
-							Log.i(TAG, response.getRequest().toString());
-
-
-							JSONObject j = response.getJSONObject().getJSONObject("data");
-
-							try {
-								lastFBURL = j.getString("url");
-								Picasso.with(context)
-										.load(lastFBURL)
-										.into(imageView);
-
-								lastFBID = fbid;
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
-						} catch (JSONException e) {
-							e.printStackTrace();
-						}
-
-
-					}
-				}
-		).executeAsync();
-	}
-
-	public static void hideLater(final View view, int delay) {
-		new Handler().postDelayed(new Runnable() {
+		HttpHandler registerDeviceHttpHandler = new HttpHandler(
+				CityOfTwo.HOST,
+				path,
+				HttpHandler.POST,
+				CityOfTwo.HEADER_GCM_ID,
+				fcmid
+		) {
 			@Override
-			public void run() {
-				view.setVisibility(View.GONE);
+			protected void onSuccess(String response) {
+				try {
+					JSONObject Response = new JSONObject(response);
+
+					Boolean status = Response.getBoolean("parsadi");
+
+					if (!status) {
+						setRegisteredStatus(true);
+					} else {
+						setRegisteredStatus(false);
+					}
+
+				} catch (JSONException e) {
+					setRegisteredStatus(false);
+					e.printStackTrace();
+				}
 			}
-		}, delay);
+
+			@Override
+			protected void onFailure(Integer status) {
+				setRegisteredStatus(false);
+			}
+
+			private void setRegisteredStatus(boolean status) {
+				sp.edit().putBoolean(CityOfTwo.KEY_DEVICE_REGISTERED, status).apply();
+			}
+		};
+
+		String token = "Token " + sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
+
+		registerDeviceHttpHandler.addHeader("Authorization", token);
+		registerDeviceHttpHandler.execute();
 	}
 
 	public static class CoyRudy {
@@ -183,7 +163,6 @@ public class Utils {
 			}
 			if (shareIntentList.isEmpty()) {
 				new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-						.setTitle("Error")
 						.setMessage("No app found for sharing CoyRudy. Referral link has been copied to your clipboard")
 						.setNeutralButton("Ok", null)
 						.show();

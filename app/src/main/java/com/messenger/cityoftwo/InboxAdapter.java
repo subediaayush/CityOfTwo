@@ -35,21 +35,6 @@ public class InboxAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
 			}
 
 			@Override
-			public void onInserted(int position, int count) {
-				notifyItemRangeInserted(position, count);
-			}
-
-			@Override
-			public void onRemoved(int position, int count) {
-				notifyItemRangeRemoved(position, count);
-			}
-
-			@Override
-			public void onMoved(int fromPosition, int toPosition) {
-				notifyItemMoved(fromPosition, toPosition);
-			}
-
-			@Override
 			public void onChanged(int position, int count) {
 				notifyItemRangeChanged(position, count);
 			}
@@ -62,6 +47,21 @@ public class InboxAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
 			@Override
 			public boolean areItemsTheSame(Message item1, Message item2) {
 				return item1.getId().equals(item2.getId());
+			}
+
+			@Override
+			public void onInserted(int position, int count) {
+				notifyItemRangeInserted(position, count);
+			}
+
+			@Override
+			public void onRemoved(int position, int count) {
+				notifyItemRangeRemoved(position, count);
+			}
+
+			@Override
+			public void onMoved(int fromPosition, int toPosition) {
+				notifyItemMoved(fromPosition, toPosition);
 			}
 		});
 
@@ -98,8 +98,8 @@ public class InboxAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> {
 		}
 
 //		Picasso.with(mContext)
-//				.load(message.received.icon)
-//				.into(holder.icon);
+//				.load(message.received.image)
+//				.into(holder.image);
 
 		holder.message.setText(message.text);
 

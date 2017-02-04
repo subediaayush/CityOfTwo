@@ -2,6 +2,7 @@ package com.messenger.cityoftwo;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.os.Build;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,10 +25,13 @@ public abstract class OnlineCheck {
 				context.getString(R.string.url_start_conversation)
 		};
 
-		final ProgressDialog p = new ProgressDialog(context, R.style.AppTheme_Dialog);
+		final ProgressDialog p;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			p = new ProgressDialog(context, R.style.AppTheme_Dialog);
+		else
+			p = new ProgressDialog(context);
 
 		if (showDialog) {
-			p.setTitle("Please Wait");
 			p.setMessage("Connecting with " + contact.nickName);
 			p.setCancelable(false);
 			p.show();
@@ -41,9 +45,12 @@ public abstract class OnlineCheck {
 					Boolean success = j.getBoolean("parsadi");
 
 					if (success) {
-						Boolean online = j.getBoolean(CityOfTwo.KEY_IS_ONLINE);
+						Boolean online = j.getBoolean(CityOfTwo.KEY_IS_AVAILABLE);
 
-						if (online) isOnline(contact);
+						if (online) {
+							int requestId = j.getInt(CityOfTwo.KEY_REQUEST_ID);
+							isOnline(contact, requestId);
+						}
 						else isOffline(contact);
 					} else {
 						onError(new Exception("Cannot connect to the host"));
@@ -73,7 +80,7 @@ public abstract class OnlineCheck {
 		handler.execute();
 	}
 
-	abstract void isOnline(Contact contact);
+	abstract void isOnline(Contact contact, int requestId);
 
 	abstract void isOffline(Contact contact);
 

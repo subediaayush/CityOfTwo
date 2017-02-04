@@ -44,7 +44,6 @@ import android.widget.TextView;
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.login.widget.ProfilePictureView;
-import com.mopub.mobileads.MoPubView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,11 +56,11 @@ import tourguide.tourguide.Overlay;
 import tourguide.tourguide.Sequence;
 import tourguide.tourguide.ToolTip;
 
-import static com.messenger.cityoftwo.CityOfTwo.KEY_CHATROOM_ID;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_COMMON_LIKES;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_DISTANCE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_ID;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_IS_TYPING;
+import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_CHATROOM;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_SEEN;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_FEMALE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_MATCH_MALE;
@@ -75,7 +74,6 @@ public class ConversationActivity extends AppCompatActivity {
     protected boolean isOptionsVisible = false;
     protected ImageView mLogoImage;
     protected View mOptionsDismissButton;
-    protected MoPubView adView;
     ConversationAdapter mConversationAdapter;
     EditText mInputText;
     ImageButton mSendButton;
@@ -375,7 +373,7 @@ public class ConversationActivity extends AppCompatActivity {
         JSONObject j = new JSONObject();
         try {
             j.put(CityOfTwo.HEADER_LAST_SEEN, System.currentTimeMillis());
-            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_CHATROOM_ID, -1));
+            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_LAST_CHATROOM, -1));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -415,7 +413,7 @@ public class ConversationActivity extends AppCompatActivity {
         JSONObject j = new JSONObject();
         try {
             j.put(CityOfTwo.HEADER_IS_TYPING, isTyping);
-            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_CHATROOM_ID, -1));
+            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_LAST_CHATROOM, -1));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -1098,9 +1096,9 @@ public class ConversationActivity extends AppCompatActivity {
         CityOfTwo.setCurrentActivity(CityOfTwo.ACTIVITY_PROFILE);
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.cancel(CityOfTwo.NOTIFICATION_NEW_MESSAGE, 10044);
-        nm.cancel(CityOfTwo.NOTIFICATION_NEW_CHAT, 10045);
-        nm.cancel(CityOfTwo.NOTIFICATION_CHAT_END, 10046);
+        nm.cancel(FirebaseMessageHandler.TAG_NOTIFICATION_NEW_MESSAGE, 10044);
+        nm.cancel(FirebaseMessageHandler.TAG_NOTIFICATION_CHAT_BEGIN, 10045);
+        nm.cancel(FirebaseMessageHandler.TAG_NOTIFICATION_CHAT_END, 10046);
 
         IntentFilter filter = new IntentFilter();
 
@@ -1114,7 +1112,6 @@ public class ConversationActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver((mBroadcastReceiver), filter);
 
         if (CityOfTwo.pendingMessages != null) CityOfTwo.pendingMessages.clear();
-        if (CityOfTwo.messageCounter != null) CityOfTwo.messageCounter = 0;
 
         SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
@@ -1124,7 +1121,7 @@ public class ConversationActivity extends AppCompatActivity {
         editor.remove(CityOfTwo.KEY_SESSION_ACTIVE);
 
         if (!userOnline) {
-            editor.remove(CityOfTwo.KEY_CHATROOM_ID)
+            editor.remove(CityOfTwo.KEY_LAST_CHATROOM)
                     .remove(CityOfTwo.KEY_CHAT_PENDING)
                     .apply();
 
@@ -1150,7 +1147,7 @@ public class ConversationActivity extends AppCompatActivity {
 
         String commonLikes = sp.getString(KEY_COMMON_LIKES, "");
         Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
-        Integer chatRoomId = sp.getInt(CityOfTwo.KEY_CHATROOM_ID, -1);
+        Integer chatRoomId = sp.getInt(CityOfTwo.KEY_LAST_CHATROOM, -1);
 
         Long lastSeen = sp.getLong(KEY_LAST_SEEN, -1);
         Boolean isTyping = sp.getBoolean(KEY_IS_TYPING, false);
@@ -1176,7 +1173,7 @@ public class ConversationActivity extends AppCompatActivity {
         } else {
             DatabaseHelper db = new DatabaseHelper(this);
             ArrayList<Conversation> pendingMessages = db.retrieveMessages(chatRoomId);
-            db.clearTable(chatRoomId);
+            db.clearMessagesTable(chatRoomId);
 
             if (chatPending) {
                 sp.edit().putBoolean(CityOfTwo.KEY_CHAT_PENDING, false).apply();
@@ -1200,7 +1197,7 @@ public class ConversationActivity extends AppCompatActivity {
         
         JSONObject j = new JSONObject();
         try {
-            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_CHATROOM_ID, -1));
+            j.put(CityOfTwo.HEADER_CHATROOM_ID, sp.getInt(KEY_LAST_CHATROOM, -1));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -1210,7 +1207,7 @@ public class ConversationActivity extends AppCompatActivity {
         HttpHandler dumpHttpHandler = new HttpHandler(CityOfTwo.HOST, Path, HttpHandler.POST, j) {
             @Override
             protected void onPostExecute() {
-                sp.edit().remove(CityOfTwo.KEY_CHATROOM_ID).apply();
+                sp.edit().remove(CityOfTwo.KEY_LAST_CHATROOM).apply();
             }
         };
         
@@ -1258,7 +1255,7 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onUserOfflineReceived(Bundle data) {
         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                 .remove(CityOfTwo.KEY_CHAT_PENDING)
-                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                .remove(CityOfTwo.KEY_LAST_CHATROOM)
                 .remove(CityOfTwo.KEY_SESSION_ACTIVE)
                 .apply();
 

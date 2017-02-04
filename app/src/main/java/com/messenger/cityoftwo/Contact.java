@@ -1,5 +1,6 @@
 package com.messenger.cityoftwo;
 
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -10,23 +11,13 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 
 /**
  * Created by Aayush on 10/7/2016.
  */
 
 public class Contact implements Parcelable {
-	public static final Creator<Contact> CREATOR = new Creator<Contact>() {
-		@Override
-		public Contact createFromParcel(Parcel in) {
-			return new Contact(in);
-		}
-
-		@Override
-		public Contact[] newArray(int size) {
-			return new Contact[size];
-		}
-	};
 	public static final Comparator<Contact> FRIEND_COMPARATOR = new Comparator<Contact>() {
 		@Override
 		public int compare(Contact lhs, Contact rhs) {
@@ -54,7 +45,17 @@ public class Contact implements Parcelable {
 			else return -1;
 		}
 	};
+	public static final Creator<Contact> CREATOR = new Creator<Contact>() {
+		@Override
+		public Contact createFromParcel(Parcel in) {
+			return new Contact(in);
+		}
 
+		@Override
+		public Contact[] newArray(int size) {
+			return new Contact[size];
+		}
+	};
 	public boolean isFriend;
 	Integer id;
 	String fid;
@@ -65,9 +66,10 @@ public class Contact implements Parcelable {
 	String[] topLikes;
 	ArrayList<Conversation> lastMessages;
 	int commonLikes;
+	Bundle revealData;
 
-	public Contact(Integer code, String fid, String name, String nickName, boolean hasRevealed, String status, String[] topLikes, int commonLikes, boolean isFriend) {
-		this.id = code;
+	public Contact(Integer id, String fid, String name, String nickName, boolean hasRevealed, String status, String[] topLikes, int commonLikes, boolean isFriend) {
+		this.id = id;
 		this.fid = fid;
 		this.name = name;
 		this.nickName = nickName;
@@ -78,6 +80,7 @@ public class Contact implements Parcelable {
 		this.isFriend = isFriend;
 
 		this.lastMessages = new ArrayList<>();
+		revealData = new Bundle();
 	}
 
 	public Contact(String contact) {
@@ -106,7 +109,10 @@ public class Contact implements Parcelable {
 				for (int i = 0; i < rawMessages.length(); i++)
 					lastMessages.add(new Conversation(rawMessages.getString(i)));
 			}
-
+			revealData = new Bundle();
+			if (j.has("reveal_data")) {
+				revealData = stringToBundle(j.getString("reveal_data"));
+			}
 			id = j.getInt("id");
 			fid = j.getString("fbid");
 		} catch (JSONException e) {
@@ -114,20 +120,29 @@ public class Contact implements Parcelable {
 		}
 	}
 
+
 	protected Contact(Parcel in) {
 		isFriend = in.readByte() != 0;
-		id = in.readInt();
 		fid = in.readString();
 		name = in.readString();
 		nickName = in.readString();
 		hasRevealed = in.readByte() != 0;
 		status = in.readString();
 		topLikes = in.createStringArray();
-
-		lastMessages = new ArrayList<>();
-		in.readTypedList(lastMessages, Conversation.CREATOR);
-
+		lastMessages = in.createTypedArrayList(Conversation.CREATOR);
 		commonLikes = in.readInt();
+		revealData = in.readBundle();
+	}
+
+	private Bundle stringToBundle(String string) throws JSONException {
+		JSONObject data = new JSONObject(string);
+		Bundle output = new Bundle();
+		Iterator<String> keySet = data.keys();
+		while (keySet.hasNext()) {
+			String key = keySet.next();
+			output.putString(key, data.getString(key));
+		}
+		return output;
 	}
 
 	@Override
@@ -138,17 +153,15 @@ public class Contact implements Parcelable {
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeByte((byte) (isFriend ? 1 : 0));
-		dest.writeInt(id);
 		dest.writeString(fid);
 		dest.writeString(name);
 		dest.writeString(nickName);
 		dest.writeByte((byte) (hasRevealed ? 1 : 0));
 		dest.writeString(status);
 		dest.writeStringArray(topLikes);
-
 		dest.writeTypedList(lastMessages);
-
 		dest.writeInt(commonLikes);
+		dest.writeBundle(revealData);
 	}
 
 	public Integer getId() {
@@ -191,6 +204,7 @@ public class Contact implements Parcelable {
 			j.put("common_likes", commonLikes);
 			j.put("topLikes", topLikes);
 			j.put("last_messages", new JSONArray(lastMessages));
+			j.put("reveal_data", bundleToString(revealData));
 			j.put("is_friend", isFriend);
 			j.put("id", id);
 			j.put("fbid", fid);
@@ -200,8 +214,20 @@ public class Contact implements Parcelable {
 		return j.toString();
 	}
 
+	private String bundleToString(Bundle data) throws JSONException {
+		JSONObject j = new JSONObject();
+		for (String key : data.keySet())
+			j.put(key, data.getString(key));
+
+		return j.toString();
+	}
+
+	public void setRevealData(Bundle revealData) {
+		this.revealData = revealData;
+	}
 
 	public void setLastMessage(ArrayList<Conversation> messages) {
 		lastMessages = messages;
 	}
+
 }

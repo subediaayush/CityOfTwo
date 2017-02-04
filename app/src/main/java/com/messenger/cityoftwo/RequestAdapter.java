@@ -95,8 +95,8 @@ public class RequestAdapter extends CardAdapterBase<InboxAdapter.MessageHolder> 
 		}
 
 //		Picasso.with(mContext)
-//				.load(message.received.icon)
-//				.into(holder.icon);
+//				.load(message.received.image)
+//				.into(holder.image);
 
 		holder.message.setText(message.text);
 

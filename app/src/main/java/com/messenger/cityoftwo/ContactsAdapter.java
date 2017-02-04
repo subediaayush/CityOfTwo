@@ -3,8 +3,6 @@ package com.messenger.cityoftwo;
 import android.content.Context;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import com.messenger.cityoftwo.dummy.DummyContent.DummyItem;
@@ -22,6 +20,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 	public static final int GUEST_MATCH = 0;
 	public static final int GUEST_CONTACT = 1;
 
+	private final ContactAdapterWrapper mWrapper;
+
 	private SortedList<Contact> mDataset;
 	private HashMap<Integer, Message> mMessages;
 
@@ -29,7 +29,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 
 	private ContactAdapterWrapper.ContactsEventListener mEventListener;
 
-	public ContactsAdapter(Context context) {
+	public ContactsAdapter(Context context, ContactAdapterWrapper wrapper) {
 
 		mDataset = new SortedList<>(Contact.class, new SortedList.Callback<Contact>() {
 			@Override
@@ -75,6 +75,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 		});
 
 		mContext = context;
+		mWrapper = wrapper;
 	}
 
 
@@ -87,33 +88,16 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 
 	@Override
 	public ContactHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-		View view = LayoutInflater.from(mContext).inflate(
-				R.layout.layout_contact,
-				parent,
-				false
-		);
-		return new ContactHolder(view);
+		return mWrapper.createItemViewHolder(parent, viewType);
 	}
 
 	@Override
 	public void onBindViewHolder(ContactHolder holder, final int position) {
-		Contact contact = mDataset.get(position);
-		if (contact.nickName.isEmpty()) {
-			holder.name.setText(contact.name);
-		} else {
-			holder.name.setText(contact.nickName);
-		}
-
-		holder.itemView.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mEventListener != null) mEventListener.onProfileViewed(position);
-			}
-		});
+		mWrapper.bindItemView(holder, position);
 
 //		Picasso.with(mContext)
-//				.load(contact.icon)
-//				.into(holder.icon);
+//				.load(contact.image)
+//				.into(holder.image);
 
 //		holder.mItem = mValues.get(position);
 //		holder.mIdView.setText(mValues.get(position).id);
@@ -134,6 +118,14 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 	@Override
 	public int getItemCount() {
 		return mDataset.size();
+	}
+
+	public ContactAdapterWrapper.ContactsEventListener getEventListener() {
+		return mEventListener;
+	}
+
+	public SortedList<Contact> getDataset() {
+		return mDataset;
 	}
 
 	@Override
@@ -176,6 +168,4 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactHolder> impleme
 	public Contact get(int position) {
 		return mDataset.get(position);
 	}
-
-
 }

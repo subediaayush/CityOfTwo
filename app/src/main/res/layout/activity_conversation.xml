@@ -124,7 +124,7 @@
             android:adjustViewBounds="true"
             android:background="@drawable/send_button_bg"
             android:padding="2dp"
-            app:srcCompat="@drawable/ic_send"
+            ads:srcCompat="@drawable/ic_send_light"
             />
 
     </LinearLayout>

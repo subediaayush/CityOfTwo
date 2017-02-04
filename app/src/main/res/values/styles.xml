@@ -227,5 +227,13 @@
 		<item name="android:gravity">center</item>
 	</style>
 
+	<style name="ProgressBar">
+		<item name="android:indeterminateOnly">false</item>
+		<item name="android:indeterminate">false</item>
+		<item name="android:progressDrawable">@drawable/circular_progress_bar</item>
+	</style>
+
+	<style name="BorderlessButton" parent="Widget.AppCompat.Button.Borderless"/>
+
 
 </resources>

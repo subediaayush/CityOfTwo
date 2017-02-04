@@ -100,6 +100,18 @@ public class Conversation implements Parcelable {
 		flags = in.readInt();
 	}
 
+	public static int addFlag(int flag, int bit) {
+		return flag | bit;
+	}
+
+	public static int removeFlag(int flag, int bit) {
+		return flag & ~bit;
+	}
+
+	public static boolean containsFlag(int flag, int bit) {
+		return (flag & bit) == bit;
+	}
+
 	public Integer getFlags() {
 		return flags;
 	}

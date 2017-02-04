@@ -38,20 +38,23 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 	private HashSet<Integer> mSentMessages;
 	private HashSet<Integer> mErrorMessages;
 
-	private int mLastSeen = -1;
+	private int mLastSeen;
 
 	private Contact mGuest;
-	private int mode;
+	private int mChatroomId;
 
 	private Boolean requestResponse = null;
 
 	private ChatEventListener mEventListener;
 
-	public ChatAdapter(Context context, Contact guest) {
+	public ChatAdapter(Context context, Contact guest, int chatroomId) {
 
 		mContext = context;
 
 		mGuest = guest;
+		mChatroomId = chatroomId;
+
+		mLastSeen = -1;
 
 		mSentMessages = new HashSet<>();
 		mErrorMessages = new HashSet<>();
@@ -215,15 +218,12 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		holder.request.setText(message);
 	}
 
-	private void handleRevealItem(final RevealViewHolder holder, int position, int flags) {
-		String name;
+	private void handleRevealItem(final RevealViewHolder holder, final int position, int flags) {
 		final String fbid;
 		if ((flags & CityOfTwo.FLAG_SENT) == CityOfTwo.FLAG_SENT) {
 			SharedPreferences sp = mContext.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE);
-			name = sp.getString(CityOfTwo.KET_NAME, "");
 			fbid = sp.getString(CityOfTwo.KEY_FBID, "");
 		} else {
-			name = mGuest.name;
 			fbid = mGuest.fid;
 
 			if (!mGuest.hasRevealed) {
@@ -232,9 +232,23 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			}
 		}
 
-		Utils.loadFacebookPicture(mContext, fbid, holder.image);
+		new FacebookHelper(mContext, fbid, mChatroomId, "name") {
+			@Override
+			public void onResponse(String response) {
+				mGuest.name = response;
+			}
 
-		if (!name.isEmpty()) holder.name.setText(name);
+			@Override
+			public void onError() {
+				mGuest.name = "Facebook User";
+			}
+		}.execute();
+
+		FacebookHelper.loadFacebookProfilePicture(mContext, fbid, mChatroomId, holder.image);
+
+		holder.name.setText(mGuest.name);
+
+		if (Conversation.containsFlag(flags, CityOfTwo.FLAG_SENT)) setItemStatus(holder, position);
 
 		holder.itemView.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -242,10 +256,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 				if (mEventListener != null) mEventListener.onViewProfile(fbid);
 			}
 		});
-	}
-
-	private String getFBProfilePicture(Contact mGuest) {
-		return null;
 	}
 
 	private void handleTextItem(TextViewHolder holder, final int position, int flags) {
@@ -256,7 +266,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			if ((nextFlag & CityOfTwo.FLAG_RECEIVED) != CityOfTwo.FLAG_RECEIVED) {
 
 				if (mGuest.hasRevealed)
-					Utils.loadFacebookPicture(mContext, mGuest.fid, holder.image);
+					FacebookHelper.loadFacebookProfilePicture(mContext, mGuest.fid, mChatroomId, holder.image);
 				else Utils.loadRandomPicture(mContext, mGuest.id, holder.image);
 
 				holder.image.setVisibility(View.VISIBLE);
@@ -272,6 +282,18 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 		holder.time.setText(messageTime);
 
+		if (c.containsFlag(CityOfTwo.FLAG_SENT)) setItemStatus(holder, position);
+
+		holder.text.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mEventListener != null)
+					mEventListener.onConversationClicked(position, getStatus(position));
+			}
+		});
+	}
+
+	private void setItemStatus(StatusViewHolder holder, int position) {
 		int status = getStatus(position);
 
 		@ColorInt
@@ -281,14 +303,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		else if (status == STATUS_SENT) color = Color.YELLOW;
 
 		holder.status.setBackgroundColor(color);
-
-		holder.text.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mEventListener != null)
-					mEventListener.onConversationClicked(position, getStatus(position));
-			}
-		});
 	}
 
 	private int getStatus(int position) {
@@ -316,7 +330,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			holder.url.setVisibility(View.VISIBLE);
 
 			holder.name.setText(mGuest.name);
-			holder.url.setText(mGuest + " at fb.com");
+			holder.url.setText(mGuest.name + " at fb.com");
 			holder.url.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -324,7 +338,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 				}
 			});
 
-			Utils.loadFacebookPicture(mContext, mGuest.fid, holder.image);
+			FacebookHelper.loadFacebookProfilePicture(mContext, mGuest.fid, mChatroomId, holder.image);
 		}
 
 		if (mGuest.nickName.isEmpty()) {
@@ -418,7 +432,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 	}
 
 	public void setMode(int mode) {
-		this.mode = mode;
 	}
 
 	public void setChatEventListener(ChatEventListener c) {
@@ -430,37 +443,41 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 		int chatLength = getItemCount();
 
-		int latestIndex = mLastSeen == -1 ? 0 : mLastSeen;
-		index_lookup:
-		for (int i = latestIndex; i < chatLength; i++) {
-			Conversation c = mConversationList.get(i);
+		int latestIndex;
+
+		for (latestIndex = mLastSeen == -1 ? 0 : mLastSeen; latestIndex < chatLength - 1; latestIndex++) {
+			Conversation c = mConversationList.get(latestIndex);
 			int comp = Conversation.TIME_COMPARATOR.compare(lastSeenWrapper, c);
 
-			if (comp != -1) {
-				if (c.containsFlag(CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT)) {
-					latestIndex = i;
-					break;
-				} else {
-					for (int j = i; i >= 0; i--) {
-						Conversation c_ = mConversationList.get(j);
-						if (c_.containsFlag(CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT)) {
-							latestIndex = j;
-							break index_lookup;
-						}
+			if (c.containsFlag(CityOfTwo.FLAG_SENT)) {
+				setStatus(latestIndex, STATUS_SEEN);
+			}
+
+			if (comp == -1) break;
+		}
+
+		latestIndex--;
+		if (latestIndex > -1) {
+			Conversation c = mConversationList.get(latestIndex);
+
+			if (!c.containsFlag(CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT)) {
+				for (int j = latestIndex; j > 0; j--) {
+					Conversation c_ = mConversationList.get(j);
+					if (c_.containsFlag(CityOfTwo.FLAG_SENT | CityOfTwo.FLAG_TEXT)) {
+						latestIndex = j;
+						break;
 					}
 				}
 			}
-
-			if (c.containsFlag(CityOfTwo.FLAG_SENT)) {
-				setStatus(i, STATUS_SEEN);
-			}
-
 		}
 
 		if (mLastSeen != latestIndex) {
 			mLastSeen = latestIndex;
-			notifyItemRangeChanged(0, mLastSeen);
+			notifyItemRangeChanged(0, mLastSeen + 1);
 		}
+
+		Log.d(TAG, "Last seen item set: " + mLastSeen);
+
 	}
 
 	public void setStatus(int index, int status) {
@@ -528,12 +545,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		}
 	}
 
-	private class TextViewHolder extends RecyclerView.ViewHolder {
+	private class TextViewHolder extends StatusViewHolder {
 
 		TextView time;
 		TextView text;
 		CircleImageView image;
-		ImageView status;
 
 		public TextViewHolder(View itemView) {
 			super(itemView);
@@ -542,10 +558,31 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			text = (TextView) itemView.findViewById(R.id.message_text);
 
 			image = (CircleImageView) itemView.findViewById(R.id.icon);
-			status = (ImageView) itemView.findViewById(R.id.status);
 		}
 	}
 
+	private class RevealViewHolder extends StatusViewHolder {
+		TextView name;
+		CircleImageView image;
+
+		public RevealViewHolder(View itemView) {
+			super(itemView);
+
+			name = (TextView) itemView.findViewById(R.id.profile_name);
+			image = (CircleImageView) itemView.findViewById(R.id.profile_icon);
+		}
+	}
+
+	private class StatusViewHolder extends RecyclerView.ViewHolder {
+
+		ImageView status;
+
+		public StatusViewHolder(View itemView) {
+			super(itemView);
+
+			status = (ImageView) itemView.findViewById(R.id.status);
+		}
+	}
 	private class GenericViewHolder extends RecyclerView.ViewHolder {
 		public GenericViewHolder(View itemView) {
 			super(itemView);
@@ -582,18 +619,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 			likes = new OptionButtonHolder(itemView.findViewById(R.id.likes));
 
 			optionsContainer = itemView.findViewById(R.id.profile_options_container);
-		}
-	}
-
-	private class RevealViewHolder extends RecyclerView.ViewHolder {
-		TextView name;
-		CircleImageView image;
-
-		public RevealViewHolder(View itemView) {
-			super(itemView);
-
-			name = (TextView) itemView.findViewById(R.id.profile_name);
-			image = (CircleImageView) itemView.findViewById(R.id.profile_icon);
 		}
 	}
 }

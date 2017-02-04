@@ -69,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
-                .remove(CityOfTwo.KEY_CHATROOM_ID)
+                .remove(CityOfTwo.KEY_LAST_CHATROOM)
                 .remove(CityOfTwo.KEY_COMMON_LIKES)
                 .remove(CityOfTwo.KEY_CHAT_PENDING)
                 .apply();
@@ -116,7 +116,7 @@ public class LoginActivity extends AppCompatActivity {
 //                if (BuildConfig.DEBUG) {
 //                    SharedPreferences.Editor editor = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit();
 //                    editor.putString(CityOfTwo.KEY_COMMON_LIKES, "chari, pari, mari")
-//                            .putInt(CityOfTwo.KEY_CHATROOM_ID, 1)
+//                            .putInt(CityOfTwo.KEY_LAST_CHATROOM, 1)
 //                            .apply();
 //                    Intent conversationActivity = new Intent(
 //                            LoginActivity.this,
@@ -228,8 +228,8 @@ public class LoginActivity extends AppCompatActivity {
                 loginDialog = new ProgressDialog(this);
             }
 
-            loginDialog.setTitle("Logging in");
             loginDialog.setMessage("Please wait while we log you in");
+            loginDialog.setCancelable(false);
             loginDialog.show();
 
             AccessToken.refreshCurrentAccessTokenAsync(new AccessToken.AccessTokenRefreshCallback() {
@@ -263,7 +263,6 @@ public class LoginActivity extends AppCompatActivity {
     private void showLoginError() {
         AlertDialog.Builder adb = new AlertDialog.Builder(this, R.style.AppTheme_Dialog);
 
-        adb.setTitle("Oops");
         adb.setMessage("Something went wrong!");
         adb.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
             @Override

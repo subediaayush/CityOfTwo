@@ -24,7 +24,7 @@ import java.util.HashMap;
  * Activities containing this fragment MUST implement the {@link ContactAdapterWrapper.ContactsEventListener}
  * interface.
  */
-public class CommonLikesFragment extends Fragment implements WrappableFragment {
+public class CommonLikesFragmentDialog extends Fragment implements DialogWrappableFragmentInterface {
 
 	public final static String ARG_SEARCH_MODE = "mode";
 	public final static String ARG_CONTACTS = "contacts";
@@ -56,17 +56,17 @@ public class CommonLikesFragment extends Fragment implements WrappableFragment {
 
 	private int searchMode;
 
-	private DialogWrapper mDialogWrapper;
+	private DialogFragmentWrapper mDialogFragmentWrapper;
 
 	/**
 	 * Mandatory empty constructor for the fragment manager to instantiate the
 	 * fragment (e.g. upon screen orientation changes).
 	 */
-	public CommonLikesFragment() {
+	public CommonLikesFragmentDialog() {
 	}
 
-	public static CommonLikesFragment newInstance() {
-		return new CommonLikesFragment();
+	public static CommonLikesFragmentDialog newInstance() {
+		return new CommonLikesFragmentDialog();
 	}
 
 //	@Override
@@ -132,11 +132,11 @@ public class CommonLikesFragment extends Fragment implements WrappableFragment {
 		mContactAdapter = new CommonLikesAdapter(getContext(), likes);
 		mLikesList.setAdapter(mContactAdapter);
 
-		if (mDialogWrapper != null) mDialogWrapper.onItemsPrepared();
+		if (mDialogFragmentWrapper != null) mDialogFragmentWrapper.onItemsPrepared();
 	}
 
-	public void setWrapper(DialogWrapper wrapper) {
-		this.mDialogWrapper = wrapper;
+	public void setDialogWrapper(DialogFragmentWrapper wrapper) {
+		this.mDialogFragmentWrapper = wrapper;
 	}
 
 
@@ -180,7 +180,7 @@ public class CommonLikesFragment extends Fragment implements WrappableFragment {
 
 				@Override
 				protected void onPostExecute() {
-					mDialogWrapper.onItemsPrepared();
+					mDialogFragmentWrapper.onItemsPrepared();
 				}
 			};
 			commonLikesHttpHandler.addHeader("Authorization", "Token " + this.token);

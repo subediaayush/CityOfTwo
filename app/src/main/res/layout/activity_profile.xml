@@ -269,7 +269,7 @@
 						android:layout_width="46dp"
 						android:layout_height="46dp"
 						android:background="@drawable/input_button"
-						app:srcCompat="@drawable/ic_send"
+						app:srcCompat="@drawable/ic_send_light"
 						/>
 				</LinearLayout>
 			</LinearLayout>

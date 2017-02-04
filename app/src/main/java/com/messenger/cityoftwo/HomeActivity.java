@@ -1,16 +1,19 @@
 package com.messenger.cityoftwo;
 
-import android.content.Context;
-import android.content.DialogInterface;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
-public class HomeActivity extends AppCompatActivity {
+import static com.messenger.cityoftwo.ProfileFragment.ARG_CURRENT_GUEST;
+
+public class HomeActivity extends ChatListenerPumpedActivity {
 
 	private final String ARG_TOKEN = "token";
 	private final String ARG_SECTIONED = "mode";
@@ -19,20 +22,27 @@ public class HomeActivity extends AppCompatActivity {
 	private HomePagerAdapter mAdapter;
 	private Integer mCurrentTab;
 
+	private BroadcastReceiver mReceiver;
+
 	private ContactsFragment mContactsFragment;
 	private LobbyFragment mLobbyFragment;
 
 	private String mToken;
+	private EmptyContentFragmentWrapper mEmptyFragment;
+
+	@Override
+	protected int getContentLayout() {
+		return R.layout.activity_home;
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.activity_home);
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
-		mToken = getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE)
+		mToken = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
 				.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
 		mHomePager = (ViewPager) findViewById(R.id.home_pager);
@@ -40,6 +50,49 @@ public class HomeActivity extends AppCompatActivity {
 
 		mTabLayout = (TabLayout) findViewById(R.id.tabs);
 		mTabLayout.setupWithViewPager(mHomePager);
+
+
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		LocalBroadcastManager.getInstance(this)
+				.unregisterReceiver(mReceiver);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		int chatroomId = sp.getInt(CityOfTwo.KEY_LAST_CHATROOM, -1);
+
+		if (chatroomId != -1) startConversation();
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		mContactsFragment.reloadContent();
+		mLobbyFragment.reloadContent();
+	}
+
+	private void startConversation() {
+		DatabaseHelper db = new DatabaseHelper(HomeActivity.this);
+
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		int chatroomId = sp.getInt(CityOfTwo.KEY_LAST_CHATROOM, -1);
+		int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
+
+		sp.edit().remove(CityOfTwo.KEY_CHAT_PENDING).apply();
+
+		Contact contact = db.loadGuest(guestId);
+		if (contact != null) contact.lastMessages.addAll(db.retrieveMessages(chatroomId));
+
+		showProfileAcivity(contact, chatroomId);
 	}
 
 	private void setupViewPager(ViewPager viewPager) {
@@ -58,8 +111,8 @@ public class HomeActivity extends AppCompatActivity {
 		mContactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
 
 			@Override
-			public void onContactSelected(final Contact contact, final int position) {
-				checkIfOnline(contact, position);
+			public void onContactSelected(final Contact contact) {
+				showProfile(contact);
 			}
 
 			@Override
@@ -73,74 +126,72 @@ public class HomeActivity extends AppCompatActivity {
 			}
 		});
 
+		mEmptyFragment = EmptyContentFragmentWrapper.newInstance("You seem to have no saved contact." +
+				" Tap here to try again.");
+		mEmptyFragment.setFragment(mContactsFragment);
+
 		mAdapter.addFragment(mLobbyFragment, "LOBBY");
-		mAdapter.addFragment(mContactsFragment, "CONTACTS");
+		mAdapter.addFragment(mEmptyFragment, "CONTACTS");
 //		mAdapter.addFragment(InboxFragment.newInstance(token), "INBOX");
 //		mAdapter.addFragment(RequestFragment.newInstance(token), "REQUEST");
 
 		viewPager.setAdapter(mAdapter);
 	}
 
-	public void checkIfOnline(final Contact contact, final int adapterPosition) {
-		final OnlineCheck check = new OnlineCheck(HomeActivity.this, contact, mToken, true) {
+	private void showProfile(final Contact contact) {
+		Bundle params = new Bundle();
+		params.putParcelable(ARG_CURRENT_GUEST, contact);
 
+		final ProfileFragment profileFragment = ProfileFragment.newInstance(params);
+		profileFragment.setEventListener(new ProfileFragment.ProfileFragmentListener() {
 			@Override
-			void isOnline(Contact contact) {
-				showProfileAcivity(contact, adapterPosition, true);
+			public void onEditProfile() {
+
 			}
 
 			@Override
-			void isOffline(Contact contact) {
-				showProfileAcivity(contact, adapterPosition, false);
+			public void onChatRequestSent(int requestId) {
+				showSentRequest(contact, requestId);
+				profileFragment.dismiss();
 			}
 
 			@Override
-			void onError(Exception e) {
-				showProfileAcivity(contact, adapterPosition, false);
-
-				new AlertDialog.Builder(HomeActivity.this, R.style.AppTheme_Dialog)
-						.setMessage("Could not connect to " + contact.nickName + ".")
-						.setPositiveButton("Try again", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								checkIfOnline(contact, adapterPosition);
-							}
-						})
-						.show();
+			public void onOfflineMessageSent() {
+				profileFragment.dismiss();
 			}
-		};
 
-		check.execute();
+			@Override
+			public void onViewProfile(String fid) {
+				Uri uri = FacebookHelper.getFacebookPageURI(HomeActivity.this, fid);
+
+				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+				startActivity(intent);
+
+			}
+		});
+		FragmentManager fm = getSupportFragmentManager();
+		profileFragment.show(fm, "CONTACT");
 	}
 
-	private void showProfileAcivity(Contact contact, int position, boolean b) {
+	public void showProfileAfterCheck(final Contact contact, final int adapterPosition) {
+
+	}
+
+	private void showProfileAcivity(Contact contact, int chatRoomId) {
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+		if (chatRoomId > -1) sp.edit().putInt(CityOfTwo.KEY_LAST_CHATROOM, chatRoomId)
+				.putInt(CityOfTwo.KEY_LAST_GUEST, contact.id).apply();
 		Intent contactIntent = new Intent(HomeActivity.this, ProfileActivity.class);
 
-		int mode = b ? ContactsFragment.MODE_ONLINE : ContactsFragment.MODE_OFFLINE;
-
-		contactIntent.putExtra(
-				ProfileActivity.ARG_PROFILE_MODE,
-				mode
-		);
-
 		contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST, contact);
-		contactIntent.putExtra(ProfileActivity.ARG_CURRENT_GUEST_POSITION, position);
+		contactIntent.putExtra(ProfileActivity.ARG_CHATROOM_ID, chatRoomId);
 
 		startActivityForResult(contactIntent, CityOfTwo.ACTIVITY_PROFILE);
 	}
 
 	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-
-		if (requestCode == CityOfTwo.ACTIVITY_PROFILE) {
-			if (resultCode == RESULT_OK) {
-				Contact contact = data.getParcelableExtra(ProfileActivity.ARG_CURRENT_GUEST);
-				Integer position = data.getIntExtra(ProfileActivity.ARG_CURRENT_GUEST_POSITION, -1);
-
-				mContactsFragment.reloadContact(contact, position);
-			}
-		}
+	int getActivityCode() {
+		return CityOfTwo.ACTIVITY_HOME;
 	}
-
 }

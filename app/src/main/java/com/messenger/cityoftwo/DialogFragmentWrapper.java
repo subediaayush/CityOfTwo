@@ -15,7 +15,7 @@ import android.widget.TextView;
  * Created by Aayush on 1/28/2017.
  */
 
-public class DialogWrapper extends DialogFragment {
+public class DialogFragmentWrapper extends DialogFragment {
 
 	private static final String ARG_DIALOG_TITLE = "title";
 
@@ -23,18 +23,24 @@ public class DialogWrapper extends DialogFragment {
 
 	private TitleHolder mTitleHolder;
 
-	public static DialogWrapper newInstance(String title) {
-		DialogWrapper fragment = new DialogWrapper();
+	public static DialogFragmentWrapper newInstance(String title) {
+		DialogFragmentWrapper fragment = new DialogFragmentWrapper();
 		Bundle args = new Bundle();
 		args.putString(ARG_DIALOG_TITLE, title);
 		fragment.setArguments(args);
 		return fragment;
 	}
 
+	public static DialogFragmentWrapper newInstance() {
+		DialogFragmentWrapper fragment = new DialogFragmentWrapper();
+		fragment.setArguments(new Bundle());
+		return fragment;
+	}
+
 	public void setFragment(Fragment fragment) {
 		this.mFragment = fragment;
-		if (mFragment instanceof WrappableFragment)
-			((WrappableFragment) mFragment).setWrapper(this);
+		if (mFragment instanceof DialogWrappableFragmentInterface)
+			((DialogWrappableFragmentInterface) mFragment).setDialogWrapper(this);
 	}
 
 //	@NonNull
@@ -53,7 +59,7 @@ public class DialogWrapper extends DialogFragment {
 //		else {
 //			mTitleHolder.setTitle(title);
 //
-//			if (!(mFragment instanceof WrappableFragment)) mTitleHolder.showIndicator(false);
+//			if (!(mFragment instanceof DialogWrappableFragmentInterface)) mTitleHolder.showIndicator(false);
 //		}
 
 
@@ -91,10 +97,9 @@ public class DialogWrapper extends DialogFragment {
 		if (title.isEmpty()) mTitleHolder.setVisibility(View.GONE);
 		else {
 			mTitleHolder.setTitle(title);
-
-			if (!(mFragment instanceof WrappableFragment)) mTitleHolder.showIndicator(false);
+			if (!(mFragment instanceof DialogWrappableFragmentInterface))
+				mTitleHolder.showIndicator(false);
 		}
-
 
 		return v;
 	}
@@ -127,7 +132,7 @@ public class DialogWrapper extends DialogFragment {
 //		boolean showIndicator;
 
 		public TitleHolder(View view) {
-			this.view = view;
+			this.view = view.findViewById(R.id.title_container);
 
 			title = (TextView) view.findViewById(R.id.title);
 			indicator = view.findViewById(R.id.loading);

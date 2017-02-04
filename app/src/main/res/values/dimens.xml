@@ -7,4 +7,5 @@
 	<dimen name="text_margin">16dp</dimen>
 	<dimen name="height_filter_item">40dp</dimen>
 	<dimen name="width_reveal_image_border">10dp</dimen>
+	<dimen name="height_peek">60dp</dimen>
 </resources>

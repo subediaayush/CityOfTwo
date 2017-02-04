@@ -8,7 +8,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
@@ -33,6 +32,8 @@ public class CityOfTwo extends Application {
 			"user_likes"
 	);
 
+	public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
+
 	public static final String KEY_ACCESS_TOKEN = "access_token";
 	public static final String KEY_PROFILE_IMAGE = "image_uri";
 	public static final String KEY_PROFILE_NAME = "user_name";
@@ -53,17 +54,30 @@ public class CityOfTwo extends Application {
 	public static final String KEY_HEIGHT = "height";
 	public static final String KEY_COMMON_LIKES = "likes";
 	public static final String KEY_TEST_RESULT = "test_result";
-	public static final String KEY_CHATROOM_ID = "chatroom_id";
+	public static final String KEY_LAST_CHATROOM = "chatroom_id";
 
 	public static final int APPLICATION_FOREGROUND = 0;
 	public static final int APPLICATION_BACKGROUND = 1;
 
+	public static final String[] ACTIVITY = new String[]{
+			"ACTIVITY_LOGIN",
+			"ACTIVITY_LOBBY",
+			"ACTIVITY_TEST",
+			"ACTIVITY_PROFILE",
+			"ACTIVITY_INTRODUCTION",
+			"ACTIVITY_HOME",
+			"ACTIVITY_FILTER",
+			"ACTIVITY_SPLASH"
+	};
+
+	public static final int ACTIVITY_LOGIN = 0;
 	public static final int ACTIVITY_LOBBY = 1;
 	public static final int ACTIVITY_TEST = 2;
 	public static final int ACTIVITY_PROFILE = 3;
 	public static final int ACTIVITY_INTRODUCTION = 4;
 	public static final int ACTIVITY_HOME = 5;
 	public static final int ACTIVITY_FILTER = 6;
+	public static final int ACTIVITY_SPLASH = 7;
 
 	public static final long MILLIS_IN_DAY = 86400000;
 	public static final long DAYS_IN_WEEK = MILLIS_IN_DAY * 7;
@@ -91,95 +105,100 @@ public class CityOfTwo extends Application {
 	public static final int FLAG_LAST_SEEN =
 			0b1000000000;
 
-	public static final String PACKAGE_NAME = "com.messenger.cityoftwo";
-	//	public static final String HOST = "192.168.0.100:5000";
-	public static final String HOST = "coyrudy.com";
-	public static final String API = "api";
+	public static final int RESULT_EXIT_APP = 10010;
 
-	public static final String HEADER_ACCESS_TOKEN = "access_token";
-	public static final String HEADER_TEST = "test";
-	public static final String HEADER_TEST_RESULT = "questions";
-	public static final String HEADER_DATA = "data";
-	public static final String HEADER_GCM_ID = "gcm_id";
+	public static final Integer MAXIMUM_AGE = 100;
+	public static final Integer MAXIMUM_DISTANCE = 100;
+	public static final Integer MINIMUM_AGE = 18;
+	public static final Integer MINIMUM_DISTANCE = 0;
+
+	public static final String ACTION_BEGIN_CHAT = PACKAGE_NAME + ".BEGIN_CHAT";
+	public static final String ACTION_END_CHAT = PACKAGE_NAME + ".END_CHAT";
+	public static final String ACTION_FCM_ID = PACKAGE_NAME + ".FCM_ID";
+	public static final String ACTION_IS_TYPING = PACKAGE_NAME + ".IS_TYPING";
+	public static final String ACTION_LAST_SEEN = PACKAGE_NAME + ".LAST_SEEN";
+	public static final String ACTION_NEW_MESSAGE = PACKAGE_NAME + ".NEW_MESSAGE";
+	public static final String ACTION_REQUEST_CHAT = PACKAGE_NAME + ".REQUEST_CHAT";
+	public static final String ACTION_USER_OFFLINE = PACKAGE_NAME + ".USER_OFFLINE";
+	public static final String ACTION_REQUEST_DENIED = PACKAGE_NAME + ".REQUEST_DENIED";
+	public static final String ACTION_REQUEST_ALARM = PACKAGE_NAME + ".REQUEST_ALARM";
+	public static final String ACTION_REQUEST_TIMEOUT = PACKAGE_NAME + ".REQUEST_TIMEOUT";
+
+	public static final String KEY_CHAT_REQUEST = "chat_request";
+	public static final String KEY_REQUEST_ID = "request_id";
+
+	public static final String HOST = "coyrudy.com";
+	//	public static final String HOST = "192.168.0.100:5000";
+	public static final String API = "api";
 
 	public static final String API_KEY = "AIzaSyB_Wco0Sdad38QGHsCcode9P1iZ3tsqqXY";
 
+	public static final String HEADER_ACCESS_TOKEN = "access_token";
 	public static final String HEADER_CHATROOM_ID = "chatroom_id";
-	public static final String KEY_MIN_AGE = "min_age";
-	public static final String KEY_MAX_AGE = "max_age";
-	public static final String KEY_DISTANCE = "distance";
-	public static final String KEY_MATCH_MALE = "gender_male";
-	public static final String KEY_MATCH_FEMALE = "gender_female";
-	public static final String KEY_DISTANCE_IN_MILES = "distance_miles";
-	public static final Integer MINIMUM_AGE = 18;
-	public static final Integer MAXIMUM_AGE = 100;
-	public static final Integer MINIMUM_DISTANCE = 0;
-	public static final Integer MAXIMUM_DISTANCE = 100;
-	public static final String KEY_PROFILE_ID = "profile_id";
-	public static final String KEY_PROFILE_URI = "profile_uri";
-	public static final String KEY_MESSAGE_FLAGS = "flags";
-	public static final String KEY_MESSAGE_TIME = "time";
+	public static final String HEADER_DATA = "data";
 	public static final String HEADER_FLAGS = "flags";
-	public static final String HEADER_TIME = "time";
-	public static final String KEY_TOKEN = "token";
-	public static final String KEY_ID = "id";
-	public static final String KEY_CREDITS = "credits";
-	public static final String KEY_FILTERS_APPLIED = "filters_applied";
-	public static final String KEY_FILTERS = "filters";
-	public static final String KEY_CHAT_PENDING = "chat_pending";
-	public static final String KEY_REG_ID = "reg_id";
-	public static final Integer ACTIVITY_LOGIN = 0;
-	public static final String KEY_CHAT_END = "chat_end";
-	public static final String KEY_FROM_INTRO = "from_intro";
-	public static final String TABLE_MESSAGES = "message";
-	public static final String COLUMN_ID = "id";
-	public static final String COLUMN_CHATROOM_ID = "chatroom_id";
-	public static final String COLUMN_MESSAGE = "name";
-	public static final String COLUMN_FLAGS = "flags";
-	public static final String COLUMN_TIME = "time";
-	public static final String ACTION_BEGIN_CHAT = "begin_chat";
-	public static final String ACTION_END_CHAT = "end_chat";
-	public static final String ACTION_NEW_MESSAGE = "new_message";
-	public static final String NOTIFICATION_NEW_MESSAGE = "notification_new_message";
-	public static final int RESULT_EXIT_APP = 10010;
-	public static final String KEY_SHOW_REVEAL_DIALOG = "show_reveal_dialog";
-	public static final String SECURED_PREFERENCE = "com.messenger.cityoftwo.secured";
-	public static final String ACTION_FCM_ID = "fcm_id";
-	public static final String KEY_CHAT_HEADER = "chat_header";
-	public static final String KEY_USER_OFFLINE = "user_offline";
-	public static final String ACTION_USER_OFFLINE = "com.messenger.cityoftwo.ACTION_USER_OFFLINE";
-	public static final String KEY_FIRST_RUN = "first_run";
-	public static final String NOTIFICATION_NEW_CHAT = "notification_new_chat";
-	public static final String KEY_SESSION_ACTIVE = "session_active";
+	public static final String HEADER_GCM_ID = "gcm_id";
 	public static final String HEADER_IS_TYPING = "is_typing";
 	public static final String HEADER_LAST_SEEN = "last_seen";
-	public static final String KEY_LAST_SEEN = "last_seen";
-	public static final String ACTION_LAST_SEEN = "com.messenger.cityoftwo.ACTION_LAST_SEEN";
-	public static final String KEY_IS_TYPING = "is_typing";
-	public static final String ACTION_IS_TYPING = "com.messenger.cityoftwo.ACTION_IS_TYPING";
-	public static final String NOTIFICATION_CHAT_END = "notification_chat_end";
-	public static final String HEADER_TOKEN = "token";
-	public static final String KEY_REQUESTS = "contacts";
-	public static final String KEY_IS_ONLINE = "is_online";
-	public static final String KEY_PROFILE_MODE = "profile_mode";
-	public static final String KEY_CURRENT_GUEST = "current_guest";
-	public static final String KEY_BACKGROUND_MESSAGES = "background_messages";
-	public static final String KEY_IS_FRIEND = "is_friend";
-	public static final String KEY_CODE = "code";
-	public static final String KEY_FBID = "fbid";
-	public static final String KET_NAME = "name";
+	public static final String HEADER_TEST = "test";
+	public static final String HEADER_TEST_RESULT = "questions";
+	public static final String HEADER_TIME = "time";
 	public static final String HEADER_TO = "to";
-	public static final String KEY_FRIEND_ID = "friend_id";
-	public static final String KEY_RESPONSE = "response";
-	public static final String KEY_NAME = "name";
+	public static final String HEADER_TOKEN = "token";
+
+	public static final String KET_NAME = "name";
+	public static final String KEY_BACKGROUND_MESSAGES = "background_messages";
 	public static final String KEY_CATEGORY = "category";
-	public static final String KEY_ICON = "icon";
+	public static final String KEY_CHAT_END = "chat_end";
+	public static final String KEY_CHAT_HEADER = "chat_header";
+	public static final String KEY_CHATROOM_ID = "chatroom_id";
+	public static final String KEY_CODE = "code";
+	public static final String KEY_CREDITS = "credits";
+	public static final String KEY_CURRENT_GUEST = "current_guest";
+	public static final String KEY_DEVICE_REGISTERED = "device_registerd";
+	public static final String KEY_DISTANCE = "distance";
+	public static final String KEY_DISTANCE_IN_MILES = "distance_miles";
+	public static final String KEY_FBID = "fbid";
+	public static final String KEY_FILTERS = "filters";
+	public static final String KEY_FILTERS_APPLIED = "filters_applied";
+	public static final String KEY_FIRST_RUN = "first_run";
+	public static final String KEY_FRIEND_ID = "friend_id";
+	public static final String KEY_FROM_INTRO = "from_intro";
+	public static final String KEY_GUEST = "guest";
+	public static final String KEY_ICON = "image";
+	public static final String KEY_ID = "id";
+	public static final String KEY_IS_AVAILABLE = "is_available";
+	public static final String KEY_IS_FRIEND = "is_friend";
+	public static final String KEY_IS_ONLINE = "is_online";
+	public static final String KEY_IS_TYPING = "is_typing";
+	public static final String KEY_LAST_GUEST = "guest_id";
+	public static final String KEY_LAST_REQUEST = "last_request";
+	public static final String KEY_LAST_SEEN = "last_seen";
+	public static final String KEY_MATCH_FEMALE = "gender_female";
+	public static final String KEY_MATCH_MALE = "gender_male";
+	public static final String KEY_MAX_AGE = "max_age";
+	public static final String KEY_MESSAGE_FLAGS = "flags";
+	public static final String KEY_MESSAGE_TIME = "time";
+	public static final String KEY_MIN_AGE = "min_age";
+	public static final String KEY_NAME = "name";
+	public static final String KEY_PROFILE_ID = "profile_id";
+	public static final String KEY_PROFILE_MODE = "profile_mode";
+	public static final String KEY_PROFILE_URI = "profile_uri";
+	public static final String KEY_REG_ID = "reg_id";
+	public static final String KEY_REQUESTS = "contacts";
+	public static final String KEY_RESPONSE = "response";
+	public static final String KEY_SESSION_ACTIVE = "session_active";
+	public static final String KEY_SHOW_REVEAL_DIALOG = "show_reveal_dialog";
+	public static final String KEY_TOKEN = "token";
+	public static final String KEY_USER_OFFLINE = "user_offline";
+
+	public static final String SECURED_PREFERENCE = PACKAGE_NAME + ".secured";
+
 	private static final String SENDER_ID = "584281533020";
 	public static ArrayList<Conversation> mBackgroundConversation;
 	public static Bitmap logoBitmap;
 	public static Bitmap logoSmallBitmap;
 	public static HashMap<String, Bitmap> answerBitmapList;
-	public static Integer messageCounter;
 	public static List<String> pendingMessages;
 	private static Integer currentActivity;
 	private static Integer applicationState;
@@ -272,23 +291,6 @@ public class CityOfTwo extends Application {
 				TypedValue.COMPLEX_UNIT_DIP, dp,
 				context.getResources().getDisplayMetrics()
 		);
-	}
-
-	public static Uri getFacebookPageURI(Context context, String profileId) {
-
-		String FACEBOOK_URL = "https://www.facebook.com/";
-
-		PackageManager packageManager = context.getPackageManager();
-		try {
-			int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
-			if (versionCode >= 3002850) { //newer versions of fb app
-				return Uri.parse("fb://facewebmodal/f?href=" + FACEBOOK_URL + profileId);
-			} else { //older versions of fb app
-				return Uri.parse("fb://page/" + profileId);
-			}
-		} catch (PackageManager.NameNotFoundException e) {
-			return Uri.parse(FACEBOOK_URL + profileId); //normal web url
-		}
 	}
 
 	public static boolean isGooglePlayServicesAvailable(Activity activity, DialogInterface.OnCancelListener cancelListener) {

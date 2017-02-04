@@ -4,10 +4,10 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +26,7 @@ import org.json.JSONObject;
  * Created by Aayush on 1/16/2017.
  */
 
-public class FilterActivity extends AppCompatActivity {
+public class FilterActivity extends ChatListenerPumpedActivity {
 	private final float KILOTOMILES = 8 / 5;
 
 	Boolean enableFilters;
@@ -51,10 +51,13 @@ public class FilterActivity extends AppCompatActivity {
 	boolean filtersChanged = false;
 
 	@Override
+	protected int getContentLayout() {
+		return R.layout.activity_filter;
+	}
+
+	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		setContentView(R.layout.activity_filter);
 
 		Button apply = (Button) findViewById(R.id.apply);
 		Button cancel = (Button) findViewById(R.id.cancel);
@@ -92,8 +95,11 @@ public class FilterActivity extends AppCompatActivity {
 	}
 
 	private void applyFilters(JSONObject mFilters) {
-		final ProgressDialog p = new ProgressDialog(this, R.style.AppTheme_Dialog);
-		p.setTitle("Applying Filters");
+		final ProgressDialog p;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			p = new ProgressDialog(this, R.style.AppTheme_Dialog);
+		else
+			p = new ProgressDialog(this);
 		p.setMessage("Please wait while we apply your filters");
 		p.setCancelable(false);
 		p.show();
@@ -316,23 +322,24 @@ public class FilterActivity extends AppCompatActivity {
 	private void onFiltersApplied(JSONObject filters) {
 		filtersChanged = true;
 		new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-				.setTitle("Success")
 				.setMessage("Your filters have been applied!")
 				.setNeutralButton("Ok", null).show();
 	}
 
 	private void onFiltersFailed(final JSONObject filters) {
 		new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-				.setTitle("Error")
-				.setMessage("There was an error while applying filters." +
-						" Do you want to try again?")
-				.setNegativeButton("Cancel", null)
-				.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+				.setMessage("There was an error while applying filters.")
+				.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						applyFilters(filters);
 					}
 				}).show();
+	}
+
+	@Override
+	int getActivityCode() {
+		return CityOfTwo.ACTIVITY_FILTER;
 	}
 
 }

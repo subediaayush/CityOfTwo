@@ -9,4 +9,9 @@
 	<style name="ChatTextMessage" parent="ChatTextMessageBase">
 		<item name="android:elevation">3dp</item>
 	</style>
+
+
+	<style name="BorderlessButton">
+		<item name="android:background">?selectableItemBackgroundBorderless</item>
+	</style>
 </resources>

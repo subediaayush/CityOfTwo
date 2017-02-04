@@ -4,6 +4,7 @@
 	android:layout_height="wrap_content"
 	android:animateLayoutChanges="true"
 	android:gravity="center_vertical|end"
+	android:layoutDirection="ltr"
 	android:orientation="horizontal"
 	android:paddingEnd="15dp"
 	android:paddingStart="36dp"

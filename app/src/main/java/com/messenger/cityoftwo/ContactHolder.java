@@ -10,13 +10,13 @@ import android.widget.TextView;
  */
 public class ContactHolder extends RecyclerView.ViewHolder {
 
-	ImageView icon;
+	ImageView image;
 	TextView name;
 
 	public ContactHolder(View view) {
 		super(view);
 
-		icon = (ImageView) view.findViewById(R.id.contact_icon);
+		image = (ImageView) view.findViewById(R.id.contact_icon);
 		name = (TextView) view.findViewById(R.id.contact_name);
 	}
 }

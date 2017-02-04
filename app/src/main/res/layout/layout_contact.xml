@@ -12,6 +12,7 @@
 	<de.hdodenhof.circleimageview.CircleImageView
 		android:id="@+id/contact_icon"
 		style="@style/CardContactIcons"
+		android:background="@drawable/ic_placeholder"
 		/>
 
 	<TextView

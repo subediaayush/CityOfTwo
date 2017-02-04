@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/main_content"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:fitsSystemWindows="true"
+	>
+
+	<ViewStub
+		android:id="@+id/layout_stub"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior"
+		/>
+
+	<LinearLayout
+		android:id="@+id/bottom_sheet"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="@color/white"
+		android:clipToPadding="true"
+		android:orientation="vertical"
+		app:behavior_hideable="true"
+		app:behavior_peekHeight="@dimen/height_peek"
+		app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+		>
+
+		<View
+			android:layout_width="match_parent"
+			android:layout_height="1dp"
+			android:background="@color/colorPrimaryLight"
+			/>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			>
+
+			<de.hdodenhof.circleimageview.CircleImageView
+				android:id="@+id/request_icon"
+				style="@style/CardContactIcons"
+				android:layout_marginStart="16dp"
+				android:background="@drawable/ic_placeholder"
+				/>
+
+			<TextView
+				android:id="@+id/request_message"
+				android:layout_width="0dp"
+				android:layout_height="60dp"
+				android:layout_marginEnd="8dp"
+				android:layout_marginStart="24dp"
+				android:layout_weight="1"
+				android:background="?android:attr/selectableItemBackground"
+				android:gravity="center_vertical"
+				android:text="Aayush Subedi wants to chat"
+				android:textColor="@color/Black"
+				android:textSize="16sp"
+				/>
+
+
+			<FrameLayout
+				android:layout_width="48dp"
+				android:layout_height="48dp"
+				android:layout_gravity="end|center_vertical"
+				android:layout_marginEnd="16dp"
+				>
+
+				<ProgressBar
+					android:id="@+id/request_timer"
+					style="@style/ProgressBar"
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:max="1200"
+					android:progress="23"
+					/>
+
+				<ImageButton
+					android:id="@+id/request_response"
+					style="@style/BorderlessButton"
+					android:layout_width="match_parent"
+					android:layout_height="match_parent"
+					android:layout_gravity="center"
+					app:srcCompat="@drawable/ic_done"
+					/>
+			</FrameLayout>
+		</LinearLayout>
+
+		<TextView
+			android:id="@+id/request_likes"
+			style="@style/CardContent.ListItem"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_margin="16dp"
+			android:layout_marginTop="7dp"
+			android:text="likes this, that, those and 20 other things including meatballs"
+			android:textAllCaps="true"
+			android:textColor="@color/gray"
+			android:textStyle="italic"
+			/>
+	</LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>

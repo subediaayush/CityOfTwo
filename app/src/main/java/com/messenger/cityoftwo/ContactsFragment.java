@@ -22,7 +22,8 @@ import java.util.HashMap;
  * Activities containing this fragment MUST implement the {@link ContactAdapterWrapper.ContactsEventListener}
  * interface.
  */
-public class ContactsFragment extends Fragment implements ContactAdapterWrapper.ContactsEventListener, WrappableFragment {
+public class ContactsFragment extends Fragment implements ContactAdapterWrapper.ContactsEventListener, DialogWrappableFragmentInterface
+		, EmptyContentWrappableFragmentInterface, ReloadableFragment {
 
 	public final static String ARG_SEARCH_MODE = "mode";
 	public final static String ARG_CONTACTS = "contacts";
@@ -53,7 +54,8 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 	private int mSearchMode;
 
 	private ContactsFragmentListener mListener;
-	private DialogWrapper mDialogWrapper;
+	private DialogFragmentWrapper mDialogFragmentWrapper;
+	private EmptyContentFragmentWrapper mEmptyContentFragmentWrapper;
 
 	/**
 	 * Mandatory empty constructor for the fragment manager to instantiate the
@@ -135,7 +137,7 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 	@Override
 	public void onProfileViewed(int position) {
 		Contact contact = mContactAdapter.get(position);
-		if (mListener != null) mListener.onContactSelected(contact, position);
+		if (mListener != null) mListener.onContactSelected(contact);
 	}
 
 	public int getTotalContacts() {
@@ -151,15 +153,45 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 	}
 
 	@Override
-	public void setWrapper(DialogWrapper wrapper) {
-		mDialogWrapper = wrapper;
+	public void setDialogWrapper(DialogFragmentWrapper wrapper) {
+		mDialogFragmentWrapper = wrapper;
+	}
+
+	public void reloadFragment() {
+		reloadInfo();
+	}
+
+	@Override
+	public void setContentWrapper(EmptyContentFragmentWrapper wrapper) {
+		mEmptyContentFragmentWrapper = wrapper;
+	}
+
+	@Override
+	public void reloadContent() {
+		reloadInfo();
+	}
+
+	private void notifyObservers(boolean error) {
+		if (!error) {
+			int totalItems = mContacts.size();
+
+			if (mEmptyContentFragmentWrapper != null)
+				mEmptyContentFragmentWrapper.isContentEmpty(totalItems == 0);
+//			mEmptyContentFragmentWrapper.isContentEmpty(totalItems != 0);
+			if (mListener != null) mListener.onContactsLoaded(mContacts.size());
+		}
+
+//						if (mListener != null) mListener.onContactsLoaded(0);
+		if (mDialogFragmentWrapper != null)
+			mDialogFragmentWrapper.onItemsPrepared();
+
 	}
 
 	/**
 	 * Created by Aayush on 1/23/2017.
 	 */
 	public interface ContactsFragmentListener {
-		void onContactSelected(Contact contact, int position);
+		void onContactSelected(Contact contact);
 
 		void onContactsLoaded(int totalContacts);
 
@@ -230,10 +262,6 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 					protected void onFailure(Integer status) {
 						if (mListener != null) mListener.onContactLoadError();
 					}
-
-					@Override
-					protected void onPostExecute() {
-					}
 				};
 				matchesHttpHandler.addHeader("Authorization", "Token " + this.token);
 			}
@@ -290,22 +318,19 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 				if (listInitiated) {
 					mContacts.addAll(contacts);
 					mContactAdapter.insertAll(mContacts);
-
-					if (mListener != null) mListener.onContactsLoaded(mContacts.size());
-					if (mDialogWrapper != null) mDialogWrapper.onItemsPrepared();
+					notifyObservers(false);
 				} else {
 					mContacts = contacts;
 					mContactAdapter.setDataset(mContacts);
 					listInitiated = true;
 
 					if (Integer.bitCount(mSearchMode) == 1) {
-						if (mListener != null) mListener.onContactsLoaded(mContacts.size());
-						if (mDialogWrapper != null) mDialogWrapper.onItemsPrepared();
+						notifyObservers(false);
 					}
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
-				if (mListener != null) if (mDialogWrapper != null) mDialogWrapper.onItemsPrepared();
+				notifyObservers(true);
 			}
 		}
 

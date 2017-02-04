@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -31,7 +32,7 @@ import org.json.JSONObject;
  * Use the {@link LobbyFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LobbyFragment extends Fragment {
+public class LobbyFragment extends Fragment implements ReloadableFragment {
 
 	public static final String ARG_TOKEN = "token";
 	private static final String TAG = "LobbyFragment";
@@ -106,8 +107,12 @@ public class LobbyFragment extends Fragment {
 	}
 
 	private void resetFilters() {
-		final ProgressDialog p = new ProgressDialog(getContext(), R.style.AppTheme_Dialog);
-		p.setTitle("Applying Filters");
+		final ProgressDialog p;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			p = new ProgressDialog(getContext(), R.style.AppTheme_Dialog);
+		else
+			p = new ProgressDialog(getContext());
+
 		p.setMessage("Please wait while we apply your filters");
 		p.setCancelable(false);
 		p.show();
@@ -131,11 +136,8 @@ public class LobbyFragment extends Fragment {
 
 	private void handleFilterResetFailure() {
 		new AlertDialog.Builder(getContext(), R.style.AppTheme_Dialog)
-				.setTitle("Error")
-				.setMessage("There was an error while applying filters." +
-						" Do you want to try again?")
-				.setNegativeButton("Cancel", null)
-				.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+				.setMessage("There was an error while applying filters.")
+				.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						resetFilters();
@@ -197,13 +199,9 @@ public class LobbyFragment extends Fragment {
 		ContactsFragment contactsFragment = ContactsFragment.newInstance(getArguments());
 		contactsFragment.setArguments(contactsArgs);
 
-		getChildFragmentManager().beginTransaction()
-				.replace(R.id.matches_container, contactsFragment)
-				.commit();
-
 		contactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
 			@Override
-			public void onContactSelected(Contact contact, int position) {
+			public void onContactSelected(Contact contact) {
 
 			}
 
@@ -223,6 +221,11 @@ public class LobbyFragment extends Fragment {
 				showSearchFailure();
 			}
 		});
+
+		getChildFragmentManager().beginTransaction()
+				.replace(R.id.matches_container, contactsFragment)
+				.commit();
+
 	}
 
 	private void waitForServer() {
@@ -259,15 +262,6 @@ public class LobbyFragment extends Fragment {
 
 		mStatusDescription.setText("There was an error. Tap here to try again.");
 //		mErrorDescription.setVisibility(View.VISIBLE);
-	}
-
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-
-		initFiltersView();
-
-		waitForServer();
 	}
 
 	@Override
@@ -361,6 +355,12 @@ public class LobbyFragment extends Fragment {
 		waitForServer();
 
 		Log.i(TAG, "View Created");
+	}
+
+	@Override
+	public void reloadContent() {
+		waitForServer();
+		initFiltersView();
 	}
 
 	/**

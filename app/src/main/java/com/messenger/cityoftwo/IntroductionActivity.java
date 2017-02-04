@@ -249,7 +249,6 @@ public class IntroductionActivity extends IntroductionActivityBase {
 					waitingDialog = new ProgressDialog(this);
 				}
 
-				waitingDialog.setTitle("Please wait");
 				waitingDialog.setMessage("Setting up your account");
 				waitingDialog.setCancelable(false);
 			}
@@ -265,9 +264,8 @@ public class IntroductionActivity extends IntroductionActivityBase {
 
 		if (!accountInitialized || !appInitialized || !testSubmitted) {
 			new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-					.setTitle("Error")
-					.setMessage("There was an error. Please try again")
-					.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+					.setMessage("There was an error initialising your account.")
+					.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							recreate();
@@ -293,7 +291,6 @@ public class IntroductionActivity extends IntroductionActivityBase {
 			p = new ProgressDialog(this);
 		}
 
-		p.setTitle("Please wait");
 		p.setMessage("Setting up your account");
 		p.setCancelable(false);
 		p.show();
@@ -485,19 +482,18 @@ public class IntroductionActivity extends IntroductionActivityBase {
 		testFragment.setArguments(test);
 	}
 
-	private void showLoginErrorDialog(DialogInterface.OnClickListener clickListener) {
+	private void showLoginErrorDialog(final DialogInterface.OnClickListener clickListener) {
 		new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-				.setTitle("Error")
 				.setMessage("Could login to your Facebook")
-				.setPositiveButton("Try again", clickListener)
-				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				.setPositiveButton("Try again", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						getNextButton().setEnabled(true);
+						getNextButton().setEnabled(false);
+						clickListener.onClick(dialog, which);
 					}
 				})
-				.setCancelable(false)
 				.show();
+		getNextButton().setEnabled(true);
 	}
 
 	private void submitTest(String answers) {

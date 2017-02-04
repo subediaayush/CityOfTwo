@@ -45,4 +45,9 @@ public class HomePagerAdapter extends FragmentPagerAdapter {
 		fragments.add(f);
 		fragmentTitles.add(title);
 	}
+
+	public void replaceFragment(int position, Fragment fragment) {
+		fragments.set(position, fragment);
+		notifyDataSetChanged();
+	}
 }

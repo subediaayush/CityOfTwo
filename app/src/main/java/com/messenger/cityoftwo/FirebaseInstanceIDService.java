@@ -1,6 +1,7 @@
 package com.messenger.cityoftwo;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -11,19 +12,22 @@ import com.google.firebase.iid.FirebaseInstanceIdService;
  */
 public class FirebaseInstanceIDService extends FirebaseInstanceIdService {
 
-    @Override
-    public void onTokenRefresh() {
+	@Override
+	public void onTokenRefresh() {
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
-        String token = FirebaseInstanceId.getInstance().getToken();
 
-        getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-                .edit()
-                .putString(CityOfTwo.KEY_REG_ID, token)
-                .apply();
+		String token = FirebaseInstanceId.getInstance().getToken();
 
-        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(CityOfTwo.ACTION_FCM_ID));
+		sp.edit().putString(CityOfTwo.KEY_REG_ID, token)
+				.putBoolean(CityOfTwo.KEY_DEVICE_REGISTERED, false)
+				.apply();
+
+		Utils.registerToken(this, token);
+
+		LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(CityOfTwo.ACTION_FCM_ID));
 
 //        if (tokenObtainedListener != null) tokenObtainedListener.onTokenObtained();
 
-    }
+	}
 }

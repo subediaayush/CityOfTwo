@@ -23,7 +23,6 @@ import android.widget.TextView;
 
 import com.facebook.AccessToken;
 import com.facebook.login.widget.ProfilePictureView;
-import com.mopub.mobileads.MoPubView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,7 +54,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 	private boolean isWaiting;
 	private ProgressDialog mWaitingDialog;
 	private int selectedItem;
-	private MoPubView adView;
+	//	private MoPubView adView;
 	private boolean isLastVisible;
 	private int maximumDisplayableChild;
 	private int currentAdLocation;
@@ -253,7 +252,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 						profileId = facebookObject.getString(CityOfTwo.KEY_PROFILE_ID);
 
 
-				final Uri profileUri = CityOfTwo.getFacebookPageURI(context, profileId);
+				final Uri profileUri = FacebookHelper.getFacebookPageURI(context, profileId);
 
 				String messageTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentConv.getTime());
 				holder.dateContainer.setText(messageTime);
@@ -428,9 +427,9 @@ public class ConversationAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 		ConversationList.addAll(c);
 	}
 
-	public void setAdView(MoPubView adView) {
-		this.adView = adView;
-	}
+//	public void setAdView(MoPubView adView) {
+//		this.adView = adView;
+//	}
 
 	public int getItemPosition(Conversation conversation) {
 		return ConversationList.indexOf(conversation);

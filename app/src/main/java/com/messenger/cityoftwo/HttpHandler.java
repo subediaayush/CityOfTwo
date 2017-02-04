@@ -53,6 +53,7 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 
 	}
 
+
 	public HttpHandler(String host, String[] path, Integer type, JSONObject params) {
 		this(type);
 
