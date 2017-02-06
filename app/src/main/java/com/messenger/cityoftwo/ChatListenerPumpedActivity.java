@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.LocalBroadcastManager;
@@ -31,15 +32,13 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 
-	private static final String ARG_INTENT_MODIFIED = "intent modified";
-	private static final String ARG_BS_STATE = "bs_state";
-	private static final String ARG_TIMER_PROGRESS = "timer_progress";
-
 	private static final int ALARM_REQUEST = 0;
-
 	private static final int ALARM_TICK = 5;
 	private static final int MAX_PROGRESS = 1200;
-
+	private final String ARG_INTENT_MODIFIED = this.getClass().getName() + "intent modified";
+	private final String ARG_BS_STATE = this.getClass().getName() + "bs_state";
+	private final String ARG_TIMER_PROGRESS = this.getClass().getName() + "timer_progress";
+	private final String ARG_CURRENT_GUEST = this.getClass().getName() + "timer_progress";
 	protected BroadcastReceiver mChatBroadcastReceiver;
 	ViewStub mStub;
 	private BottomSheetBehavior mBottomSheetBehavior;
@@ -55,6 +54,7 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 	private int mRequestId;
 	private Contact mGuest;
 	private int mDuration = 30;
+	private long requestRemainingTime;
 
 	protected abstract int getContentLayout();
 
@@ -84,15 +84,20 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 					case CityOfTwo.ACTION_REQUEST_CHAT: {
 						DatabaseHelper db = new DatabaseHelper(ChatListenerPumpedActivity.this);
 						SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+
+						int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
+						if (requestId != 0) break;
+
 						int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
 						mGuest = db.loadGuest(guestId);
 						setRequestDuration(30);
-						setupRequestView();
+						showReceivedRequest();
 						break;
 					}
 					case CityOfTwo.ACTION_REQUEST_TIMEOUT: {
 						getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
 								.remove(CityOfTwo.KEY_LAST_REQUEST)
+								.remove(CityOfTwo.KEY_RESQUEST_DISPATCH)
 								.apply();
 						Log.i(TAG, "Request Timeout Received");
 						clearRequestView();
@@ -148,30 +153,6 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 		mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 	}
 
-	private Intent maintainBottomSheetData(Intent intent) {
-		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-		int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, -1);
-
-		Boolean intentModified = intent.getBooleanExtra(ARG_INTENT_MODIFIED, false);
-		if (!intentModified && requestId != -1) {
-			intent.putExtra(ARG_BS_STATE, mBottomSheetBehavior.getState());
-			intent.putExtra(ARG_TIMER_PROGRESS, mTimer.getProgress());
-		}
-
-		return intent;
-	}
-
-	@Override
-	public void startActivity(Intent intent) {
-		startActivityForResult(intent, -1);
-	}
-
-	@Override
-	public void finish() {
-		setConsistentResult(-1);
-		super.finish();
-	}
-
 	private void initBottomSheet() {
 		mGuestIcon = (CircleImageView) findViewById(R.id.request_icon);
 		mRequest = (TextView) findViewById(R.id.request_message);
@@ -181,12 +162,13 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 
 		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
-		int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, -1);
-		if (requestId != -1) {
+		int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
+		if (requestId != 0) {
 			int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
 			DatabaseHelper db = new DatabaseHelper(this);
 			mGuest = db.loadGuest(guestId);
-			setupRequestView();
+			if (requestId > 0) showReceivedRequest();
+			else showSentRequest();
 		} else {
 			mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
@@ -199,70 +181,34 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 		startActivityForResult(intent, CityOfTwo.ACTIVITY_PROFILE);
 	}
 
-	private void setupRequestView() {
-		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
-		final int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, -1);
 
-		if (requestId == -1) {
-			mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-			cancelAlarm();
+	private void cancelAlarm() {
+		PendingIntent pendingIntent = getAlarmPendingIntent();
+		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-			return;
-		}
+		am.cancel(pendingIntent);
+	}
 
-		int progress = getIntent().getIntExtra(ARG_TIMER_PROGRESS, MAX_PROGRESS);
-		int remainingTime = progress * mDuration / MAX_PROGRESS;
+	private void setupAlarm(long duration) {
+		PendingIntent pendingIntent = getAlarmPendingIntent();
+		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-		mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-		mRequest.setText(mGuest.nickName + " wants to chat.");
-		String commonLikesMessages = "Likes " +
-				Utils.getReadableList(mGuest.topLikes) + " and " +
-				(mGuest.commonLikes - mGuest.topLikes.length) + " others";
-
-		mLikes.setText(commonLikesMessages);
-
-		if (mGuest.hasRevealed) {
-			new FacebookHelper(this, mGuest.fid, -1, "name") {
-				@Override
-				public void onResponse(String response) {
-					mRequest.setText(response + " wants to chat.");
-				}
-
-				@Override
-				public void onError() {
-
-				}
-			}.execute();
-			FacebookHelper.loadFacebookProfilePicture(this, mGuest.fid, -1, mGuestIcon);
-		}
-
-		mResponse.setVisibility(View.VISIBLE);
-		mTimer.setIndeterminate(false);
-		mTimer.setProgress(progress);
-
-		final ObjectAnimator animation = ObjectAnimator.ofInt(
-				mTimer,
-				"progress",
-				0
+		am.set(
+				AlarmManager.ELAPSED_REALTIME,
+				SystemClock.elapsedRealtime() + duration,
+				pendingIntent
 		);
+	}
 
-		Log.i(TAG, "Setting listener duration for " + remainingTime);
-		animation.setDuration(remainingTime * 1000);
-		animation.start();
-
-		mResponse.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mTimer.setIndeterminate(true);
-				animation.cancel();
-				sendAcceptRequest(requestId);
-				mResponse.setVisibility(View.GONE);
-				cancelAlarm();
-			}
-		});
-
-		setupAlarm(remainingTime * 1000);
+	private PendingIntent getAlarmPendingIntent() {
+		Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+		alarmIntent.setAction(CityOfTwo.ACTION_REQUEST_ALARM);
+		return PendingIntent.getBroadcast(
+				this,
+				ALARM_REQUEST,
+				alarmIntent,
+				PendingIntent.FLAG_UPDATE_CURRENT
+		);
 	}
 
 	protected void sendAcceptRequest(int requestId) {
@@ -301,76 +247,127 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 				).show();
 				clearRequestView();
 			}
+
+			@Override
+			protected void onPostExecute() {
+				getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+						.edit().remove(CityOfTwo.KEY_LAST_REQUEST)
+						.remove(CityOfTwo.KEY_RESQUEST_DISPATCH)
+						.apply();
+			}
 		};
 		acceptHttpHandler.addHeader("Authorization", "Token " + token);
 		acceptHttpHandler.execute();
 	}
 
-	private void cancelAlarm() {
-		PendingIntent pendingIntent = getAlarmPendingIntent();
-		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-		am.cancel(pendingIntent);
-	}
-
-	private void setupAlarm(long duration) {
-		PendingIntent pendingIntent = getAlarmPendingIntent();
-		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-		am.set(
-				AlarmManager.ELAPSED_REALTIME,
-				SystemClock.elapsedRealtime() + duration,
-				pendingIntent
-		);
-	}
-
-	private PendingIntent getAlarmPendingIntent() {
-		Intent alarmIntent = new Intent(this, AlarmReceiver.class);
-		alarmIntent.setAction(CityOfTwo.ACTION_REQUEST_ALARM);
-		PendingIntent pendingIntent = PendingIntent.getBroadcast(
-				this,
-				ALARM_REQUEST,
-				alarmIntent,
-				PendingIntent.FLAG_UPDATE_CURRENT
-		);
-		return pendingIntent;
-	}
-
 	protected void showSentRequest(Contact guest, int requestId) {
 		getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-				.edit().putInt(CityOfTwo.KEY_LAST_REQUEST, requestId)
+				.edit().putInt(CityOfTwo.KEY_LAST_REQUEST, -requestId)
+				.putLong(CityOfTwo.KEY_RESQUEST_DISPATCH, System.currentTimeMillis())
 				.apply();
 
 		mGuest = guest;
 
 		setRequestDuration(60);
-		setupRequestView();
+		showSentRequest();
 	}
 
-	public void setConsistentResult(int resultCode) {
-		setConsistentResult(resultCode, new Intent());
+
+	private void showReceivedRequest() {
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		final int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
+
+		mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+		mResponse.setVisibility(View.VISIBLE);
+
+		mResponse.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mTimer.setIndeterminate(true);
+				mTimer.clearAnimation();
+				sendAcceptRequest(requestId);
+				mResponse.setVisibility(View.GONE);
+				cancelAlarm();
+			}
+		});
+
+		setupRequestView(mGuest, requestId, "Connecting to %s");
+
 	}
 
-	public void setConsistentResult(int resultCode, Intent data) {
-		data.putExtra(ARG_BS_STATE, mBottomSheetBehavior.getState());
-		data.putExtra(ARG_TIMER_PROGRESS, mTimer.getProgress());
+	private void showSentRequest() {
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		final int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
 
-		setResult(resultCode, data);
+		mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+		mResponse.setVisibility(View.GONE);
+
+		setupRequestView(mGuest, requestId, "Connecting to %s");
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if (getIntent() == null) setIntent(new Intent());
-		getIntent().putExtras(data);
-	}
+	private boolean setupRequestView(Contact guest, int requestId, @NonNull final String message) {
+		if (requestId == 0) {
+			mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+			cancelAlarm();
 
-	@Override
-	public void startActivityForResult(Intent intent, int requestCode) {
-		super.startActivityForResult(maintainBottomSheetData(intent), requestCode);
+			return false;
+		}
+
+		long remainingTime = getRequestRemainingTime();
+		int progress = (int) (remainingTime / ((float) mDuration * 1000) * MAX_PROGRESS);
+
+		Log.i(TAG, "Setting timer progress:" + progress);
+		Log.i(TAG, "Setting remaining time:" + remainingTime);
+
+		mRequest.setText(guest.nickName);
+		String commonLikesMessages = "Likes " +
+				Utils.getReadableList(guest.topLikes) + " and " +
+				(guest.commonLikes - guest.topLikes.length) + " others";
+
+		mLikes.setText(commonLikesMessages);
+
+		if (guest.hasRevealed) {
+			new FacebookHelper(this, guest.fid, -1, "name") {
+				@Override
+				public void onResponse(String response) {
+					String responseMessage = String.format(message, response);
+					mRequest.setText(responseMessage);
+				}
+
+				@Override
+				public void onError() {
+
+				}
+			}.execute();
+			FacebookHelper.loadFacebookProfilePicture(this, guest.fid, -1, mGuestIcon);
+		}
+
+		mTimer.setIndeterminate(false);
+
+		mTimer.setProgress(progress);
+
+		final ObjectAnimator animation = ObjectAnimator.ofInt(
+				mTimer,
+				"progress",
+				0
+		);
+
+		Log.i(TAG, "Setting listener duration for " + remainingTime);
+		animation.setDuration(remainingTime);
+		animation.start();
+
+		setupAlarm(remainingTime);
+		return true;
 	}
 
 	public void setRequestDuration(int requestDuration) {
 		this.mDuration = requestDuration;
+	}
+
+	public long getRequestRemainingTime() {
+		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
+		long progress = System.currentTimeMillis() - sp.getLong(CityOfTwo.KEY_RESQUEST_DISPATCH, Long.MAX_VALUE);
+		return Math.max(mDuration * 1000 - Math.max(progress, 0), 0);
 	}
 }

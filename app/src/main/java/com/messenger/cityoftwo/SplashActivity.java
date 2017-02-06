@@ -1,18 +1,13 @@
 package com.messenger.cityoftwo;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -43,6 +38,10 @@ public class SplashActivity extends PumpedActivity {
 
 		checkNetworkState();
 
+		getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+				.edit().remove(CityOfTwo.KEY_LAST_REQUEST)
+				.remove(CityOfTwo.KEY_RESQUEST_DISPATCH)
+				.apply();
 
 //		final Intent intent = new Intent(this, HomeActivity.class);
 //		new Handler().postDelayed(new Runnable() {
@@ -87,37 +86,9 @@ public class SplashActivity extends PumpedActivity {
 	}
 
 	private void handleConnectionPresence() {
-		waitForGcm();
+		processToken();
 	}
 
-	private void waitForGcm() {
-		boolean deviceRegistered = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-				.getBoolean(CityOfTwo.KEY_DEVICE_REGISTERED, false);
-
-		if (!deviceRegistered) {
-			String token = FirebaseInstanceId.getInstance().getToken();
-
-			if (token == null || token.isEmpty()) {
-				BroadcastReceiver receiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						LocalBroadcastManager.getInstance(SplashActivity.this)
-								.unregisterReceiver(this);
-
-						processToken();
-					}
-				};
-
-				LocalBroadcastManager.getInstance(this).registerReceiver(
-						receiver,
-						new IntentFilter(CityOfTwo.ACTION_FCM_ID)
-				);
-			} else {
-				Utils.registerToken(this, token);
-				processToken();
-			}
-		}
-	}
 
 	private void processToken() {
 		String token = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
@@ -184,6 +155,8 @@ public class SplashActivity extends PumpedActivity {
 
 					editor.apply();
 					securedEditor.apply();
+
+					Utils.registerToken(SplashActivity.this);
 
 					Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
 					startActivity(intent);

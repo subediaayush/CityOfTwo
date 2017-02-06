@@ -71,7 +71,6 @@ public class LoginActivity extends AppCompatActivity {
         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                 .remove(CityOfTwo.KEY_LAST_CHATROOM)
                 .remove(CityOfTwo.KEY_COMMON_LIKES)
-                .remove(CityOfTwo.KEY_CHAT_PENDING)
                 .apply();
 
         if (BuildConfig.DEBUG) {

@@ -224,7 +224,7 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 
 		getChildFragmentManager().beginTransaction()
 				.replace(R.id.matches_container, contactsFragment)
-				.commit();
+				.commitAllowingStateLoss();
 
 	}
 
@@ -359,8 +359,10 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 
 	@Override
 	public void reloadContent() {
-		waitForServer();
-		initFiltersView();
+		if (getActivity() != null) {
+			waitForServer();
+			initFiltersView();
+		}
 	}
 
 	/**

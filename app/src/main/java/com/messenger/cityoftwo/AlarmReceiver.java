@@ -16,6 +16,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, Context.MODE_PRIVATE)
 				.edit().remove(CityOfTwo.KEY_LAST_REQUEST)
+				.remove(CityOfTwo.KEY_RESQUEST_DISPATCH)
 				.apply();
 
 		Log.i(TAG, "Request Timeout Received " + intent.getAction());

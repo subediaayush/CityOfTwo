@@ -72,7 +72,6 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 					Log.i(TAG, "Current Activity: " + CityOfTwo.ACTIVITY[currentActivity]);
 
 					if (currentActivity == ACTIVITY_HOME) sharedPreferences.edit()
-							.putBoolean(CityOfTwo.KEY_CHAT_PENDING, true)
 							.putInt(CityOfTwo.KEY_LAST_CHATROOM, chatroomId)
 							.putInt(CityOfTwo.KEY_LAST_GUEST, guest.id)
 							.apply();
@@ -239,7 +238,6 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 					}
 
 					sharedPreferences.edit()
-							.remove(CityOfTwo.KEY_CHAT_PENDING)
 							.remove(CityOfTwo.KEY_LAST_CHATROOM)
 							.apply();
 
@@ -265,17 +263,17 @@ public class FirebaseMessageHandler extends com.google.firebase.messaging.Fireba
 					int requestId = Integer.parseInt(data.get(CityOfTwo.KEY_REQUEST_ID));
 					Contact guest = new Contact(data.get(CityOfTwo.KEY_GUEST));
 
-					sharedPreferences.edit().putInt(CityOfTwo.KEY_REQUEST_ID, requestId)
+					sharedPreferences.edit().putInt(CityOfTwo.KEY_LAST_REQUEST, requestId)
 							.putInt(CityOfTwo.KEY_LAST_GUEST, guest.id)
+							.putLong(CityOfTwo.KEY_RESQUEST_DISPATCH, System.currentTimeMillis())
 							.remove(CityOfTwo.KEY_LAST_CHATROOM)
-							.remove(CityOfTwo.KEY_CHAT_PENDING)
 							.apply();
 
 					db.saveGuest(guest);
 
 					intent = new Intent(CityOfTwo.ACTION_REQUEST_CHAT);
-					sendBroadcast(intent);
-
+					mBroadcaster.sendBroadcast(intent);
+					break;
 				}
 				default:
 					Log.i(TAG, "Unsupported message type " + messageType);

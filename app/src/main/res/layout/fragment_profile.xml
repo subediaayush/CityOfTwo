@@ -13,7 +13,23 @@
 		android:showDividers="middle"
 		>
 
-		<include layout="@layout/layout_profile"/>
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			>
+
+			<include layout="@layout/layout_profile"/>
+
+			<LinearLayout
+				android:id="@+id/offline_message_container"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="5dp"
+				android:animateLayoutChanges="true"
+				android:orientation="vertical"
+				/>
+		</LinearLayout>
 
 		<TextView
 			android:id="@+id/request_chat"
@@ -28,7 +44,7 @@
 			/>
 
 		<LinearLayout
-			android:id="@+id/offline_container"
+			android:id="@+id/offline_input_container"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="horizontal"

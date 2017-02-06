@@ -3,6 +3,7 @@ package com.messenger.cityoftwo;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Handler;
 import android.support.annotation.ColorInt;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
@@ -155,7 +156,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 	@Override
 	public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-		int flags = holder.getItemViewType();
+		int flags = getItemViewType(position);
 
 		if ((flags & CityOfTwo.FLAG_START) == CityOfTwo.FLAG_START) {
 			handleProfileItem((ProfileViewHolder) holder, position, flags);
@@ -228,7 +229,12 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 			if (!mGuest.hasRevealed) {
 				mGuest.hasRevealed = true;
-				notifyItemRangeChanged(0, mConversationList.size());
+				new Handler().postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						notifyItemRangeChanged(0, position - 1);
+					}
+				}, 200);
 			}
 		}
 

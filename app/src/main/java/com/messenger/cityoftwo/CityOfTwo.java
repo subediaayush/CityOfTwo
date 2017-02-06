@@ -193,7 +193,7 @@ public class CityOfTwo extends Application {
 	public static final String KEY_USER_OFFLINE = "user_offline";
 
 	public static final String SECURED_PREFERENCE = PACKAGE_NAME + ".secured";
-
+	public static final String KEY_RESQUEST_DISPATCH = "request_dispatch";
 	private static final String SENDER_ID = "584281533020";
 	public static ArrayList<Conversation> mBackgroundConversation;
 	public static Bitmap logoBitmap;

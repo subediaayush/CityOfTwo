@@ -87,8 +87,6 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 		int chatroomId = sp.getInt(CityOfTwo.KEY_LAST_CHATROOM, -1);
 		int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
 
-		sp.edit().remove(CityOfTwo.KEY_CHAT_PENDING).apply();
-
 		Contact contact = db.loadGuest(guestId);
 		if (contact != null) contact.lastMessages.addAll(db.retrieveMessages(chatroomId));
 

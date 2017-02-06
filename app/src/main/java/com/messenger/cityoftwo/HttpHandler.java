@@ -178,9 +178,11 @@ public class HttpHandler extends AsyncTask<Void, Void, Boolean> {
 			this.Success = response.isSuccessful();
 
 			Log.i("Http Connection", "Call to " + URL.toString() + " completed");
-			Log.i("Http Response", response.message());
-			Log.i("Http Response", Response);
 			Log.i("Http Response", String.valueOf(Status));
+			if (Status == 200) {
+				Log.i("Http Response", response.message());
+				Log.i("Http Response", Response);
+			}
 			return true;
 		} catch (IOException e) {
 			Log.i("Http Connection", "Call to " + URL.toString() + " failed with an exception: " + e.toString());

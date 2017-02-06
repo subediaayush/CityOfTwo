@@ -4,8 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
@@ -160,7 +160,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 			try {
 				db.insertOrThrow(TABLE_MESSAGES, null, cv);
-			} catch (SQLiteException e) {
+			} catch (SQLException e) {
 				Log.e("Error on table " + TABLE_MESSAGES, e.toString());
 			}
 		}
@@ -179,7 +179,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 		try {
 			db.insertOrThrow(TABLE_MESSAGES, null, cv);
-		} catch (SQLiteException e) {
+		} catch (SQLException e) {
 			Log.e("Error on table " + TABLE_MESSAGES, e.toString());
 		}
 
@@ -265,7 +265,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 		try {
 			db.insertOrThrow(TABLE_GUESTS, null, cv);
-		} catch (SQLiteException e) {
+		} catch (SQLException e) {
 			Log.e("Error on table " + TABLE_GUESTS, e.toString());
 		}
 

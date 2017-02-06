@@ -340,6 +340,7 @@ public class IntroductionActivity extends IntroductionActivityBase {
 								.putString(CityOfTwo.KEY_SESSION_TOKEN, token)
 								.apply();
 
+
 						showDonePage();
 					} finally {
 						initializeAccount(token);
@@ -417,6 +418,8 @@ public class IntroductionActivity extends IntroductionActivityBase {
 					securedEditor.putString(CityOfTwo.KEY_CODE, uniqueCode)
 							.putInt(CityOfTwo.KEY_CREDITS, credits)
 							.apply();
+
+					Utils.registerToken(IntroductionActivity.this);
 
 					accountInitialized = true;
 					startIfReady();

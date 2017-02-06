@@ -168,7 +168,9 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 
 	@Override
 	public void reloadContent() {
-		reloadInfo();
+		if (getActivity() != null) {
+			reloadInfo();
+		}
 	}
 
 	private void notifyObservers(boolean error) {

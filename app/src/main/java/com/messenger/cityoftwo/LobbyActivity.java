@@ -184,7 +184,6 @@ public class LobbyActivity extends AppCompatActivity {
                     }
                     case CityOfTwo.ACTION_USER_OFFLINE: {
                         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
-                                .remove(CityOfTwo.KEY_CHAT_PENDING)
                                 .remove(CityOfTwo.KEY_COMMON_LIKES)
                                 .remove(CityOfTwo.KEY_LAST_CHATROOM)
                                 .remove(CityOfTwo.KEY_SESSION_ACTIVE)
@@ -206,7 +205,6 @@ public class LobbyActivity extends AppCompatActivity {
                 getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                         .remove(CityOfTwo.KEY_LAST_CHATROOM)
                         .remove(CityOfTwo.KEY_COMMON_LIKES)
-                        .remove(CityOfTwo.KEY_CHAT_PENDING)
                         .apply();
 
                 setStatus(BEGIN);
@@ -853,7 +851,6 @@ public class LobbyActivity extends AppCompatActivity {
 
         if (!userOnline) {
             editor.remove(CityOfTwo.KEY_LAST_CHATROOM)
-                    .remove(CityOfTwo.KEY_CHAT_PENDING)
                     .apply();
 
             setStatus(BEGIN);
@@ -863,9 +860,9 @@ public class LobbyActivity extends AppCompatActivity {
 
         editor.apply();
 
-        Boolean chatPending = sp.getBoolean(CityOfTwo.KEY_CHAT_PENDING, false);
+        int chatroomId = sp.getInt(CityOfTwo.KEY_LAST_CHATROOM, -1);
 
-        if (chatPending) {
+        if (chatroomId != -1) {
             Log.i("Lobby", "Chat pending, opening pending chat");
             Intent conversationIntent = new Intent(this, ConversationActivity.class);
             startActivityForResult(conversationIntent, CityOfTwo.ACTIVITY_PROFILE);
@@ -881,7 +878,6 @@ public class LobbyActivity extends AppCompatActivity {
         getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
                 .remove(CityOfTwo.KEY_LAST_CHATROOM)
                 .remove(CityOfTwo.KEY_COMMON_LIKES)
-                .remove(CityOfTwo.KEY_CHAT_PENDING)
                 .apply();
 
         mLobbyDescription.setAlpha(1);

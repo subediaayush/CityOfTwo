@@ -776,10 +776,12 @@ public class ProfileActivity extends ChatListenerPumpedActivity implements ChatA
 		final SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 		String token = sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
+		sp.edit().remove(CityOfTwo.KEY_LAST_CHATROOM).apply();
+
 		new DumpHttpHandler(this, token, mChatroomId) {
 			@Override
 			public void onPostExecute() {
-				sp.edit().remove(CityOfTwo.KEY_LAST_CHATROOM).apply();
+
 			}
 		}.execute();
 	}

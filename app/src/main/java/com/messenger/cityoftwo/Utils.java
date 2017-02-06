@@ -13,10 +13,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.squareup.picasso.Picasso;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -75,13 +73,11 @@ public class Utils {
 				.into(imageView);
 	}
 
-	public static void registerToken(Context context, String fcmid) {
+	public static void registerToken(Context context) {
+		String fcmid = FirebaseInstanceId.getInstance().getToken();
 		final SharedPreferences sp = context.getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
-		String broadcast_gcm = context.getString(R.string.url_broadcast_gcm),
-				header = CityOfTwo.HEADER_GCM_ID,
-				value = fcmid;
-
+		String broadcast_gcm = context.getString(R.string.url_broadcast_gcm);
 		String[] path = {CityOfTwo.API, broadcast_gcm};
 
 		HttpHandler registerDeviceHttpHandler = new HttpHandler(
@@ -90,35 +86,7 @@ public class Utils {
 				HttpHandler.POST,
 				CityOfTwo.HEADER_GCM_ID,
 				fcmid
-		) {
-			@Override
-			protected void onSuccess(String response) {
-				try {
-					JSONObject Response = new JSONObject(response);
-
-					Boolean status = Response.getBoolean("parsadi");
-
-					if (!status) {
-						setRegisteredStatus(true);
-					} else {
-						setRegisteredStatus(false);
-					}
-
-				} catch (JSONException e) {
-					setRegisteredStatus(false);
-					e.printStackTrace();
-				}
-			}
-
-			@Override
-			protected void onFailure(Integer status) {
-				setRegisteredStatus(false);
-			}
-
-			private void setRegisteredStatus(boolean status) {
-				sp.edit().putBoolean(CityOfTwo.KEY_DEVICE_REGISTERED, status).apply();
-			}
-		};
+		);
 
 		String token = "Token " + sp.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 

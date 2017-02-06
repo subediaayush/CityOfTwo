@@ -8,7 +8,9 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.BottomSheetDialogFragment;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +52,7 @@ public class ProfileFragment extends BottomSheetDialogFragment {
 		}
 	};
 	private View mOfflineContainer;
+	private LinearLayout mOfflineMessageContainer;
 
 	public static ProfileFragment newInstance(Bundle args) {
 		ProfileFragment fragment = new ProfileFragment();
@@ -68,7 +71,10 @@ public class ProfileFragment extends BottomSheetDialogFragment {
 		mRequest = itemView.findViewById(R.id.request_chat);
 		mOfflineMessage = (TextView) itemView.findViewById(R.id.offline_message);
 		mSend = itemView.findViewById(R.id.send_offline_message);
-		mOfflineContainer = itemView.findViewById(R.id.offline_container);
+		mOfflineContainer = itemView.findViewById(R.id.offline_input_container);
+
+		mOfflineMessageContainer = (LinearLayout) itemView.findViewById(R.id.offline_message_container);
+		mOfflineMessageContainer.removeAllViews();
 	}
 
 	@NonNull
@@ -82,6 +88,20 @@ public class ProfileFragment extends BottomSheetDialogFragment {
 
 		initView(view);
 		mGuest = getArguments().getParcelable(ARG_CURRENT_GUEST);
+
+		if (mGuest.lastMessages.size() > 0) {
+			mOfflineMessageContainer.setVisibility(View.VISIBLE);
+
+			ChatAdapter chatAdapter = new ChatAdapter(getContext(), mGuest, -1);
+			chatAdapter.insertAll(mGuest.lastMessages);
+
+			for (int i = 0; i < chatAdapter.getItemCount(); i++) {
+				Conversation c = chatAdapter.get(i);
+				RecyclerView.ViewHolder holder = chatAdapter.onCreateViewHolder(mOfflineMessageContainer, c.getFlags());
+				chatAdapter.onBindViewHolder(holder, i);
+				mOfflineMessageContainer.addView(holder.itemView);
+			}
+		} else mOfflineMessageContainer.setVisibility(View.GONE);
 
 		if (!mGuest.hasRevealed) {
 			mName.setVisibility(View.GONE);
