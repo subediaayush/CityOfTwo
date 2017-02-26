@@ -295,9 +295,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			String status = c.getString(c.getColumnIndex(COLUMN_STATUS));
 			int common_likes = c.getInt(c.getColumnIndex(COLUMN_COMMON_LIKES));
 			String[] top_likes = stringToArray(c.getString(c.getColumnIndex(COLUMN_TOP_LIKES)));
-			boolean is_friend = c.getInt(c.getColumnIndex(COLUMN_IS_FRIEND)) == 1;
 			if (guestId == id)
-				guest = new Contact(id, fid, name, nickname, has_revealed, status, top_likes, common_likes, is_friend);
+				guest = new Contact(id, fid, name, nickname, has_revealed, status, top_likes, common_likes, true);
 			c.moveToNext();
 		} catch (CursorIndexOutOfBoundsException e) {
 			e.printStackTrace();

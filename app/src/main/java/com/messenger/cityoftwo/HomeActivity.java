@@ -106,6 +106,13 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 		mLobbyFragment = LobbyFragment.newInstance(lobbyArgs);
 		mContactsFragment = ContactsFragment.newInstance(contactsArgs);
 
+		mLobbyFragment.setListener(new LobbyFragment.LobbyFragmentListener() {
+
+			@Override
+			public void onViewProfile(Contact contact) {
+				showProfile(contact);
+			}
+		});
 		mContactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
 
 			@Override

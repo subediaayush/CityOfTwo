@@ -268,8 +268,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 		Conversation c = mConversationList.get(position);
 
 		if ((flags & CityOfTwo.FLAG_RECEIVED) == CityOfTwo.FLAG_RECEIVED) {
-			int nextFlag = mConversationList.get(position + 1).getFlags();
-			if ((nextFlag & CityOfTwo.FLAG_RECEIVED) != CityOfTwo.FLAG_RECEIVED) {
+			int nextFlag = position < mConversationList.size() - 1 ? mConversationList.get(position + 1).getFlags() : -1;
+			if (nextFlag == -1 || (nextFlag & CityOfTwo.FLAG_RECEIVED) != CityOfTwo.FLAG_RECEIVED) {
 
 				if (mGuest.hasRevealed)
 					FacebookHelper.loadFacebookProfilePicture(mContext, mGuest.fid, mChatroomId, holder.image);

@@ -51,10 +51,7 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 	private TextView mRequest;
 	private CircleImageView mGuestIcon;
 
-	private int mRequestId;
-	private Contact mGuest;
 	private int mDuration = 30;
-	private long requestRemainingTime;
 
 	protected abstract int getContentLayout();
 
@@ -86,12 +83,12 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 						SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 
 						int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
-						if (requestId != 0) break;
+						if (requestId == 0) break;
 
 						int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
-						mGuest = db.loadGuest(guestId);
+						Contact guest = db.loadGuest(guestId);
 						setRequestDuration(30);
-						showReceivedRequest();
+						showReceivedRequest(guest);
 						break;
 					}
 					case CityOfTwo.ACTION_REQUEST_TIMEOUT: {
@@ -111,10 +108,15 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 						SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 						int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
 						int chatroomId = sp.getInt(CityOfTwo.KEY_LAST_CHATROOM, -1);
-						mGuest = db.loadGuest(guestId);
+						Contact guest = db.loadGuest(guestId);
 
 						data.putInt(ProfileActivity.ARG_CHATROOM_ID, chatroomId);
-						data.putParcelable(ProfileActivity.ARG_CURRENT_GUEST, mGuest);
+						data.putParcelable(ProfileActivity.ARG_CURRENT_GUEST, guest);
+
+						getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE).edit()
+								.remove(CityOfTwo.KEY_LAST_REQUEST)
+								.remove(CityOfTwo.KEY_RESQUEST_DISPATCH)
+								.apply();
 
 						startNewChat(data);
 						break;
@@ -166,9 +168,9 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 		if (requestId != 0) {
 			int guestId = sp.getInt(CityOfTwo.KEY_LAST_GUEST, -1);
 			DatabaseHelper db = new DatabaseHelper(this);
-			mGuest = db.loadGuest(guestId);
-			if (requestId > 0) showReceivedRequest();
-			else showSentRequest();
+			Contact guest = db.loadGuest(guestId);
+			if (requestId > 0) showReceivedRequest(guest);
+			else showSentRequest(guest);
 		} else {
 			mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 		}
@@ -211,7 +213,7 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 		);
 	}
 
-	protected void sendAcceptRequest(int requestId) {
+	protected void sendAcceptRequest(final Contact guest, int requestId) {
 		final String token = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
 				.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 		String host = CityOfTwo.HOST;
@@ -242,7 +244,7 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 			protected void onFailure(Integer status) {
 				Toast.makeText(
 						ChatListenerPumpedActivity.this,
-						"Could not find " + mGuest.nickName,
+						"Could not find " + guest.nickName,
 						Toast.LENGTH_SHORT
 				).show();
 				clearRequestView();
@@ -263,17 +265,16 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 	protected void showSentRequest(Contact guest, int requestId) {
 		getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
 				.edit().putInt(CityOfTwo.KEY_LAST_REQUEST, -requestId)
+				.putInt(CityOfTwo.KEY_LAST_GUEST, guest.id)
 				.putLong(CityOfTwo.KEY_RESQUEST_DISPATCH, System.currentTimeMillis())
 				.apply();
 
-		mGuest = guest;
-
 		setRequestDuration(60);
-		showSentRequest();
+		showSentRequest(guest);
 	}
 
 
-	private void showReceivedRequest() {
+	private void showReceivedRequest(final Contact guest) {
 		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 		final int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
 
@@ -286,24 +287,24 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 			public void onClick(View v) {
 				mTimer.setIndeterminate(true);
 				mTimer.clearAnimation();
-				sendAcceptRequest(requestId);
+				sendAcceptRequest(guest, requestId);
 				mResponse.setVisibility(View.GONE);
 				cancelAlarm();
 			}
 		});
 
-		setupRequestView(mGuest, requestId, "Connecting to %s");
+		setupRequestView(guest, requestId, "Connecting to %s");
 
 	}
 
-	private void showSentRequest() {
+	private void showSentRequest(Contact guest) {
 		SharedPreferences sp = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE);
 		final int requestId = sp.getInt(CityOfTwo.KEY_LAST_REQUEST, 0);
 
 		mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 		mResponse.setVisibility(View.GONE);
 
-		setupRequestView(mGuest, requestId, "Connecting to %s");
+		setupRequestView(guest, requestId, "Connecting to %s");
 	}
 
 	private boolean setupRequestView(Contact guest, int requestId, @NonNull final String message) {

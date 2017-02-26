@@ -68,7 +68,7 @@ public abstract class OnlineCheck {
 
 			@Override
 			protected void onPostExecute() {
-				if (showDialog) p.cancel();
+				p.cancel();
 			}
 		};
 

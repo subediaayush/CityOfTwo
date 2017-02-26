@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -27,7 +26,7 @@ import org.json.JSONObject;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link LobbyEventListener} interface
+ * {@link LobbyFragmentListener} interface
  * to handle interaction events.
  * Use the {@link LobbyFragment#newInstance} factory method to
  * create an instance of this fragment.
@@ -61,7 +60,7 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 	private Boolean mErrorEncountered = false;
 
 
-	private LobbyEventListener mListener;
+	private LobbyFragmentListener mListener;
 	private View mMatchesCardContainer;
 
 	public LobbyFragment() {
@@ -82,21 +81,14 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 		return fragment;
 	}
 
-	// TODO: Rename method, update argument and hook method into UI event
-	public void onButtonPressed(Uri uri) {
-		if (mListener != null) {
-			mListener.onFragmentInteraction(uri);
-		}
-	}
-
 //	@Override
 //	public void onAttach(Context context) {
 //		super.onAttach(context);
-//		if (context instanceof LobbyEventListener) {
-//			mListener = (LobbyEventListener) context;
+//		if (context instanceof LobbyFragmentListener) {
+//			mListener = (LobbyFragmentListener) context;
 //		} else {
 //			throw new RuntimeException(context.toString()
-//					+ " must implement LobbyEventListener");
+//					+ " must implement LobbyFragmentListener");
 //		}
 //	}
 
@@ -202,7 +194,7 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 		contactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
 			@Override
 			public void onContactSelected(Contact contact) {
-
+				if (mListener != null) mListener.onViewProfile(contact);
 			}
 
 			@Override
@@ -365,15 +357,19 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 		}
 	}
 
+	public void setListener(LobbyFragmentListener listener) {
+		this.mListener = listener;
+	}
+
 	/**
 	 * This interface must be implemented by activities that contain this
 	 * fragment to allow an interaction in this fragment to be communicated
 	 * to the activity and potentially other fragments contained in that
 	 * activity.
 	 */
-	public interface LobbyEventListener {
+	public interface LobbyFragmentListener {
 		// TODO: Update argument type and name
-		void onFragmentInteraction(Uri uri);
+		void onViewProfile(Contact contact);
 	}
 
 	private class LobbyHttpHandler {
@@ -424,5 +420,4 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 			httpHandler.execute();
 		}
 	}
-
 }
