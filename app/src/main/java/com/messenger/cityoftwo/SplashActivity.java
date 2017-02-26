@@ -36,6 +36,8 @@ public class SplashActivity extends PumpedActivity {
 //
 		setContentView(R.layout.activity_splash);
 
+		new DatabaseHelper(this).clearGuestTable();
+
 		checkNetworkState();
 
 		getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)

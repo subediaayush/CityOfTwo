@@ -223,7 +223,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public boolean clearMessagesTable() {
 		SQLiteDatabase db = getWritableDatabase();
 
-		int id = db.delete(
+		int count = db.delete(
 				TABLE_MESSAGES,
 				null,
 				null
@@ -231,13 +231,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 		db.close();
 
-		return id > 0;
+		return count > 0;
 	}
 
 	public boolean clearMessagesTable(Integer chatroomId) {
 		SQLiteDatabase db = getWritableDatabase();
 
-		int id = db.delete(
+		int count = db.delete(
 				TABLE_MESSAGES,
 				COLUMN_CHATROOM_ID + "=?",
 				new String[]{chatroomId + ""}
@@ -245,9 +245,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 		db.close();
 
-		return id > 0;
+		return count > 0;
 	}
 
+	public boolean clearGuestTable() {
+		SQLiteDatabase db = getWritableDatabase();
+
+		int count = db.delete(
+				TABLE_GUESTS,
+				null,
+				null
+		);
+
+		db.close();
+
+		return count > 0;
+	}
 	public void saveGuest(Contact guest) {
 		SQLiteDatabase db = getWritableDatabase();
 
@@ -264,7 +277,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		cv.put(COLUMN_IS_FRIEND, guest.isFriend ? 1 : 0);
 
 		try {
-			db.insertOrThrow(TABLE_GUESTS, null, cv);
+			db.insertWithOnConflict(TABLE_GUESTS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
 		} catch (SQLException e) {
 			Log.e("Error on table " + TABLE_GUESTS, e.toString());
 		}

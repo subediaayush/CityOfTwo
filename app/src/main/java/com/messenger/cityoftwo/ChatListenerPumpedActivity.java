@@ -71,6 +71,21 @@ public abstract class ChatListenerPumpedActivity extends PumpedActivity {
 
 		mBottomSheetBehavior = BottomSheetBehavior.from(mBottomSheet);
 		mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+		mBottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+			@Override
+			public void onStateChanged(@NonNull View bottomSheet, int newState) {
+				if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+					getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+							.edit().remove(CityOfTwo.KEY_LAST_REQUEST)
+							.apply();
+				}
+			}
+
+			@Override
+			public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+			}
+		});
 		initBottomSheet();
 
 		mChatBroadcastReceiver = new BroadcastReceiver() {
