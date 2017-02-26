@@ -35,6 +35,7 @@ import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 import static com.messenger.cityoftwo.CityOfTwo.FLAG_PROFILE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_IS_TYPING;
+import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_CHATROOM;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_SEEN;
 import static com.messenger.cityoftwo.FacebookHelper.getFacebookPageURI;
 
@@ -338,6 +339,9 @@ public class ProfileActivity extends ChatListenerPumpedActivity implements ChatA
 	@Override
 	protected void onStop() {
 		super.onStop();
+
+		getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
+				.edit().remove(KEY_LAST_CHATROOM).apply();
 	}
 
 	@Override

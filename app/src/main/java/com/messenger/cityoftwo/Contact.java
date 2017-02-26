@@ -56,6 +56,7 @@ public class Contact implements Parcelable {
 			return new Contact[size];
 		}
 	};
+
 	public boolean isFriend;
 	Integer id;
 	String fid;
@@ -122,6 +123,7 @@ public class Contact implements Parcelable {
 
 
 	protected Contact(Parcel in) {
+		id = in.readInt();
 		isFriend = in.readByte() != 0;
 		fid = in.readString();
 		name = in.readString();
@@ -152,6 +154,7 @@ public class Contact implements Parcelable {
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeInt(id);
 		dest.writeByte((byte) (isFriend ? 1 : 0));
 		dest.writeString(fid);
 		dest.writeString(name);
