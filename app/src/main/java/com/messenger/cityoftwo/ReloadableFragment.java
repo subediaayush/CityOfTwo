@@ -6,4 +6,6 @@ package com.messenger.cityoftwo;
 
 public interface ReloadableFragment {
 	void reloadContent();
+
+	void onContentReloaded();
 }

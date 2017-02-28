@@ -35,7 +35,6 @@ import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 import static com.messenger.cityoftwo.CityOfTwo.FLAG_PROFILE;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_IS_TYPING;
-import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_CHATROOM;
 import static com.messenger.cityoftwo.CityOfTwo.KEY_LAST_SEEN;
 import static com.messenger.cityoftwo.FacebookHelper.getFacebookPageURI;
 
@@ -310,7 +309,9 @@ public class ProfileActivity extends ChatListenerPumpedActivity implements ChatA
 
 		if (chatRoomId == -1) {
 			finish();
+			return;
 		}
+
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(CityOfTwo.ACTION_IS_TYPING);
 		filter.addAction(CityOfTwo.ACTION_LAST_SEEN);
@@ -339,9 +340,6 @@ public class ProfileActivity extends ChatListenerPumpedActivity implements ChatA
 	@Override
 	protected void onStop() {
 		super.onStop();
-
-		getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
-				.edit().remove(KEY_LAST_CHATROOM).apply();
 	}
 
 	@Override
@@ -873,6 +871,11 @@ public class ProfileActivity extends ChatListenerPumpedActivity implements ChatA
 						.show();
 			}
 
+			@Override
+			public void onContentReloaded() {
+
+			}
+
 		});
 		wrapper.show(fm);
 	}
@@ -1002,7 +1005,6 @@ public class ProfileActivity extends ChatListenerPumpedActivity implements ChatA
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
 
 		HttpHandler handler = new HttpHandler(host, path, HttpHandler.POST, j) {
 			@Override

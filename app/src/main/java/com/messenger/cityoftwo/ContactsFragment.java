@@ -173,6 +173,11 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 		}
 	}
 
+	@Override
+	public void onContentReloaded() {
+		if (mListener != null) mListener.onContentReloaded();
+	}
+
 	private void notifyObservers(boolean error) {
 		if (!error) {
 			int totalItems = mContacts.size();
@@ -198,6 +203,8 @@ public class ContactsFragment extends Fragment implements ContactAdapterWrapper.
 		void onContactsLoaded(int totalContacts);
 
 		void onContactLoadError();
+
+		void onContentReloaded();
 	}
 
 	/**

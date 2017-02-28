@@ -22,8 +22,8 @@
     <string name="url_get_matches">get-matches/</string>
     <string name="url_start_conversation">start-conversation/</string>
     <string name="url_get_icon">get-icon/</string>
-    <string name="url_accept_request">accept-request/</string>
-    <string name="url_remove_from_contact">remove-from-contact/</string>
+    <string name="url_accept_request">accept-contact/</string>
+    <string name="url_remove_from_contact">decline-contact/</string>
     <string name="url_get_common_likes">get-common-likes</string>
     <string name="url_get_user_data">get-user-data/</string>
     <string name="url_accept_chat_request">accept-chat-request/</string>

@@ -9,6 +9,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.Toolbar;
 
 import static com.messenger.cityoftwo.ProfileFragment.ARG_CURRENT_GUEST;
@@ -27,6 +28,8 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 	private ContactsFragment mContactsFragment;
 	private LobbyFragment mLobbyFragment;
 
+	private SwipeRefreshLayout mRefreshLayout;
+
 	private String mToken;
 	private EmptyContentFragmentWrapper mEmptyFragment;
 
@@ -42,6 +45,14 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
+		mRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
+		mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				reloadFragments();
+			}
+		});
+
 		mToken = getSharedPreferences(CityOfTwo.PACKAGE_NAME, MODE_PRIVATE)
 				.getString(CityOfTwo.KEY_SESSION_TOKEN, "");
 
@@ -50,8 +61,6 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 
 		mTabLayout = (TabLayout) findViewById(R.id.tabs);
 		mTabLayout.setupWithViewPager(mHomePager);
-
-
 	}
 
 	@Override
@@ -72,12 +81,16 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 		if (chatroomId != -1) startConversation();
 	}
 
+	private void reloadFragments() {
+		mContactsFragment.reloadContent();
+		mLobbyFragment.reloadContent();
+	}
+
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-		mContactsFragment.reloadContent();
-		mLobbyFragment.reloadContent();
+		reloadFragments();
 	}
 
 	private void startConversation() {
@@ -112,6 +125,11 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 			public void onViewProfile(Contact contact) {
 				showProfile(contact);
 			}
+
+			@Override
+			public void onContentReloaded() {
+				if (mRefreshLayout.isRefreshing()) mRefreshLayout.setRefreshing(false);
+			}
 		});
 		mContactsFragment.setListener(new ContactsFragment.ContactsFragmentListener() {
 
@@ -129,6 +147,11 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 			public void onContactLoadError() {
 
 			}
+
+			@Override
+			public void onContentReloaded() {
+				if (mRefreshLayout.isRefreshing()) mRefreshLayout.setRefreshing(false);
+			}
 		});
 
 		mEmptyFragment = EmptyContentFragmentWrapper.newInstance("You seem to have no saved contact." +
@@ -141,6 +164,22 @@ public class HomeActivity extends ChatListenerPumpedActivity {
 //		mAdapter.addFragment(RequestFragment.newInstance(token), "REQUEST");
 
 		viewPager.setAdapter(mAdapter);
+		viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+			@Override
+			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+			}
+
+			@Override
+			public void onPageSelected(int position) {
+
+			}
+
+			@Override
+			public void onPageScrollStateChanged(int state) {
+				mRefreshLayout.setEnabled(state == ViewPager.SCROLL_STATE_IDLE);
+			}
+		});
 	}
 
 	private void showProfile(final Contact contact) {

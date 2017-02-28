@@ -212,6 +212,10 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 			public void onContactLoadError() {
 				showSearchFailure();
 			}
+
+			@Override
+			public void onContentReloaded() {
+			}
 		});
 
 		getChildFragmentManager().beginTransaction()
@@ -357,6 +361,11 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 		}
 	}
 
+	@Override
+	public void onContentReloaded() {
+		if (mListener != null) mListener.onContentReloaded();
+	}
+
 	public void setListener(LobbyFragmentListener listener) {
 		this.mListener = listener;
 	}
@@ -370,6 +379,8 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 	public interface LobbyFragmentListener {
 		// TODO: Update argument type and name
 		void onViewProfile(Contact contact);
+
+		void onContentReloaded();
 	}
 
 	private class LobbyHttpHandler {
@@ -410,6 +421,11 @@ public class LobbyFragment extends Fragment implements ReloadableFragment {
 				@Override
 				protected void onFailure(Integer status) {
 					showSearchFailure();
+				}
+
+				@Override
+				protected void onPostExecute() {
+					if (mListener != null) mListener.onContentReloaded();
 				}
 			};
 
